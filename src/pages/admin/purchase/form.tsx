@@ -59,7 +59,7 @@ const FormComponent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-bg-secondary p-8">
       <div className="max-w-6xl mx-auto">
         <Button
           icon={<ArrowLeftOutlined />}
@@ -71,9 +71,16 @@ const FormComponent = () => {
 
         <Card
           title={<h2 className="text-2xl font-bold p-4 mt-[20px] m-0 text-white">{isEditMode ? 'Edit Purchase' : 'Add New Purchase'}</h2>}
-          headStyle={{ backgroundColor: 'var(--brand)', padding: '16px 24px', margin: '-24px -24px 24px -24px', width: 'calc(100% + 48px)' }}
-          className="shadow-card border border-gray-200"
-          style={{ boxShadow: 'var(--card-shadow), 0 0 0 1px rgba(0, 0, 0, 0.05)', overflow: 'hidden' }}
+          headStyle={{ 
+            backgroundColor: 'var(--brand)', 
+            color: 'white',
+            padding: '16px 24px', 
+            margin: '-24px -24px 24px -24px', 
+            width: 'calc(100% + 48px)',
+            borderRadius: '8px 8px 0 0'
+          }}
+          className="shadow-card bg-surface-1"
+          style={{ boxShadow: 'var(--card-shadow)', overflow: 'hidden' }}
         >
           <Form
             form={form}
@@ -182,7 +189,7 @@ const FormComponent = () => {
               rules={[{ required: true, message: 'Please select due date' }]}
             >
               <DatePicker
-                style={{ width: '100%' }}
+                style={{ width: '49%' }}
                 size="large"
                 format="YYYY-MM-DD"
                 placeholder="Select due date"

@@ -5,8 +5,8 @@ import Login from '../pages/Auth/Login';
 import { Dashboard } from '../pages/admin/Dashboard';
 import ProtectedRoute from './ProtectedRoute';
 import Purchase from '../pages/admin/purchase';
-import PurchaseForm from '../pages/admin/purchase/form';
-import PurchaseView from '../pages/admin/purchase/view';
+import Invoice from '../pages/admin/invoice';
+
 
 const AppRoutes = () => (
   <Routes>
@@ -18,8 +18,7 @@ const AppRoutes = () => (
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
         <Route path="purchase" element={<Purchase />} />
-        <Route path="purchase/form" element={<PurchaseForm />} />
-        <Route path="purchase/view" element={<PurchaseView />} />
+      <Route path="invoice" element={<Invoice />} />
       </Route>
     </Route>
   </Routes>

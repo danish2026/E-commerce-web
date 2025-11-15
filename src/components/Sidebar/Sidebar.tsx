@@ -6,6 +6,7 @@ const Sidebar = () => {
   const items = [
     { label: 'Dashboard', to: '/dashboard' },
     { label: 'Purchase', to: '/purchase' },
+    { label: 'Invoice', to: '/invoice' },
   ];
 
   return (

@@ -16,3 +16,98 @@ body {
 .shadow-card {
   box-shadow: var(--card-shadow);
 }
+
+/* Ant Design theme overrides */
+.ant-table-wrapper,
+.ant-table,
+.ant-table-container,
+.ant-table-content {
+  background-color: var(--surface-1) !important;
+  color: var(--text-primary) !important;
+}
+
+.ant-table-thead > tr > th {
+  background-color: var(--surface-2) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--surface-2) !important;
+}
+
+.ant-table-tbody > tr > td {
+  background-color: var(--surface-1) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--surface-2) !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background-color: var(--surface-2) !important;
+}
+
+.ant-input,
+.ant-picker {
+  background-color: var(--surface-1) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--surface-2) !important;
+}
+
+.ant-input::placeholder,
+.ant-picker-input input::placeholder {
+  color: var(--muted) !important;
+}
+
+.ant-card {
+  background-color: var(--surface-1) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--surface-2) !important;
+}
+
+.ant-card-head {
+  background-color: var(--surface-1) !important;
+  border-color: var(--surface-2) !important;
+}
+
+.ant-card-head-title {
+  color: var(--text-primary) !important;
+}
+
+.ant-descriptions-item-label,
+.ant-descriptions-item-content {
+  color: var(--text-primary) !important;
+}
+
+.ant-descriptions-bordered .ant-descriptions-item-label {
+  background-color: var(--surface-2) !important;
+  border-color: var(--surface-2) !important;
+}
+
+.ant-descriptions-bordered .ant-descriptions-item-content {
+  border-color: var(--surface-2) !important;
+}
+
+.ant-btn-default {
+  background-color: var(--surface-1) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--surface-2) !important;
+}
+
+.ant-btn-default:hover {
+  background-color: var(--surface-2) !important;
+  border-color: var(--surface-2) !important;
+  color: var(--text-primary) !important;
+}
+
+.ant-btn-link {
+  color: var(--brand) !important;
+}
+
+.ant-btn-link:hover {
+  color: var(--brand) !important;
+  opacity: 0.8;
+}
+
+[data-theme='dark'] .ant-table-thead > tr > th {
+  background-color: var(--surface-2) !important;
+}
+
+[data-theme='dark'] .ant-table-tbody > tr:hover > td {
+  background-color: var(--surface-2) !important;
+}

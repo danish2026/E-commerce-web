@@ -107,7 +107,7 @@ const Table = ({ onNavigate, purchases }: TableProps) => {
   ];
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="bg-surface-1 rounded-lg shadow-card overflow-hidden">
       <AntTable
         columns={columns}
         dataSource={purchases}

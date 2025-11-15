@@ -82,13 +82,13 @@ const Purchase = () => {
   }, [searchText, dateRange]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-bg-secondary p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Purchase Management</h1>
+          <h1 className="text-3xl font-bold text-text-primary">Purchase Management</h1>
         </div>
 
-        <div className="bg-white rounded-lg shadow  p-6 mb-6">
+        <div className="bg-surface-1 rounded-lg shadow-card p-6 mb-6">
           <Space size="middle" className="w-full" direction="vertical">
             <Space size="middle" className="w-full" wrap>
               <Input
@@ -111,7 +111,12 @@ const Purchase = () => {
                 icon={<PlusOutlined />}
                 onClick={() => handleNavigate('form', { mode: 'add' })}
                 size="large"
-                style={{height: '40px',width: '200px'}}
+                style={{
+                  height: '40px',
+                  width: '200px',
+                  backgroundColor: 'var(--brand)',
+                  borderColor: 'var(--brand)',
+                }}
               >
                 Add Purchase
               </Button>

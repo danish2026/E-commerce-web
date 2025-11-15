@@ -18,9 +18,15 @@ const sections = [
     ],
   },
   {
-    label: 'Purchase',
+    // label: 'Purchase',
     items: [
       { label: 'Purchase', to: '/purchase', icon: Users },
+    ],
+  },
+  {
+    label: 'Invoice',
+    items: [
+      { label: 'Invoice', to: '/invoice', icon: Users },
     ],
   },
   {

@@ -2,12 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../../context/AuthContext';
-import { useThemeMode } from '../../theme/theme';
+import { useThemeMode } from '../../context/ThemeContext';
 import { Bell, Moon, SunMedium, LogOut } from '../icons';
 import { Avatar, Button, IconButton, Select, Toggle } from '../ui';
 
 export const Topbar = () => {
-  const [currency, setCurrency] = useState('USD');
   const { mode, toggleMode } = useThemeMode();
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -27,19 +26,7 @@ export const Topbar = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <Select
-              aria-label="Select currency"
-              value={currency}
-              onChange={(event) => setCurrency(event.target.value)}
-              className="pr-10"
-            >
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-            </Select>
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted">⌄</span>
-          </div>
+ 
           <div className="flex items-center gap-2 rounded-full bg-surface-2/70 px-3 py-1.5">
             {mode === 'dark' ? <Moon size={16} /> : <SunMedium size={16} />}
             <Toggle pressed={mode === 'dark'} label="Toggle theme" onClick={toggleMode} />

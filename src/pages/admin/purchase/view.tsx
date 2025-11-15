@@ -21,7 +21,7 @@ const View = () => {
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-bg-secondary p-8">
         <div className="max-w-4xl mx-auto">
           <Button
             icon={<ArrowLeftOutlined />}
@@ -30,8 +30,8 @@ const View = () => {
           >
             Back to Purchase List
           </Button>
-          <Card>
-            <p>No purchase data found. Please select a purchase to view.</p>
+          <Card className="bg-surface-1 shadow-card">
+            <p className="text-text-primary">No purchase data found. Please select a purchase to view.</p>
           </Card>
         </div>
       </div>
@@ -52,7 +52,7 @@ const View = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-bg-secondary p-8">
       <div className="max-w-4xl mx-auto">
         <Button
           icon={<ArrowLeftOutlined />}
@@ -65,17 +65,21 @@ const View = () => {
         <Card
           title={
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900 m-0">Purchase Order Details</h2>
+              <h2 className="text-2xl font-bold text-text-primary m-0">Purchase Order Details</h2>
               <Button
                 type="primary"
                 icon={<EditOutlined />}
                 onClick={() => navigate('/purchase/form', { state: { ...data, mode: 'edit' } })}
+                style={{
+                  backgroundColor: 'var(--brand)',
+                  borderColor: 'var(--brand)',
+                }}
               >
                 Edit
               </Button>
             </div>
           }
-          className="shadow-lg"
+          className="shadow-card bg-surface-1"
         >
           <Descriptions bordered column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}>
             <Descriptions.Item label="Supplier">
@@ -91,7 +95,7 @@ const View = () => {
               <strong>₹{data.amount}</strong>
             </Descriptions.Item>
             <Descriptions.Item label="Total with GST">
-              <strong className="text-green-600">₹{totalWithGst}</strong>
+              <strong className="text-accent-1">₹{totalWithGst}</strong>
             </Descriptions.Item>
             <Descriptions.Item label="Quantity">
               <strong>{data.quantity}</strong>
