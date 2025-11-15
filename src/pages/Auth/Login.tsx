@@ -1,0 +1,100 @@
+import { FormEvent, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { useAuth } from '../../context/AuthContext';
+import { LogoSpark } from '../../components/icons';
+import { Button, Card, Input } from '../../components/ui';
+
+const Login = () => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [credentials, setCredentials] = useState({ email: '', password: '' });
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    login(credentials.email, credentials.password);
+    navigate('/dashboard', { replace: true });
+  };
+
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-[var(--bg-secondary)]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(31,154,138,0.35)_0%,_rgba(5,7,9,0.95)_55%)]" />
+
+      <div className="relative z-10 flex min-h-screen flex-col gap-8 px-4 py-10 lg:flex-row lg:gap-12 lg:px-10">
+        <section className="flex w-full flex-col rounded-3xl border border-white/5 bg-white/5 p-8 text-white backdrop-blur-2xl dark:border-white/10 lg:w-1/2">
+          <div className="inline-flex items-center gap-3 rounded-full border border-white/20 px-4 py-2 text-sm uppercase tracking-[0.3em] text-white/80">
+            <LogoSpark className="h-6 w-6 text-white" />
+            Bliss Commerce
+          </div>
+          
+          <div className="flex flex-1 flex-col items-center justify-center space-y-10 text-center">
+            <div className="space-y-4">
+              <h1 className="text-4xl font-semibold leading-tight">Welcome to Your Store</h1>
+              <p className="text-white/70">
+              Sign in to track orders, manage your cart, and explore new deals. 
+              </p>
+            </div>    
+            
+            <p className="text-sm text-white/60">
+              Secure SSO • SOC2 • GDPR • 99.99% uptime
+            </p>
+          </div>
+        </section>
+
+        <section className="flex w-full items-center justify-center lg:w-1/2">
+          <Card className="w-full max-w-md space-y-8 bg-[var(--surface-1)]/90 p-8 shadow-card backdrop-blur-2xl">
+            <header className="space-y-2">
+              <p className="text-sm uppercase tracking-[0.4em] text-muted">Welcome back</p>
+              <h2 className="text-3xl font-semibold text-text-primary">Access your dashboard</h2>
+            </header>
+            <form className="space-y-5" onSubmit={handleSubmit}>
+              <label className="space-y-1 text-sm text-text-secondary">
+                Email address
+                <Input
+                  type="email"
+                  required
+                  value={credentials.email}
+                  onChange={(event) => setCredentials((prev) => ({ ...prev, email: event.target.value }))}
+                  placeholder="you@company.com"
+                />
+              </label>
+              <label className="space-y-1 text-sm text-text-secondary">
+                Password
+                <Input
+                  type="password"
+                  required
+                  value={credentials.password}
+                  onChange={(event) =>
+                    setCredentials((prev) => ({ ...prev, password: event.target.value }))
+                  }
+                  placeholder="••••••••"
+                />
+              </label>
+              <div className="flex items-center justify-between text-sm text-muted">
+                <label className="inline-flex items-center gap-2">
+                  <input type="checkbox" className="h-4 w-4 rounded border border-surface-2 accent-brand" />
+                  Remember me
+                </label>
+                <button type="button" className="text-brand transition hover:underline">
+                  Forgot password?
+                </button>
+              </div>
+              <Button type="submit" className="w-full">
+                Sign in
+              </Button>
+            </form>
+            <footer className="text-center text-sm text-muted">
+              Don’t have an account?{' '}
+              <button type="button" className="text-brand underline underline-offset-4">
+                Request access
+              </button>
+            </footer>
+          </Card>
+        </section>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
+

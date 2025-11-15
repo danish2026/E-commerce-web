@@ -1,0 +1,79 @@
+:root {
+  color-scheme: light;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f6f7fb;
+  --surface-1: #ffffff;
+  --surface-2: #f2f4f8;
+  --text-primary: #0f1724;
+  --text-secondary: #374151;
+  --muted: #9aa4b2;
+  --accent-1: #10b981;
+  --accent-2: #ef4444;
+  --brand: #1f9a8a;
+  --brand-rgb: 31 154 138;
+  --glass: rgba(255, 255, 255, 0.06);
+  --card-shadow: 0 6px 18px rgba(16, 24, 40, 0.12);
+
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+
+  --space-8: 0.5rem;
+  --space-12: 0.75rem;
+  --space-16: 1rem;
+  --space-24: 1.5rem;
+  --space-32: 2rem;
+  --space-40: 2.5rem;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg-primary: #0b0f10;
+  --bg-secondary: #071013;
+  --surface-1: #0f1720;
+  --surface-2: #0b1415;
+  --text-primary: #e6eef0;
+  --text-secondary: #9aa6a8;
+  --muted: #6b7a7c;
+  --accent-1: #10b981;
+  --accent-2: #ef4444;
+  --brand: #12a37a;
+  --brand-rgb: 18 163 122;
+  --glass: rgba(255, 255, 255, 0.03);
+  --card-shadow: 0 8px 24px rgba(2, 6, 23, 0.6);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+:where(button) {
+  font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
