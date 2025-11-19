@@ -6,14 +6,40 @@ import { LogoSpark } from '../../components/icons';
 import { Button, Card, Input } from '../../components/ui';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const navigate = useNavigate();
-  const [credentials, setCredentials] = useState({ email: '', password: '' });
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [credentials, setCredentials] = useState({ email: '', password: '', confirmPassword: '' });
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    login(credentials.email, credentials.password);
-    navigate('/dashboard', { replace: true });
+    setError('');
+    setLoading(true);
+
+    try {
+      if (isRegisterMode) {
+        if (credentials.password !== credentials.confirmPassword) {
+          setError('Passwords do not match');
+          setLoading(false);
+          return;
+        }
+        if (credentials.password.length < 6) {
+          setError('Password must be at least 6 characters long');
+          setLoading(false);
+          return;
+        }
+        await register(credentials.email, credentials.password);
+      } else {
+        await login(credentials.email, credentials.password);
+      }
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -44,17 +70,29 @@ const Login = () => {
         <section className="flex w-full items-center justify-center lg:w-1/2">
           <Card className="w-full max-w-md space-y-8 bg-[var(--surface-1)]/90 p-8 shadow-card backdrop-blur-2xl">
             <header className="space-y-2">
-              <p className="text-sm uppercase tracking-[0.4em] text-muted">Welcome back</p>
-              <h2 className="text-3xl font-semibold text-text-primary">Access your dashboard</h2>
+              <p className="text-sm uppercase tracking-[0.4em] text-muted">
+                {isRegisterMode ? 'Create account' : 'Welcome back'}
+              </p>
+              <h2 className="text-3xl font-semibold text-text-primary">
+                {isRegisterMode ? 'Sign up for your account' : 'Access your dashboard'}
+              </h2>
             </header>
             <form className="space-y-5" onSubmit={handleSubmit}>
+              {error && (
+                <div className="rounded-lg bg-red-500/10 p-3 text-sm text-red-500 border border-red-500/20">
+                  {error}
+                </div>
+              )}
               <label className="space-y-1 text-sm text-text-secondary">
                 Email address
                 <Input
                   type="email"
                   required
                   value={credentials.email}
-                  onChange={(event) => setCredentials((prev) => ({ ...prev, email: event.target.value }))}
+                  onChange={(event) => {
+                    setCredentials((prev) => ({ ...prev, email: event.target.value }));
+                    setError('');
+                  }}
                   placeholder="you@company.com"
                 />
               </label>
@@ -64,30 +102,77 @@ const Login = () => {
                   type="password"
                   required
                   value={credentials.password}
-                  onChange={(event) =>
-                    setCredentials((prev) => ({ ...prev, password: event.target.value }))
-                  }
+                  onChange={(event) => {
+                    setCredentials((prev) => ({ ...prev, password: event.target.value }));
+                    setError('');
+                  }}
                   placeholder="••••••••"
+                  minLength={6}
                 />
               </label>
-              <div className="flex items-center justify-between text-sm text-muted">
-                <label className="inline-flex items-center gap-2">
-                  <input type="checkbox" className="h-4 w-4 rounded border border-surface-2 accent-brand" />
-                  Remember me
+              {isRegisterMode && (
+                <label className="space-y-1 text-sm text-text-secondary">
+                  Confirm Password
+                  <Input
+                    type="password"
+                    required
+                    value={credentials.confirmPassword}
+                    onChange={(event) => {
+                      setCredentials((prev) => ({ ...prev, confirmPassword: event.target.value }));
+                      setError('');
+                    }}
+                    placeholder="••••••••"
+                    minLength={6}
+                  />
                 </label>
-                <button type="button" className="text-brand transition hover:underline">
-                  Forgot password?
-                </button>
-              </div>
-              <Button type="submit" className="w-full">
-                Sign in
+              )}
+              {!isRegisterMode && (
+                <div className="flex items-center justify-between text-sm text-muted">
+                  <label className="inline-flex items-center gap-2">
+                    <input type="checkbox" className="h-4 w-4 rounded border border-surface-2 accent-brand" />
+                    Remember me
+                  </label>
+                  <button type="button" className="text-brand transition hover:underline">
+                    Forgot password?
+                  </button>
+                </div>
+              )}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Please wait...' : isRegisterMode ? 'Create account' : 'Sign in'}
               </Button>
             </form>
             <footer className="text-center text-sm text-muted">
-              Don’t have an account?{' '}
-              <button type="button" className="text-brand underline underline-offset-4">
-                Request access
-              </button>
+              {isRegisterMode ? (
+                <>
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsRegisterMode(false);
+                      setError('');
+                      setCredentials({ email: '', password: '', confirmPassword: '' });
+                    }}
+                    className="text-brand underline underline-offset-4 hover:no-underline"
+                  >
+                    Sign in
+                  </button>
+                </>
+              ) : (
+                <>
+                  Don't have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsRegisterMode(true);
+                      setError('');
+                      setCredentials({ email: '', password: '', confirmPassword: '' });
+                    }}
+                    className="text-brand underline underline-offset-4 hover:no-underline"
+                  >
+                    Create account
+                  </button>
+                </>
+              )}
             </footer>
           </Card>
         </section>

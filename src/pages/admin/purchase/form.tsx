@@ -1,8 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Form, Input, InputNumber, Select, DatePicker, Button, Card, Space, message } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { createPurchase, getApiErrorMessage, mapPaymentStatusToEnum, updatePurchase } from './PurcherseService';
+
 
 const { Option } = Select;
 
@@ -22,6 +24,7 @@ const FormComponent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
   const formData = location.state as PurchaseFormData | null;
   const isEditMode = formData?.mode === 'edit';
 
@@ -39,18 +42,41 @@ const FormComponent = () => {
     }
   }, [formData, isEditMode, form]);
 
-  const onFinish = (values: any) => {
-    const formattedValues = {
-      ...values,
-      amount: values.amount.toString(),
-      quantity: values.quantity.toString(),
-      dueDate: values.dueDate ? values.dueDate.format('YYYY-MM-DD') : '',
-    };
+  const onFinish = async (values: any) => {
+    try {
+      setLoading(true);
+      
+      // Map payment status to enum
+      const paymentStatus = mapPaymentStatusToEnum(values.payment);
+      
+      // Format data for API
+      const apiData = {
+        supplier: values.supplier,
+        buyer: values.buyer,
+        gst: values.gst,
+        amount: values.amount,
+        quantity: values.quantity,
+        paymentStatus: paymentStatus,
+        dueDate: values.dueDate ? values.dueDate.format('YYYY-MM-DD') : '',
+      };
 
-    // Here you would typically make an API call to save the data
-    console.log('Form values:', formattedValues);
-    message.success(isEditMode ? 'Purchase updated successfully!' : 'Purchase created successfully!');
-    navigate('/purchase');
+      if (isEditMode && formData?.id) {
+        // Update existing purchase
+        await updatePurchase(formData.id, apiData);
+        message.success('Purchase updated successfully!');
+      } else {
+        // Create new purchase
+        await createPurchase(apiData);
+        message.success('Purchase created successfully!');
+      }
+      
+      navigate('/purchase');
+    } catch (error) {
+      console.error('Error saving purchase:', error);
+      message.error(getApiErrorMessage(error, 'Failed to save purchase'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onFinishFailed = (errorInfo: any) => {
@@ -118,6 +144,7 @@ const FormComponent = () => {
                   placeholder="Enter GST percentage"
                   style={{ width: '100%' }}
                   size="large"
+                  type='number'
                   min={0}
                   max={100}
                   formatter={(value) => `${value}%`}
@@ -141,6 +168,7 @@ const FormComponent = () => {
                   placeholder="Enter amount"
                   style={{ width: '100%' }}
                   size="large"
+                  type='number'
                   min={0}
                   prefix="₹"
                   formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -164,6 +192,7 @@ const FormComponent = () => {
               >
                 <InputNumber
                   placeholder="Enter quantity"
+                  type='number'
                   style={{ width: '100%' }}
                   size="large"
                   min={1}
@@ -203,6 +232,7 @@ const FormComponent = () => {
                   htmlType="submit"
                   icon={<SaveOutlined />}
                   size="large"
+                  loading={loading}
                   style={{ 
                     backgroundColor: 'var(--brand)', 
                     borderColor: 'var(--brand)',

@@ -1,7 +1,8 @@
 import React from 'react';
-import { Table as AntTable, Tag, Button, Space } from 'antd';
+import { Table as AntTable, Tag, Button, Space, Modal, message } from 'antd';
 import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import { deletePurchase, getApiErrorMessage } from './PurcherseService';
 
 interface Purchase {
   id: string;
@@ -17,9 +18,10 @@ interface Purchase {
 interface TableProps {
   onNavigate: (path: string, data?: any) => void;
   purchases: Purchase[];
+  onDelete?: () => void;
 }
 
-const Table = ({ onNavigate, purchases }: TableProps) => {
+const Table = ({ onNavigate, purchases, onDelete }: TableProps) => {
   const getPaymentTag = (payment: string) => {
     const colorMap: Record<string, string> = {
       Paid: 'success',
@@ -27,6 +29,28 @@ const Table = ({ onNavigate, purchases }: TableProps) => {
       Partial: 'processing',
     };
     return <Tag color={colorMap[payment] || 'default'}>{payment}</Tag>;
+  };
+
+  const handleDelete = (record: Purchase) => {
+    Modal.confirm({
+      title: 'Are you sure you want to delete this purchase?',
+      content: `This will permanently delete the purchase for ${record.supplier}.`,
+      okText: 'Yes, Delete',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      onOk: async () => {
+        try {
+          await deletePurchase(record.id);
+          message.success('Purchase deleted successfully!');
+          if (onDelete) {
+            onDelete();
+          }
+        } catch (error) {
+          console.error('Error deleting purchase:', error);
+          message.error(getApiErrorMessage(error, 'Failed to delete purchase'));
+        }
+      },
+    });
   };
 
   const columns: ColumnsType<Purchase> = [
@@ -95,8 +119,9 @@ const Table = ({ onNavigate, purchases }: TableProps) => {
           </Button>
           <Button
             type="link"
+            danger
             icon={<DeleteOutlined />}
-            onClick={() => onNavigate('form', { ...record, mode: 'edit' })}
+            onClick={() => handleDelete(record)}
             title="Delete"
           >
           

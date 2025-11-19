@@ -1,50 +1,65 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input, DatePicker, Button, Space } from 'antd';
+import { Input, DatePicker, Button, Space, message, Spin } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import Table from './table';
+import {
+  fetchPurchases,
+  mapPaymentStatusFromEnum,
+  getApiErrorMessage,
+} from './PurcherseService';
 
 const { RangePicker } = DatePicker;
 
-// Mock data - replace with actual API call
-const mockPurchases = [
-  {
-    id: '1',
-    supplier: 'ABC Suppliers',
-    buyer: 'John Doe',
-    gst: '18',
-    amount: '50000',
-    quantity: '100',
-    payment: 'Paid',
-    dueDate: '2024-01-15',
-  },
-  {
-    id: '2',
-    supplier: 'XYZ Corporation',
-    buyer: 'Jane Smith',
-    gst: '12',
-    amount: '75000',
-    quantity: '150',
-    payment: 'Pending',
-    dueDate: '2024-02-20',
-  },
-  {
-    id: '3',
-    supplier: 'Global Trading',
-    buyer: 'Bob Johnson',
-    gst: '18',
-    amount: '30000',
-    quantity: '75',
-    payment: 'Partial',
-    dueDate: '2024-01-30',
-  },
-];
+interface PurchaseDisplay {
+  id: string;
+  supplier: string;
+  buyer: string;
+  gst: string;
+  amount: string;
+  quantity: string;
+  payment: string;
+  dueDate: string;
+}
 
 const Purchase = () => {
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
+  const [purchases, setPurchases] = useState<PurchaseDisplay[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch purchases from API
+  const loadPurchases = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchPurchases();
+      
+      // Transform API data to display format
+      const transformedPurchases: PurchaseDisplay[] = data.map((purchase) => ({
+        id: purchase.id,
+        supplier: purchase.supplier,
+        buyer: purchase.buyer,
+        gst: purchase.gst.toString(),
+        amount: purchase.amount.toString(),
+        quantity: purchase.quantity.toString(),
+        payment: mapPaymentStatusFromEnum(purchase.paymentStatus),
+        dueDate: purchase.dueDate,
+      }));
+      
+      setPurchases(transformedPurchases);
+    } catch (error) {
+      console.error('Error fetching purchases:', error);
+      message.error(getApiErrorMessage(error, 'Failed to fetch purchases'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPurchases();
+  }, []);
 
   const handleNavigate = (path: string, data?: any) => {
     if (path === 'form') {
@@ -56,7 +71,7 @@ const Purchase = () => {
 
   // Filter purchases based on search text and date range
   const filteredPurchases = useMemo(() => {
-    let filtered = [...mockPurchases];
+    let filtered = [...purchases];
 
     // Filter by search text
     if (searchText) {
@@ -79,7 +94,7 @@ const Purchase = () => {
     }
 
     return filtered;
-  }, [searchText, dateRange]);
+  }, [purchases, searchText, dateRange]);
 
   return (
     <div className="min-h-screen bg-bg-secondary p-8">
@@ -124,7 +139,13 @@ const Purchase = () => {
           </Space>
         </div>
 
-        <Table onNavigate={handleNavigate} purchases={filteredPurchases} />
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Spin size="large" />
+          </div>
+        ) : (
+          <Table onNavigate={handleNavigate} purchases={filteredPurchases} onDelete={loadPurchases} />
+        )}
       </div>
     </div>
   );
