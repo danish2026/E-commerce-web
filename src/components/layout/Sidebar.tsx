@@ -41,12 +41,12 @@ const sections = [
 export const Sidebar = ({ collapsed, onToggleCollapse }: SidebarProps) => (
   <aside
     className={clsx(
-      'sticky top-6 h-[calc(100vh-3rem)] rounded-3xl bg-surface-1/80 p-4 shadow-card backdrop-blur-lg transition-all duration-300 focus-within:ring-2 focus-within:ring-brand/40',
+      'sticky top-8 h-[calc(100vh-4rem)] border-r border-surface-2/50 pr-8 transition-all duration-300',
       collapsed ? 'w-[5rem]' : 'w-64',
     )}
     aria-label="Primary navigation"
   >
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between pb-4">
       {!collapsed && (
         <div>
           {/* <p className="text-xs uppercase tracking-[0.3em] text-muted">bliss</p> */}

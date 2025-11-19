@@ -96,17 +96,19 @@ const FormComponent = () => {
         </Button>
 
         <Card
-          title={<h2 className="text-2xl font-bold p-4 mt-[20px] m-0 text-white">{isEditMode ? 'Edit Purchase' : 'Add New Purchase'}</h2>}
+          title={<h2 className="text-2xl font-bold p-4 mt-[20px] m-0" style={{ color: 'var(--text-primary)' }}>{isEditMode ? 'Edit Purchase' : 'Add New Purchase'}</h2>}
           headStyle={{ 
-            backgroundColor: 'var(--brand)', 
-            color: 'white',
+            backgroundColor: 'var(--surface-1)', 
+            color: 'var(--text-primary)',
             padding: '16px 24px', 
             margin: '-24px -24px 24px -24px', 
             width: 'calc(100% + 48px)',
-            borderRadius: '8px 8px 0 0'
+            borderRadius: '8px 8px 0 0',
+            borderBottom: '1px solid var(--surface-2)'
           }}
           className="shadow-card bg-surface-1"
-          style={{ boxShadow: 'var(--card-shadow)', overflow: 'hidden' }}
+          style={{ boxShadow: 'var(--card-shadow)', overflow: 'hidden', backgroundColor: 'var(--surface-1)' }}
+          bodyStyle={{ backgroundColor: 'var(--surface-1)' }}
         >
           <Form
             form={form}

@@ -17,7 +17,7 @@ export const Topbar = () => {
   };
 
   return (
-    <header className="flex flex-col gap-4 rounded-2xl bg-surface-1/70 p-4 shadow-card backdrop-blur">
+    <header className="flex flex-col gap-4 pb-6 mb-6 border-b border-surface-2/50">
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex flex-1 items-center gap-3">
           <div>

@@ -104,7 +104,7 @@ const Purchase = () => {
           <h1 className="text-3xl font-bold text-text-primary">Purchase Management</h1>
         </div>
 
-        <div className="bg-surface-1 rounded-lg shadow-card p-6 mb-6">
+        <div className="bg-surface-1 rounded-lg shadow-card p-8 mb-6">
           <Space size="middle" className="w-full" direction="vertical">
             <Space size="middle" className="w-full" wrap>
               <Input
@@ -112,7 +112,7 @@ const Purchase = () => {
                 prefix={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                style={{ width: 550 ,height: '40px'}}
+                style={{ width: 550, height: '40px' }}
                 allowClear
               />
               <RangePicker

@@ -134,6 +134,7 @@ const Table = ({ onNavigate, purchases, onDelete }: TableProps) => {
   return (
     <div className="bg-surface-1 rounded-lg shadow-card overflow-hidden">
       <AntTable
+        className="purchase-table"
         columns={columns}
         dataSource={purchases}
         rowKey="id"
