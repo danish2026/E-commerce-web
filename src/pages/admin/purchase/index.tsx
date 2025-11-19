@@ -8,6 +8,7 @@ import {
   fetchPurchases,
   mapPaymentStatusFromEnum,
   getApiErrorMessage,
+  PurchaseDto,
 } from './PurcherseService';
 
 const { RangePicker } = DatePicker;
@@ -37,7 +38,7 @@ const Purchase = () => {
       const data = await fetchPurchases();
       
       // Transform API data to display format
-      const transformedPurchases: PurchaseDisplay[] = data.map((purchase) => ({
+      const transformedPurchases: PurchaseDisplay[] = data.map((purchase: PurchaseDto) => ({
         id: purchase.id,
         supplier: purchase.supplier,
         buyer: purchase.buyer,

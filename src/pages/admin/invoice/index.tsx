@@ -21,4 +21,4 @@ const handleDecrement = () => {
   )
 }
 
-export default Invoice
+export default Invoice;

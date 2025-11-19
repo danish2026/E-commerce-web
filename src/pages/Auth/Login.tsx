@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
 import { LogoSpark } from '../../components/icons';
@@ -12,6 +13,8 @@ const Login = () => {
   const [credentials, setCredentials] = useState({ email: '', password: '', confirmPassword: '' });
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -98,32 +101,62 @@ const Login = () => {
               </label>
               <label className="space-y-1 text-sm text-text-secondary">
                 Password
-                <Input
-                  type="password"
-                  required
-                  value={credentials.password}
-                  onChange={(event) => {
-                    setCredentials((prev) => ({ ...prev, password: event.target.value }));
-                    setError('');
-                  }}
-                  placeholder="••••••••"
-                  minLength={6}
-                />
-              </label>
-              {isRegisterMode && (
-                <label className="space-y-1 text-sm text-text-secondary">
-                  Confirm Password
+                <div className="relative">
                   <Input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     required
-                    value={credentials.confirmPassword}
+                    value={credentials.password}
                     onChange={(event) => {
-                      setCredentials((prev) => ({ ...prev, confirmPassword: event.target.value }));
+                      setCredentials((prev) => ({ ...prev, password: event.target.value }));
                       setError('');
                     }}
                     placeholder="••••••••"
                     minLength={6}
+                    className="pr-10"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text-primary transition-colors"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+              </label>
+              {isRegisterMode && (
+                <label className="space-y-1 text-sm text-text-secondary">
+                  Confirm Password
+                  <div className="relative">
+                    <Input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      required
+                      value={credentials.confirmPassword}
+                      onChange={(event) => {
+                        setCredentials((prev) => ({ ...prev, confirmPassword: event.target.value }));
+                        setError('');
+                      }}
+                      placeholder="••••••••"
+                      minLength={6}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text-primary transition-colors"
+                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
                 </label>
               )}
               {!isRegisterMode && (
@@ -151,6 +184,8 @@ const Login = () => {
                       setIsRegisterMode(false);
                       setError('');
                       setCredentials({ email: '', password: '', confirmPassword: '' });
+                      setShowPassword(false);
+                      setShowConfirmPassword(false);
                     }}
                     className="text-brand underline underline-offset-4 hover:no-underline"
                   >
@@ -166,6 +201,8 @@ const Login = () => {
                       setIsRegisterMode(true);
                       setError('');
                       setCredentials({ email: '', password: '', confirmPassword: '' });
+                      setShowPassword(false);
+                      setShowConfirmPassword(false);
                     }}
                     className="text-brand underline underline-offset-4 hover:no-underline"
                   >
