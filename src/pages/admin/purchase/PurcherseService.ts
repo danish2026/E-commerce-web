@@ -34,9 +34,58 @@ export interface CreatePurchasePayload {
 
 export type UpdatePurchasePayload = Partial<CreatePurchasePayload>;
 
-export const fetchPurchases = async (): Promise<PurchaseDto[]> => {
-  const { data } = await apiClient.get<PurchaseDto[]>(API.PURCHASE);
-  return data;
+export interface PaginatedPurchaseResponse {
+  data: PurchaseDto[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export const fetchPurchases = async (
+  search?: string,
+  fromDate?: string,
+  toDate?: string,
+  paymentStatus?: PaymentStatus,
+  page: number = 1,
+  limit: number = 10
+): Promise<PaginatedPurchaseResponse> => {
+  const params: Record<string, string | number> = {};
+  
+  if (search) {
+    params.search = search;
+  }
+  
+  if (fromDate) {
+    params.fromDate = fromDate;
+  }
+  
+  if (toDate) {
+    params.toDate = toDate;
+  }
+  
+  if (paymentStatus) {
+    params.paymentStatus = paymentStatus;
+  }
+  
+  params.page = page;
+  params.limit = limit;
+  
+  const { data } = await apiClient.get<PurchaseDto[] | PaginatedPurchaseResponse>(
+    API.PURCHASE, 
+    { params }
+  );
+  
+  // Handle both paginated and non-paginated responses
+  if (Array.isArray(data)) {
+    return {
+      data,
+      total: data.length,
+      page: 1,
+      limit: data.length,
+    };
+  }
+  
+  return data as PaginatedPurchaseResponse;
 };
 
 export const createPurchase = async (

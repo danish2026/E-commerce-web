@@ -1,7 +1,7 @@
 import React from 'react';
 import { Table as AntTable, Tag, Button, Space, Modal, message } from 'antd';
 import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
+import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import { deletePurchase, getApiErrorMessage } from './PurcherseService';
 
 interface Purchase {
@@ -19,9 +19,10 @@ interface TableProps {
   onNavigate: (path: string, data?: any) => void;
   purchases: Purchase[];
   onDelete?: () => void;
+  pagination?: TablePaginationConfig;
 }
 
-const Table = ({ onNavigate, purchases, onDelete }: TableProps) => {
+const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
   const getPaymentTag = (payment: string) => {
     const colorMap: Record<string, string> = {
       Paid: 'success',
@@ -132,17 +133,13 @@ const Table = ({ onNavigate, purchases, onDelete }: TableProps) => {
   ];
 
   return (
-    <div className="bg-surface-1 rounded-lg shadow-card overflow-hidden">
+    <div className="glass-panel rounded-2xl border border-[var(--glass-border)] shadow-card overflow-hidden">
       <AntTable
-        className="purchase-table"
+        className="purchase-table glass-table"
         columns={columns}
         dataSource={purchases}
         rowKey="id"
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `Total ${total} purchases`,
-        }}
+        pagination={pagination || false}
         locale={{
           emptyText: 'No purchases found. Click Add Purchase to create one.',
         }}

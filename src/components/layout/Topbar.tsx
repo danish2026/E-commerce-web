@@ -17,7 +17,7 @@ export const Topbar = () => {
   };
 
   return (
-    <header className="flex flex-col gap-4 pb-6 mb-6 border-b border-surface-2/50">
+    <header className="glass-header flex flex-col gap-4 p-6 mb-6">
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex flex-1 items-center gap-3">
           <div>
@@ -26,18 +26,28 @@ export const Topbar = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
- 
-          <div className="flex items-center gap-2 rounded-full bg-surface-2/70 px-3 py-1.5">
+          <div className="flex items-center gap-2 rounded-full px-3 py-1.5 glass-panel border border-[var(--glass-border)]">
             {mode === 'dark' ? <Moon size={16} /> : <SunMedium size={16} />}
             <Toggle pressed={mode === 'dark'} label="Toggle theme" onClick={toggleMode} />
           </div>
-          <IconButton label="Notifications">
-            <Bell size={18} />
-          </IconButton>
-          <Button variant="ghost" onClick={handleLogout} leadingIcon={<LogOut size={18} />}>
-            Logout
-          </Button>
-          <Avatar name="Danish Admin" />
+          <div className="glass-panel border border-[var(--glass-border)] rounded-xl">
+            <IconButton label="Notifications" className="hover:bg-[var(--glass-bg-hover)] transition-colors">
+              <Bell size={18} />
+            </IconButton>
+          </div>
+          <div className="glass-panel border border-[var(--glass-border)] rounded-xl">
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
+              leadingIcon={<LogOut size={18} />}
+              className="hover:bg-[var(--glass-bg-hover)] transition-colors"
+            >
+              Logout
+            </Button>
+          </div>
+          <div className="glass-panel border border-[var(--glass-border)] rounded-full p-1">
+            <Avatar name="Danish Admin" />
+          </div>
         </div>
       </div>
     </header>

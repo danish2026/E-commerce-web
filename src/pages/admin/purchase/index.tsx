@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input, DatePicker, Button, Space, message, Spin } from 'antd';
+import { Input, DatePicker, Button, Space, message, Spin, Select } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import Table from './table';
@@ -9,6 +9,7 @@ import {
   mapPaymentStatusFromEnum,
   getApiErrorMessage,
   PurchaseDto,
+  PaymentStatus,
 } from './PurcherseService';
 
 const { RangePicker } = DatePicker;
@@ -28,17 +29,38 @@ const Purchase = () => {
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | undefined>(undefined);
   const [purchases, setPurchases] = useState<PurchaseDisplay[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
 
   // Fetch purchases from API
-  const loadPurchases = async () => {
+  const loadPurchases = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await fetchPurchases();
+      const searchParam = searchText.trim() || undefined;
+      
+      // Format dates as YYYY-MM-DD for API
+      const fromDateParam = dateRange && dateRange[0] 
+        ? dateRange[0].format('YYYY-MM-DD') 
+        : undefined;
+      const toDateParam = dateRange && dateRange[1] 
+        ? dateRange[1].format('YYYY-MM-DD') 
+        : undefined;
+      
+      const response = await fetchPurchases(
+        searchParam, 
+        fromDateParam, 
+        toDateParam,
+        paymentStatus,
+        currentPage,
+        pageSize
+      );
       
       // Transform API data to display format
-      const transformedPurchases: PurchaseDisplay[] = data.map((purchase: PurchaseDto) => ({
+      const transformedPurchases: PurchaseDisplay[] = response.data.map((purchase: PurchaseDto) => ({
         id: purchase.id,
         supplier: purchase.supplier,
         buyer: purchase.buyer,
@@ -50,17 +72,37 @@ const Purchase = () => {
       }));
       
       setPurchases(transformedPurchases);
+      setTotal(response.total);
     } catch (error) {
       console.error('Error fetching purchases:', error);
       message.error(getApiErrorMessage(error, 'Failed to fetch purchases'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchText, dateRange, paymentStatus, currentPage, pageSize]);
 
   useEffect(() => {
     loadPurchases();
-  }, []);
+  }, [loadPurchases]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [searchText, dateRange, paymentStatus]);
+
+  const handlePageChange = (page: number, pageSize?: number) => {
+    setCurrentPage(page);
+    if (pageSize) {
+      setPageSize(pageSize);
+    }
+  };
+
+  const handlePageSizeChange = (current: number, size: number) => {
+    setCurrentPage(current);
+    setPageSize(size);
+  };
 
   const handleNavigate = (path: string, data?: any) => {
     if (path === 'form') {
@@ -70,32 +112,8 @@ const Purchase = () => {
     }
   };
 
-  // Filter purchases based on search text and date range
-  const filteredPurchases = useMemo(() => {
-    let filtered = [...purchases];
-
-    // Filter by search text
-    if (searchText) {
-      const searchLower = searchText.toLowerCase();
-      filtered = filtered.filter(
-        (purchase) =>
-          purchase.supplier.toLowerCase().includes(searchLower) ||
-          purchase.buyer.toLowerCase().includes(searchLower) ||
-          purchase.amount.includes(searchText) ||
-          purchase.quantity.includes(searchText)
-      );
-    }
-
-    // Filter by date range
-    if (dateRange && dateRange[0] && dateRange[1]) {
-      filtered = filtered.filter((purchase) => {
-        const purchaseDate = dayjs(purchase.dueDate);
-        return purchaseDate.isAfter(dateRange[0]!.subtract(1, 'day')) && purchaseDate.isBefore(dateRange[1]!.add(1, 'day'));
-      });
-    }
-
-    return filtered;
-  }, [purchases, searchText, dateRange]);
+  // All filtering is handled by API (search and date range)
+  const filteredPurchases = purchases;
 
   return (
     <div className="min-h-screen bg-bg-secondary p-8">
@@ -104,7 +122,7 @@ const Purchase = () => {
           <h1 className="text-3xl font-bold text-text-primary">Purchase Management</h1>
         </div>
 
-        <div className="bg-surface-1 rounded-lg shadow-card p-8 mb-6">
+        <div className="bg-surface-1 rounded-2xl shadow-card p-8 mb-6">
           <Space size="middle" className="w-full" direction="vertical">
             <Space size="middle" className="w-full" wrap>
               <Input
@@ -112,7 +130,7 @@ const Purchase = () => {
                 prefix={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                style={{ width: 550, height: '40px' }}
+                style={{ width: 490, height: '40px' }}
                 allowClear
               />
               <RangePicker
@@ -120,7 +138,20 @@ const Purchase = () => {
                 onChange={(dates) => setDateRange(dates as [Dayjs | null, Dayjs | null] | null)}
                 format="YYYY-MM-DD"
                 placeholder={['Start Date', 'End Date']}
-                style={{ width: 250 ,height: '40px'}}
+                style={{ width: 200 ,height: '40px'}}
+              />
+              <Select
+                placeholder="Payment Status"
+                value={paymentStatus}
+                onChange={(value) => setPaymentStatus(value || undefined)}
+                allowClear
+                style={{ width: 100, height: '40px' }}
+                options={[
+                  { label: 'Paid', value: PaymentStatus.PAID },
+                  { label: 'Pending', value: PaymentStatus.PENDING },
+                  { label: 'Partial', value: PaymentStatus.PARTIAL },
+                  { label: 'Overdue', value: PaymentStatus.OVERDUE },
+                ]}
               />
               <Button
                 type="primary"
@@ -145,7 +176,20 @@ const Purchase = () => {
             <Spin size="large" />
           </div>
         ) : (
-          <Table onNavigate={handleNavigate} purchases={filteredPurchases} onDelete={loadPurchases} />
+          <Table 
+            onNavigate={handleNavigate} 
+            purchases={filteredPurchases} 
+            onDelete={loadPurchases}
+            pagination={{
+              current: currentPage,
+              pageSize: pageSize,
+              total: total,
+              onChange: handlePageChange,
+              onShowSizeChange: handlePageSizeChange,
+              showSizeChanger: true,
+              showTotal: (total) => `Total ${total} purchases`,
+            }}
+          />
         )}
       </div>
     </div>
