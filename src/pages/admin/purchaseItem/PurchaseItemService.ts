@@ -91,7 +91,22 @@ export const updatePurchaseItem = async (
 };
 
 export const deletePurchaseItem = async (id: string): Promise<void> => {
-  await apiClient.delete(`${API.PURCHASE_ITEM}/${id}`);
+  if (!id) {
+    throw new Error('Purchase item ID is required');
+  }
+  
+  const url = `${API.PURCHASE_ITEM}/${id}`;
+  console.log('Delete request URL:', url);
+  console.log('Base URL:', API.BASEURL);
+  console.log('Full URL will be:', `${API.BASEURL}${url}`);
+  
+  try {
+    await apiClient.delete(url);
+    console.log('Delete request successful');
+  } catch (error) {
+    console.error('Delete request failed:', error);
+    throw error;
+  }
 };
 
 export const getApiErrorMessage = (

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Modal, message } from 'antd';
-import { EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
+import { message } from 'antd';
+import { EditOutlined, DeleteOutlined, EyeOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
@@ -46,6 +46,9 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 640 : false);
   const [isTablet, setIsTablet] = useState(typeof window !== 'undefined' ? window.innerWidth <= 1024 : false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<PurchaseItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -57,25 +60,42 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
   }, []);
 
   const handleDelete = (record: PurchaseItem) => {
-    Modal.confirm({
-      title: 'Are you sure you want to delete this purchase item?',
-      content: `This will permanently delete the purchase item: ${record.item}.`,
-      okText: 'Yes, Delete',
-      okType: 'danger',
-      cancelText: 'Cancel',
-      onOk: async () => {
-        try {
-          await deletePurchaseItem(record.id);
-          message.success('Purchase item deleted successfully!');
-          if (onDelete) {
-            onDelete();
-          }
-        } catch (error) {
-          console.error('Error deleting purchase item:', error);
-          message.error(getApiErrorMessage(error, 'Failed to delete purchase item'));
-        }
-      },
-    });
+    if (!record.id) {
+      message.error('Invalid purchase item ID');
+      return;
+    }
+    setItemToDelete(record);
+    setDeleteModalVisible(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete || !itemToDelete.id) {
+      message.error('Invalid purchase item ID');
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      console.log('Deleting purchase item with ID:', itemToDelete.id);
+      await deletePurchaseItem(itemToDelete.id);
+      message.success('Purchase item deleted successfully!');
+      setDeleteModalVisible(false);
+      setItemToDelete(null);
+      if (onDelete) {
+        onDelete();
+      }
+    } catch (error) {
+      console.error('Error deleting purchase item:', error);
+      const errorMessage = getApiErrorMessage(error, 'Failed to delete purchase item');
+      message.error(errorMessage);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModalVisible(false);
+    setItemToDelete(null);
   };
 
   const handleSelectRow = (id: string, checked: boolean) => {
@@ -190,9 +210,72 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
     );
   };
 
+  const renderDeleteModal = () => {
+    if (!deleteModalVisible || !itemToDelete) return null;
+
+    return (
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+        onClick={handleCancelDelete}
+      >
+        <div 
+          className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="p-6">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <ExclamationCircleOutlined className="text-red-600 text-xl" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-[#0f1724]">
+                  Delete Purchase Item
+                </h3>
+                <p className="text-sm text-[#6b7280] mt-1">
+                  Are you sure you want to delete this purchase item?
+                </p>
+              </div>
+            </div>
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-[#0f1724] font-medium">
+                {itemToDelete.item}
+              </p>
+              {itemToDelete.description && (
+                <p className="text-xs text-[#6b7280] mt-1 truncate">
+                  {itemToDelete.description}
+                </p>
+              )}
+            </div>
+            <p className="text-sm text-[#6b7280] mb-6">
+              This action cannot be undone. The purchase item will be permanently deleted.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={handleCancelDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-[#0f1724] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-lg bg-red-600 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (isMobile) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-[#e6eef2] overflow-hidden">
+      <>
+        {renderDeleteModal()}
+        <div className="bg-white rounded-lg shadow-sm border border-[#e6eef2] overflow-hidden">
         <div className="space-y-0">
           {purchaseItems.length === 0 ? (
             <div className="text-center py-12 text-[#6b7280] text-sm">
@@ -258,11 +341,14 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
         </div>
         {renderPagination(getPageNumbers())}
       </div>
+      </>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-[#e6eef2] overflow-hidden">
+    <>
+      {renderDeleteModal()}
+      <div className="bg-white rounded-lg shadow-sm border border-[#e6eef2] overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-[#e6eef2]">
@@ -367,6 +453,7 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
       </div>
       {renderPagination(getDesktopPageNumbers())}
     </div>
+    </>
   );
 };
 
