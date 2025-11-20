@@ -39,8 +39,8 @@ const RoleProtectedRoute = ({ allowedRoles }: RoleProtectedRouteProps) => {
 
   // Check if user has required role
   if (!role || !allowedRoles.includes(role as Role)) {
-    // Redirect to dashboard or show access denied
-    return <Navigate to="/dashboard" replace />;
+    // Redirect to sales page (accessible to all authenticated users)
+    return <Navigate to="/sales" replace />;
   }
 
   // User is authenticated and has required role

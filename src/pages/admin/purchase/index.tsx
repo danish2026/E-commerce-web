@@ -116,11 +116,11 @@ const Purchase = () => {
   const filteredPurchases = purchases;
 
   return (
-    <div className="min-h-screen bg-bg-secondary p-8">
+    <div className="min-h-screen bg-bg-secondary p-7">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+        {/* <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-text-primary">Purchase Management</h1>
-        </div>
+        </div> */}
 
         <div className="bg-surface-1 rounded-2xl shadow-card p-8 mb-6">
           <Space size="middle" className="w-full" direction="vertical">

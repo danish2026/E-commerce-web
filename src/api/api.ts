@@ -5,5 +5,6 @@ export const API = {
     Register: "auth/register",
 
     PURCHASE:"purchase",
+    PURCHASE_ITEM:"purchase-item",
     
 };

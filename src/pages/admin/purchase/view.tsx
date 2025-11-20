@@ -64,7 +64,7 @@ const View = () => {
               <h1 className="text-2xl font-bold text-gray-900">Purchase Order</h1>
               <p className="text-sm text-gray-500 mt-1">{data.id}</p>
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
+            <button onClick={() => navigate('/purchase/form', { state: { ...data, mode: 'edit' } })} className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
               <Edit className="w-4 h-4" />
               <span>Edit</span>
             </button>

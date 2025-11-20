@@ -10,7 +10,7 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('auth_token');
     if (token) {
       config.headers = config.headers ?? {};
       config.headers.Authorization = `Bearer ${token}`;
@@ -23,11 +23,14 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      localStorage.removeItem('accessToken');
+    // Only log out on 401 (Unauthorized) - means token is invalid/expired
+    // 403 (Forbidden) means user is authenticated but lacks permission - don't logout
+    if (error.response?.status === 401) {
+      localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
-      window.location.href = '/';
+      window.location.href = '/login';
     }
+    // For 403 errors, just reject the promise and let the component handle it
     return Promise.reject(error);
   }
 );

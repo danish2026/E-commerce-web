@@ -24,14 +24,17 @@ type MenuSection = {
 };
 
 const getMenuSections = (userRole: Role | string | null): MenuSection[] => {
-  const baseSections: MenuSection[] = [
-    {
+  const baseSections: MenuSection[] = [];
+  
+  // Dashboard - Only for SUPER_ADMIN
+  if (userRole === Role.SUPER_ADMIN) {
+    baseSections.push({
       label: 'Dashboard',
       items: [
-        { label: 'Dashboard', to: '/dashboard', icon: Home },
+        { label: 'Dashboard', to: '/dashboard', icon: Home, roles: [Role.SUPER_ADMIN] },
       ],
-    },
-  ];
+    });
+  }
 
   // Purchase section - Only for SUPER_ADMIN and SALES_MANAGER
   if (userRole === Role.SUPER_ADMIN || userRole === Role.SALES_MANAGER) {

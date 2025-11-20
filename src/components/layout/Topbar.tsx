@@ -1,15 +1,45 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../context/AuthContext';
 import { useThemeMode } from '../../context/ThemeContext';
 import { Bell, Moon, SunMedium, LogOut } from '../icons';
 import { Avatar, Button, IconButton, Select, Toggle } from '../ui';
 
+const getModuleName = (pathname: string): string => {
+  // Remove leading slash and split by '/'
+  const segments = pathname.replace(/^\//, '').split('/').filter(Boolean);
+  
+  // If no segments or at root/dashboard
+  if (segments.length === 0 || segments[0] === 'dashboard') {
+    return 'Dashboard';
+  }
+  
+  // Get the first segment (main module)
+  const mainModule = segments[0];
+  
+  // Map route segments to display names
+  const moduleMap: Record<string, string> = {
+    'sales': 'Sales',
+    'purchase': 'Purchase Mangement',
+    'purchase-item': 'Purchase Item Management',
+    'invoice': 'Invoice',
+    'dashboard': 'Dashboard',
+  };
+  
+  // Check if we have a mapped name, otherwise format the route name
+  return moduleMap[mainModule] || mainModule
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 export const Topbar = () => {
   const { mode, toggleMode } = useThemeMode();
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const moduleName = getModuleName(location.pathname);
 
   const handleLogout = () => {
     logout();
@@ -21,8 +51,8 @@ export const Topbar = () => {
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex flex-1 items-center gap-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-muted">Balance overview</p>
-            <h1 className="text-3xl font-semibold text-text-primary">Global Finance</h1>
+            {/* <p className="text-xs uppercase tracking-[0.25em] text-muted">Balance overview</p> */}
+            <h1 className="text-3xl font-semibold text-text-primary">{moduleName}</h1>
           </div>
         </div>
         <div className="flex items-center gap-3">

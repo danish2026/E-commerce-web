@@ -10,6 +10,8 @@ import FormComponent from '../pages/admin/purchase/form';
 import View from '../pages/admin/purchase/view';
 import Invoice from '../pages/admin/invoice';
 import PurcheseItem from '../pages/admin/purchaseItem';
+import PurchaseItemForm from '../pages/admin/purchaseItem/form';
+import PurchaseItemView from '../pages/admin/purchaseItem/view';
 import NotFound from '../pages/admin/notFound';
 import Sales from '../pages/admin/sales';
 import { Role } from '../common/enums/role.enum';
@@ -20,9 +22,13 @@ const AppRoutes = () => (
 
     <Route element={<ProtectedRoute />}>
       <Route path="/" element={<MainLayout />}>
-        {/* Dashboard - All authenticated users can access */}
-        <Route index element={<Dashboard />} />
-        <Route path="dashboard" element={<Dashboard />} />
+        {/* Dashboard - SUPER_ADMIN only */}
+        <Route
+          element={<RoleProtectedRoute allowedRoles={[Role.SUPER_ADMIN]} />}
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
+        </Route>
 
         {/* Sales - All roles can access */}
         <Route
@@ -39,6 +45,8 @@ const AppRoutes = () => (
           <Route path="purchase/form" element={<FormComponent />} />
           <Route path="purchase/view" element={<View />} />
           <Route path="purchase-item" element={<PurcheseItem />} />
+          <Route path="purchase-item/form" element={<PurchaseItemForm />} />
+          <Route path="purchase-item/view" element={<PurchaseItemView />} />
           <Route path="invoice" element={<Invoice />} />
         </Route>
 

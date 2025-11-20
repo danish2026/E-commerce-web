@@ -26,16 +26,16 @@ const FormComponent = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const formData = location.state as PurchaseFormData | null;
-  const isEditMode = formData?.mode === 'edit';
+  const isEditMode = formData?.mode === 'edit' || (formData?.id && formData?.mode !== 'add');
 
   useEffect(() => {
     if (formData && isEditMode) {
       form.setFieldsValue({
         supplier: formData.supplier,
         buyer: formData.buyer,
-        gst: formData.gst,
-        amount: parseFloat(formData.amount),
-        quantity: parseFloat(formData.quantity),
+        gst: formData.gst ? parseFloat(formData.gst) : undefined,
+        amount: formData.amount ? parseFloat(formData.amount) : undefined,
+        quantity: formData.quantity ? parseFloat(formData.quantity) : undefined,
         payment: formData.payment,
         dueDate: formData.dueDate ? dayjs(formData.dueDate) : null,
       });
@@ -146,13 +146,12 @@ const FormComponent = () => {
                   placeholder="Enter GST percentage"
                   style={{ width: '100%' }}
                   size="large"
-                  type='number'
                   min={0}
                   max={100}
-                  formatter={(value) => `${value}%`}
+                  formatter={(value) => value !== undefined && value !== null ? `${value}%` : ''}
                   parser={(value) => {
                     const cleaned = value?.replace('%', '') || '';
-                    const num = cleaned ? parseFloat(cleaned) : 0;
+                    const num = cleaned ? parseFloat(cleaned) : undefined;
                     return num as any;
                   }}
                 />
@@ -170,13 +169,12 @@ const FormComponent = () => {
                   placeholder="Enter amount"
                   style={{ width: '100%' }}
                   size="large"
-                  type='number'
                   min={0}
                   prefix="₹"
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  formatter={(value) => value !== undefined && value !== null ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
                   parser={(value) => {
                     const cleaned = value?.replace(/₹\s?|(,*)/g, '') || '';
-                    const num = cleaned ? parseFloat(cleaned) : 0;
+                    const num = cleaned ? parseFloat(cleaned) : undefined;
                     return num as any;
                   }}
                 />
@@ -194,7 +192,6 @@ const FormComponent = () => {
               >
                 <InputNumber
                   placeholder="Enter quantity"
-                  type='number'
                   style={{ width: '100%' }}
                   size="large"
                   min={1}
