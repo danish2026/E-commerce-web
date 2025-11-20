@@ -108,7 +108,6 @@ export const Sidebar = ({ collapsed, onToggleCollapse }: SidebarProps) => {
       )}>
         {!collapsed && (
           <div>
-            {/* <p className="text-xs uppercase tracking-[0.3em] text-muted">bliss</p> */}
             <p className="text-lg font-semibold text-text-primary">E-Comerce</p>
           </div>
         )}

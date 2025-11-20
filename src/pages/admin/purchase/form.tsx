@@ -170,7 +170,7 @@ const FormComponent = () => {
                   style={{ width: '100%' }}
                   size="large"
                   min={0}
-                  prefix="₹"
+                  // prefix="₹" 
                   formatter={(value) => value !== undefined && value !== null ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
                   parser={(value) => {
                     const cleaned = value?.replace(/₹\s?|(,*)/g, '') || '';
