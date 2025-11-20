@@ -97,12 +97,15 @@ export const Sidebar = ({ collapsed, onToggleCollapse }: SidebarProps) => {
   return (
     <aside
       className={clsx(
-        'glass-sidebar sticky top-8 h-[calc(100vh-4rem)] p-6 transition-all duration-300',
-        collapsed ? 'w-[5rem]' : 'w-64',
+        'glass-sidebar sticky top-8 h-[calc(100vh-4rem)] transition-all duration-300',
+        collapsed ? 'w-[5rem] p-2' : 'w-64 p-6',
       )}
       aria-label="Primary navigation"
     >
-      <div className="flex items-center justify-between pb-6 border-b border-[var(--glass-border)]">
+      <div className={clsx(
+        'flex items-center pb-6 border-b border-[var(--glass-border)]',
+        collapsed ? 'justify-center' : 'justify-between'
+      )}>
         {!collapsed && (
           <div>
             {/* <p className="text-xs uppercase tracking-[0.3em] text-muted">bliss</p> */}
@@ -137,8 +140,8 @@ export const Sidebar = ({ collapsed, onToggleCollapse }: SidebarProps) => {
                       to={item.to}
                       className={({ isActive }) =>
                         clsx(
-                          'glass-nav-item flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-text-secondary relative z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--glass-border)]',
-                          collapsed ? 'justify-center px-2' : 'justify-start',
+                          'glass-nav-item flex items-center rounded-xl py-2.5 text-sm font-medium text-text-secondary relative z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--glass-border)]',
+                          collapsed ? 'justify-center px-2 gap-0' : 'justify-start px-4 gap-3',
                           isActive
                             ? 'active text-brand'
                             : 'hover:text-text-primary',
@@ -147,7 +150,7 @@ export const Sidebar = ({ collapsed, onToggleCollapse }: SidebarProps) => {
                       title={collapsed ? item.label : undefined}
                       tabIndex={0}
                     >
-                      <Icon size={20} aria-hidden className="relative z-10" />
+                      <Icon size={20} aria-hidden className="relative z-10 flex-shrink-0" />
                       {!collapsed && <span className="relative z-10">{item.label}</span>}
                     </NavLink>
                   </li>
