@@ -47,7 +47,9 @@ export const Topbar = () => {
   };
 
   return (
-    <header className="glass-header flex flex-col gap-4 p-6 mb-6">
+    // <header className="glass-header fixed flex flex-col gap-4 p-6 mb-6">
+    <header className="glass-header  top-0 left-0 right-0 z-50 flex flex-col gap-4 p-6 mb-6">
+
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex flex-1 items-center gap-3">
           <div>
@@ -60,7 +62,7 @@ export const Topbar = () => {
             {mode === 'dark' ? <Moon size={16} /> : <SunMedium size={16} />}
             <Toggle pressed={mode === 'dark'} label="Toggle theme" onClick={toggleMode} />
           </div>
-          <div className="glass-panel border border-[var(--glass-border)] rounded-xl">
+          <div className="glass-panel border border-[var(--glass-border)] rounded-[22px]">
             <IconButton label="Notifications" className="hover:bg-[var(--glass-bg-hover)] transition-colors">
               <Bell size={18} />
             </IconButton>

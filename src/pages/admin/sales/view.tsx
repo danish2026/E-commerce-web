@@ -1,11 +1,11 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Edit, User, Building, Package, Calendar, DollarSign, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 interface ViewData {
   id?: string;
-  supplier: string;
-  buyer: string;
+  customer: string;
+  seller: string;
   gst: string;
   amount: string;
   quantity: string;
@@ -15,12 +15,14 @@ interface ViewData {
 
 const View = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   
-  // Sample data for demonstration
-  const data: ViewData = {
-    id: 'PO-2024-001',
-    supplier: 'ABC Suppliers Ltd.',
-    buyer: 'John Doe',
+  // Get data from navigation state or use sample data
+  const locationData = location.state as ViewData | null;
+  const data: ViewData = locationData || {
+    id: 'SO-2024-001',
+    customer: 'ABC Customer Ltd.',
+    seller: 'John Doe',
     gst: '18',
     amount: '50000',
     quantity: '250',
@@ -49,7 +51,7 @@ const View = () => {
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <button 
-          onClick={() => navigate('/purchase')}
+          onClick={() => navigate('/sales')}
           className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] mb-6"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -61,10 +63,10 @@ const View = () => {
           {/* Title Bar */}
           <div className="flex justify-between items-center p-6 border-b border-[var(--glass-border)]">
             <div>
-              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Purchase Order</h1>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Sales Order</h1>
               <p className="text-sm text-[var(--text-secondary)] mt-1">{data.id}</p>
             </div>
-            <button onClick={() => navigate('/purchase/form', { state: { ...data, mode: 'edit' } })} className="flex items-center gap-2 px-4 py-2 bg-[var(--brand)] text-white rounded-lg hover:opacity-90 transition-colors">
+            <button onClick={() => navigate('/sales/form', { state: { ...data, mode: 'edit' } })} className="flex items-center gap-2 px-4 py-2 bg-[var(--brand)] text-white rounded-lg hover:opacity-90 transition-colors">
               <Edit className="w-4 h-4" />
               <span>Edit</span>
             </button>
@@ -77,17 +79,17 @@ const View = () => {
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-[var(--text-secondary)] text-sm">
                   <Building className="w-4 h-4" />
-                  <span>Supplier</span>
+                  <span>Customer</span>
                 </div>
-                <p className="text-lg font-semibold text-[var(--text-primary)]">{data.supplier}</p>
+                <p className="text-lg font-semibold text-[var(--text-primary)]">{data.customer}</p>
               </div>
               
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-[var(--text-secondary)] text-sm">
                   <User className="w-4 h-4" />
-                  <span>Buyer</span>
+                  <span>Seller</span>
                 </div>
-                <p className="text-lg font-semibold text-[var(--text-primary)]">{data.buyer}</p>
+                <p className="text-lg font-semibold text-[var(--text-primary)]">{data.seller}</p>
               </div>
             </div>
 
@@ -149,3 +151,5 @@ const View = () => {
 };
 
 export default View;
+
+

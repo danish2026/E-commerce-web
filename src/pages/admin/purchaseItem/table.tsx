@@ -148,17 +148,17 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
     };
 
     return (
-      <div className="px-4 py-4 border-t border-[#e6eef2] bg-gray-50">
+      <div className="px-4 py-4 border-t border-[var(--glass-border)] bg-[var(--surface-2)]">
         <div className="flex flex-col lg:flex-row justify-end items-center gap-4">
-          <div className="flex items-center gap-2 text-xs text-[#6b7280]">
-          <div className="text-xs gap-[10px] text-[#6b7280]">
+          <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+          <div className="text-xs gap-[10px] text-[var(--text-secondary)]">
             Showing {start} to {end} of {total} 
           </div>
             <span>Rows per page:</span>
             <select
               value={pageSize}
               onChange={handlePageSizeChange}
-              className="px-2 py-1 rounded border border-gray-300 text-[#0f1724] text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
+              className="px-2 py-1 rounded border border-[var(--glass-border)] text-[var(--text-primary)] text-sm bg-[var(--surface-1)] focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
               aria-label="page"
             >
               {PAGE_SIZE_OPTIONS.map((option) => (
@@ -173,7 +173,7 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
             <button
               onClick={() => pagination.onChange?.(currentPage - 1, pageSize)}
               disabled={currentPage === 1}
-              className="px-3 py-1.5 rounded border border-gray-300 text-sm text-[#0f1724] hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
+              className="px-3 py-1.5 rounded border border-[var(--glass-border)] text-sm text-[var(--text-primary)] hover:bg-[var(--glass-bg)] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
               aria-label="Previous page"
             >
               ‹
@@ -187,7 +187,7 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
                   className={`px-3 py-1.5 rounded text-sm min-w-[36px] focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1 ${
                     isCurrent
                       ? 'bg-brand text-white font-semibold'
-                      : 'border border-gray-300 text-[#0f1724] hover:bg-gray-100'
+                      : 'border border-[var(--glass-border)] text-[var(--text-primary)] hover:bg-[var(--glass-bg)]'
                   }`}
                   aria-label={`Page ${page}`}
                   aria-current={isCurrent ? 'page' : undefined}
@@ -199,7 +199,7 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
             <button
               onClick={() => pagination.onChange?.(currentPage + 1, pageSize)}
               disabled={currentPage >= totalPages}
-              className="px-3 py-1.5 rounded border border-gray-300 text-sm text-[#0f1724] hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
+              className="px-3 py-1.5 rounded border border-[var(--glass-border)] text-sm text-[var(--text-primary)] hover:bg-[var(--glass-bg)] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
               aria-label="Next page"
             >
               ›
@@ -215,52 +215,52 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
 
     return (
       <div 
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70"
         onClick={handleCancelDelete}
       >
         <div 
-          className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+          className="bg-[var(--surface-1)] rounded-lg shadow-xl max-w-md w-full mx-4 border border-[var(--glass-border)]"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-6">
             <div className="flex items-center gap-4 mb-4">
-              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <ExclamationCircleOutlined className="text-red-600 text-xl" />
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <ExclamationCircleOutlined className="text-red-600 dark:text-red-400 text-xl" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-[#0f1724]">
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">
                   Delete Purchase Item
                 </h3>
-                <p className="text-sm text-[#6b7280] mt-1">
+                <p className="text-sm text-[var(--text-secondary)] mt-1">
                   Are you sure you want to delete this purchase item?
                 </p>
               </div>
             </div>
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-[#0f1724] font-medium">
+            <div className="mb-6 p-4 bg-[var(--surface-2)] rounded-lg">
+              <p className="text-sm text-[var(--text-primary)] font-medium">
                 {itemToDelete.item}
               </p>
               {itemToDelete.description && (
-                <p className="text-xs text-[#6b7280] mt-1 truncate">
+                <p className="text-xs text-[var(--text-secondary)] mt-1 truncate">
                   {itemToDelete.description}
                 </p>
               )}
             </div>
-            <p className="text-sm text-[#6b7280] mb-6">
+            <p className="text-sm text-[var(--text-secondary)] mb-6">
               This action cannot be undone. The purchase item will be permanently deleted.
             </p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={handleCancelDelete}
                 disabled={isDeleting}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-[#0f1724] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 rounded-lg border border-[var(--glass-border)] text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--surface-2)] focus:outline-none focus:ring-2 focus:ring-[var(--glass-border)] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="px-4 py-2 rounded-lg bg-red-600 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 rounded-lg bg-red-600 dark:bg-red-700 text-sm font-medium text-white hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isDeleting ? 'Deleting...' : 'Delete'}
               </button>
@@ -275,10 +275,10 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
     return (
       <>
         {renderDeleteModal()}
-        <div className="bg-white rounded-lg shadow-sm border border-[#e6eef2] overflow-hidden">
+        <div className="bg-[var(--surface-1)] rounded-lg shadow-sm border border-[var(--glass-border)] overflow-hidden">
         <div className="space-y-0">
           {purchaseItems.length === 0 ? (
-            <div className="text-center py-12 text-[#6b7280] text-sm">
+            <div className="text-center py-12 text-[var(--text-secondary)] text-sm">
               No purchase items found. Click Add Purchase Item to create one.
             </div>
           ) : (
@@ -286,40 +286,40 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
               return (
                 <div
                   key={item.id}
-                  className="px-4 py-4 border-b border-[#eef2f5] last:border-b-0 hover:bg-gray-50 transition-colors"
+                  className="px-4 py-4 border-b border-[var(--glass-border)] last:border-b-0 hover:bg-[var(--surface-2)] transition-colors"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <input
                         type="checkbox"
-                        className="w-4 h-4 rounded border-gray-300 text-brand focus:ring-brand focus:ring-2"
+                        className="w-4 h-4 rounded border-[var(--glass-border)] text-brand focus:ring-brand focus:ring-2"
                         checked={selectedRows.has(item.id)}
                         onChange={(e) => handleSelectRow(item.id, e.target.checked)}
                       />
-                      <h3 className="text-[15px] font-semibold text-[#0f1724] truncate flex-1">
+                      <h3 className="text-[15px] font-semibold text-[var(--text-primary)] truncate flex-1">
                         {item.item}
                       </h3>
                     </div>
                     <div className="flex items-center gap-2 ml-2">
                       <button
                         onClick={() => onNavigate('form', { ...item, mode: 'edit' })}
-                        className="p-2 rounded hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
+                        className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
                         title="Edit"
                         aria-label="Edit"
                       >
-                        <EditOutlined className="w-4 h-4 text-[#6b7280]" />
+                        <EditOutlined className="w-4 h-4 text-[var(--text-secondary)]" />
                       </button>
                       <button
                         onClick={() => handleDelete(item)}
-                        className="p-2 rounded hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                        className="p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                         title="Delete"
                         aria-label="Delete"
                       >
-                        <DeleteOutlined className="w-4 h-4 text-red-500" />
+                        <DeleteOutlined className="w-4 h-4 text-red-500 dark:text-red-400" />
                       </button>
                     </div>
                   </div>
-                  <div className="ml-7 space-y-2 text-xs text-[#6b7280]">
+                  <div className="ml-7 space-y-2 text-xs text-[var(--text-secondary)]">
                     {item.createdAt && (
                       <div>{formatDate(item.createdAt)}</div>
                     )}
@@ -328,10 +328,10 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
                       <span>Price: ₹{formatCurrency(item.price)}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[#0f1724]">Total: ₹{formatCurrency(item.total)}</span>
+                      <span className="font-semibold text-[var(--text-primary)]">Total: ₹{formatCurrency(item.total)}</span>
                     </div>
                     {item.description && (
-                      <div className="text-xs text-[#6b7280] truncate">{item.description}</div>
+                      <div className="text-xs text-[var(--text-secondary)] truncate">{item.description}</div>
                     )}
                   </div>
                 </div>
@@ -348,45 +348,45 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
   return (
     <>
       {renderDeleteModal()}
-      <div className="bg-white rounded-lg shadow-sm border border-[#e6eef2] overflow-hidden">
+      <div className="bg-[var(--surface-1)] rounded-lg shadow-sm border border-[var(--glass-border)] overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-[#e6eef2]">
+          <thead className="bg-[var(--surface-2)] border-b border-[var(--glass-border)]">
             <tr>
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[#0f1724]">Item Name</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">Item Name</span>
                 </div>
               </th>
               {!isTablet && (
                 <th className="px-[18px] py-6 text-left h-[64px]">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[#0f1724]">Date Created</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">Date Created</span>
                   </div>
                 </th>
               )}
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[#0f1724]">Quantity</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">Quantity</span>
                 </div>
               </th>
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[#0f1724]">Price</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">Price</span>
                 </div>
               </th>
               <th className="px-[18px] py-6 text-left h-[64px]">
-                <span className="text-sm font-semibold text-[#0f1724]">Total</span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">Total</span>
               </th>
               <th className="px-[18px] py-6 text-left pl-[100px] h-[64px]">
-                <span className="text-sm font-semibold text-[#0f1724]">Actions</span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">Actions</span>
               </th>
             </tr>
           </thead>
           <tbody>
             {purchaseItems.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-[18px] py-12 text-center text-[#6b7280] text-sm">
+                <td colSpan={7} className="px-[18px] py-12 text-center text-[var(--text-secondary)] text-sm">
                   No purchase items found. Click Add Purchase Item to create one.
                 </td>
               </tr>
@@ -395,52 +395,52 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
                 return (
                   <tr
                     key={item.id}
-                    className="hover:-translate-y-0.5 transition-all duration-200 bg-white border-b border-[#eef2f5] hover:bg-gray-50 group"
+                    className="hover:-translate-y-0.5 transition-all duration-200 bg-[var(--surface-1)] border-b border-[var(--glass-border)] hover:bg-[var(--surface-2)] group"
                   >
                     <td className="px-[18px] py-4 h-[56px]">
-                      <div className="text-[15px] font-semibold text-[#0f1724] truncate max-w-[220px]" title={item.item}>
+                      <div className="text-[15px] font-semibold text-[var(--text-primary)] truncate max-w-[220px]" title={item.item}>
                         {item.item}
                       </div>
                     </td>
                     {!isTablet && (
                       <td className="px-[18px] py-4 h-[56px]">
-                        <div className="text-xs text-[#6b7280]">{formatDate(item.createdAt)}</div>
+                        <div className="text-xs text-[var(--text-secondary)]">{formatDate(item.createdAt)}</div>
                       </td>
                     )}
                     <td className="px-[18px] py-4 h-[56px]">
-                      <div className="text-sm text-[#0f1724]">{item.quantity}</div>
+                      <div className="text-sm text-[var(--text-primary)]">{item.quantity}</div>
                     </td>
                     <td className="px-[18px] py-4 h-[56px]">
-                      <div className="text-sm text-[#0f1724]">₹{formatCurrency(item.price)}</div>
+                      <div className="text-sm text-[var(--text-primary)]">₹{formatCurrency(item.price)}</div>
                     </td>
                     <td className="px-[18px] py-4 h-[56px]">
-                      <div className="text-sm font-semibold text-[#0f1724]">₹{formatCurrency(item.total)}</div>
+                      <div className="text-sm font-semibold text-[var(--text-primary)]">₹{formatCurrency(item.total)}</div>
                     </td>
                     <td className="px-[18px] py-4 h-[56px] text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => onNavigate('view', item)}
-                          className="p-2 rounded hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
+                          className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
                           title="View"
                           aria-label="View"
                         >
-                          <EyeOutlined className="w-4 h-4 text-[#6b7280] group-hover:text-[#0f1724]" />
+                          <EyeOutlined className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
                         </button>
                         <button
                           onClick={() => onNavigate('form', { ...item, mode: 'edit' })}
-                          className="p-2 rounded hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
+                          className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
                           title="Edit"
                           aria-label="Edit"
                         >
-                          <EditOutlined className="w-4 h-4 text-[#6b7280] group-hover:text-[#0f1724]" />
+                          <EditOutlined className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
                         </button>
                         <button
                           onClick={() => handleDelete(item)}
-                          className="p-2 rounded hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                          className="p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
                           title="Delete"
                           aria-label="Delete"
                         >
-                          <DeleteOutlined className="w-4 h-4 text-red-500" />
+                          <DeleteOutlined className="w-4 h-4 text-red-500 dark:text-red-400" />
                         </button>
                       </div>
                     </td>

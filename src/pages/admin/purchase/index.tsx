@@ -23,6 +23,7 @@ interface PurchaseDisplay {
   quantity: string;
   payment: string;
   dueDate: string;
+  totalAmount: string;
 }
 
 const Purchase = () => {
@@ -60,16 +61,23 @@ const Purchase = () => {
       );
       
       // Transform API data to display format
-      const transformedPurchases: PurchaseDisplay[] = response.data.map((purchase: PurchaseDto) => ({
-        id: purchase.id,
-        supplier: purchase.supplier,
-        buyer: purchase.buyer,
-        gst: purchase.gst.toString(),
-        amount: purchase.amount.toString(),
-        quantity: purchase.quantity.toString(),
-        payment: mapPaymentStatusFromEnum(purchase.paymentStatus),
-        dueDate: purchase.dueDate,
-      }));
+      const transformedPurchases: PurchaseDisplay[] = response.data.map((purchase: PurchaseDto) => {
+        // Calculate total amount: (amount * quantity) * (1 + gst / 100)
+        const baseAmount = purchase.amount * purchase.quantity;
+        const calculatedTotalAmount = baseAmount * (1 + purchase.gst / 100);
+        
+        return {
+          id: purchase.id,
+          supplier: purchase.supplier,
+          buyer: purchase.buyer,
+          gst: purchase.gst.toString(),
+          amount: purchase.amount.toString(),
+          quantity: purchase.quantity.toString(),
+          payment: mapPaymentStatusFromEnum(purchase.paymentStatus),
+          dueDate: purchase.dueDate,
+          totalAmount: calculatedTotalAmount.toFixed(2),
+        };
+      });
       
       setPurchases(transformedPurchases);
       setTotal(response.total);
@@ -122,7 +130,7 @@ const Purchase = () => {
           <h1 className="text-3xl font-bold text-text-primary">Purchase Management</h1>
         </div> */}
 
-        <div className="bg-surface-1 rounded-2xl shadow-card p-8 mb-6">
+        <div className="bg-surface-1 rounded-2xl shadow-card p-8 mb-6 border border-[var(--glass-border)]">
           <Space size="middle" className="w-full" direction="vertical">
             <Space size="middle" className="w-full" wrap>
               <Input

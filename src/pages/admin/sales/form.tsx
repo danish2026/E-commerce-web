@@ -1,17 +1,22 @@
-import  { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Form, Input, InputNumber, Button, Card, Space, message } from 'antd';
+import { Form, Input, InputNumber, Select, DatePicker, Button, Card, Space, message } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
-import { createPurchaseItem, getApiErrorMessage, updatePurchaseItem } from './PurchaseItemService';
+import dayjs from 'dayjs';
+import { createSales, getApiErrorMessage, mapPaymentStatusToEnum, updateSales } from './SalesService';
 
 
-interface PurchaseItemFormData {
+const { Option } = Select;
+
+interface SalesFormData {
   id?: string;
-  item: string;
-  description?: string;
+  customer: string;
+  seller: string;
+  gst: string;
+  amount: string;
   quantity: string;
-  price: string;
-  total: string;
+  payment: string;
+  dueDate: string;
   mode?: 'add' | 'edit';
 }
 
@@ -20,58 +25,55 @@ const FormComponent = () => {
   const location = useLocation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const formData = location.state as PurchaseItemFormData | null;
+  const formData = location.state as SalesFormData | null;
   const isEditMode = formData?.mode === 'edit' || (formData?.id && formData?.mode !== 'add');
 
   useEffect(() => {
     if (formData && isEditMode) {
       form.setFieldsValue({
-        item: formData.item,
-        description: formData.description,
+        customer: formData.customer,
+        seller: formData.seller,
+        gst: formData.gst ? parseFloat(formData.gst) : undefined,
+        amount: formData.amount ? parseFloat(formData.amount) : undefined,
         quantity: formData.quantity ? parseFloat(formData.quantity) : undefined,
-        price: formData.price ? parseFloat(formData.price) : undefined,
-        total: formData.total ? parseFloat(formData.total) : undefined,
+        payment: formData.payment,
+        dueDate: formData.dueDate ? dayjs(formData.dueDate) : null,
       });
     }
   }, [formData, isEditMode, form]);
-
-  // Calculate total when quantity or price changes
-  const handleQuantityOrPriceChange = () => {
-    const quantity = form.getFieldValue('quantity');
-    const price = form.getFieldValue('price');
-    if (quantity && price) {
-      const total = quantity * price;
-      form.setFieldsValue({ total: parseFloat(total.toFixed(2)) });
-    }
-  };
 
   const onFinish = async (values: any) => {
     try {
       setLoading(true);
       
+      // Map payment status to enum
+      const paymentStatus = mapPaymentStatusToEnum(values.payment);
+      
       // Format data for API
       const apiData = {
-        item: values.item,
-        description: values.description || undefined,
+        customer: values.customer,
+        seller: values.seller,
+        gst: values.gst,
+        amount: values.amount,
         quantity: values.quantity,
-        price: values.price,
-        total: values.total || (values.quantity * values.price),
+        paymentStatus: paymentStatus,
+        dueDate: values.dueDate ? values.dueDate.format('YYYY-MM-DD') : '',
       };
 
       if (isEditMode && formData?.id) {
-        // Update existing purchase item
-        await updatePurchaseItem(formData.id, apiData);
-        message.success('Purchase item updated successfully!');
+        // Update existing sale
+        await updateSales(formData.id, apiData);
+        message.success('Sale updated successfully!');
       } else {
-        // Create new purchase item
-        await createPurchaseItem(apiData);
-        message.success('Purchase item created successfully!');
+        // Create new sale
+        await createSales(apiData);
+        message.success('Sale created successfully!');
       }
       
-      navigate('/purchase-item');
+      navigate('/sales');
     } catch (error) {
-      console.error('Error saving purchase item:', error);
-      message.error(getApiErrorMessage(error, 'Failed to save purchase item'));
+      console.error('Error saving sale:', error);
+      message.error(getApiErrorMessage(error, 'Failed to save sale'));
     } finally {
       setLoading(false);
     }
@@ -87,14 +89,14 @@ const FormComponent = () => {
       <div className="max-w-6xl mx-auto">
         <Button
           icon={<ArrowLeftOutlined />}
-          onClick={() => navigate('/purchase-item')}
+          onClick={() => navigate('/sales')}
           className="mb-6"
         >
-          Back to Purchase Item List
+          Back to Sales List
         </Button>
 
         <Card
-          title={<h2 className="text-2xl font-bold p-4 mt-[20px] m-0" style={{ color: 'var(--text-primary)' }}>{isEditMode ? 'Edit Purchase Item' : 'Add New Purchase Item'}</h2>}
+          title={<h2 className="text-2xl font-bold p-4 mt-[20px] m-0" style={{ color: 'var(--text-primary)' }}>{isEditMode ? 'Edit Sale' : 'Add New Sale'}</h2>}
           headStyle={{ 
             backgroundColor: 'var(--surface-1)', 
             color: 'var(--text-primary)',
@@ -104,7 +106,7 @@ const FormComponent = () => {
             borderRadius: '8px 8px 0 0',
             borderBottom: '1px solid var(--glass-border)'
           }}
-          className="shadow-card bg-surface-1 purchase-form-card"
+          className="shadow-card bg-surface-1 sales-form-card"
           style={{ boxShadow: 'var(--card-shadow)', overflow: 'hidden', backgroundColor: 'var(--surface-1)', borderColor: 'var(--glass-border)', border: '1px solid var(--glass-border)' }}
           bodyStyle={{ backgroundColor: 'var(--surface-1)' }}
         >
@@ -114,28 +116,24 @@ const FormComponent = () => {
             onFinish={onFinish}
             onFinishFailed={onFinishFailed}
             autoComplete="off"
-            className="purchase-form"
+            className="sales-form"
           >
             <Form.Item
-              label="Item"
-              name="item"
-              rules={[{ required: true, message: 'Please enter item name' }]}
+              label="Customer"
+              name="customer"
+              rules={[{ required: true, message: 'Please enter customer name' }]}
             >
-              <Input placeholder="Enter item name" size="large" />
+              <Input placeholder="Enter customer name" size="large" />
             </Form.Item>
 
             <Form.Item
-              label="Description"
-              name="description"
+              label="Seller"
+              name="seller"
+              rules={[{ required: true, message: 'Please enter seller name' }]}
             >
-              <Input.TextArea 
-                placeholder="Enter item description (optional)" 
-                size="large"
-                rows={3}
-              />
+              <Input placeholder="Enter seller name" size="large" />
             </Form.Item>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Form.Item
                 label="Quantity"
                 name="quantity"
@@ -149,48 +147,94 @@ const FormComponent = () => {
                   style={{ width: '100%' }}
                   size="large"
                   min={1}
-                  onChange={handleQuantityOrPriceChange}
                 />
               </Form.Item>
 
               <Form.Item
-                label="Price"
-                name="price"
+                label="Payment Status"
+                name="payment"
+                rules={[{ required: true, message: 'Please select payment status' }]}
+              >
+                <Select placeholder="Select payment status" size="large">
+                  <Option value="Paid">Paid</Option>
+                  <Option value="Pending">Pending</Option>
+                  <Option value="Partial">Partial</Option>
+                </Select>
+              </Form.Item>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Form.Item
+              label="Due Date"
+              name="dueDate"
+              rules={[{ required: true, message: 'Please select due date' }]}
+            >
+              <DatePicker
+                style={{ width: '100%' }}
+                size="large"
+                format="YYYY-MM-DD"
+                placeholder="Select due date"
+              />
+            </Form.Item>
+
+            <Form.Item
+                label="GST (%)"
+                name="gst"
                 rules={[
-                  { required: true, message: 'Please enter price' },
-                  { type: 'number', min: 0, message: 'Price must be greater than 0' },
+                  { required: true, message: 'Please enter GST percentage' },
+                  { type: 'number', min: 0, max: 100, message: 'GST must be between 0 and 100' },
                 ]}
               >
                 <InputNumber
-                  placeholder="Enter price"
+                  placeholder="Enter GST percentage"
                   style={{ width: '100%' }}
                   size="large"
                   min={0}
-                  // prefix="₹"
+                  max={100}
+                  formatter={(value) => value !== undefined && value !== null ? `${value}%` : ''}
+                  parser={(value) => {
+                    const cleaned = value?.replace('%', '') || '';
+                    const num = cleaned ? parseFloat(cleaned) : undefined;
+                    return num as any;
+                  }}
+                />
+              </Form.Item>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Form.Item
+                label="Amount"
+                name="amount"
+                rules={[
+                  { required: true, message: 'Please enter amount' },
+                  { type: 'number', min: 0, message: 'Amount must be greater than 0' },
+                ]}
+              >
+                <InputNumber
+                  placeholder="Enter amount"
+                  style={{ width: '100%' }}
+                  size="large"
+                  min={0}
                   formatter={(value) => value !== undefined && value !== null ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
                   parser={(value) => {
                     const cleaned = value?.replace(/₹\s?|(,*)/g, '') || '';
                     const num = cleaned ? parseFloat(cleaned) : undefined;
                     return num as any;
                   }}
-                  onChange={handleQuantityOrPriceChange}
                 />
               </Form.Item>
 
               <Form.Item
-                label="Total"
-                name="total"
+                label="Totel Amount"
+                name="amount"
                 rules={[
-                  { required: true, message: 'Total is required' },
-                  { type: 'number', min: 0, message: 'Total must be greater than 0' },
+                  { required: true, message: 'Please enter amount' },
+                  { type: 'number', min: 0, message: 'Amount must be greater than 0' },
                 ]}
               >
                 <InputNumber
-                  placeholder="Total (auto-calculated)"
+                  placeholder="Enter amount"
                   style={{ width: '100%' }}
                   size="large"
                   min={0}
-                  // prefix="₹"
                   formatter={(value) => value !== undefined && value !== null ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
                   parser={(value) => {
                     const cleaned = value?.replace(/₹\s?|(,*)/g, '') || '';
@@ -200,7 +244,6 @@ const FormComponent = () => {
                 />
               </Form.Item>
             </div>
-
             <Form.Item>
               <Space>
                 <Button
@@ -222,10 +265,10 @@ const FormComponent = () => {
                     e.currentTarget.style.opacity = '1';
                   }}
                 >
-                  {isEditMode ? 'Update Purchase Item' : 'Create Purchase Item'}
+                  {isEditMode ? 'Update Sale' : 'Create Sale'}
                 </Button>
                 <Button
-                  onClick={() => navigate('/purchase-item')}
+                  onClick={() => navigate('/sales')}
                   size="large"
                 >
                   Cancel

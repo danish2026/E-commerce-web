@@ -15,7 +15,7 @@ export const AppShell = ({ sidebar, header, children, className }: AppShellProps
       {sidebar}
       <div className="flex-1 flex flex-col">
         {header}
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 ">{children}</main>
       </div>
     </div>
   </div>

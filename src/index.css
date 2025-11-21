@@ -46,7 +46,7 @@ body {
 .ant-picker {
   background-color: var(--surface-1) !important;
   color: var(--text-primary) !important;
-  border-color: var(--surface-2) !important;
+  border-color: var(--input-border) !important;
 }
 
 .ant-input::placeholder,
@@ -58,9 +58,9 @@ body {
 .search-input-light.ant-input,
 .search-input-light.ant-input:hover,
 .search-input-light.ant-input:focus {
-  background-color: #ffffff !important;
+  /* background-color: #ffffff !important; */
   color: #0f1724 !important;
-  border-color: #e2e8f0 !important;
+  /* border-color: #e2e8f0 !important; */
 }
 
 .search-input-light.ant-input::placeholder {
@@ -142,7 +142,7 @@ body {
 .ant-select-selector {
   background-color: var(--surface-1) !important;
   color: var(--text-primary) !important;
-  border-color: var(--surface-2) !important;
+  border-color: var(--input-border) !important;
 }
 
 .ant-input-number-input,
@@ -175,25 +175,85 @@ body {
   color: #ffffff !important;
 }
 
-/* Dark theme: Inputs should have white background */
+/* Dark theme: Inputs should have #262321 background */
 [data-theme='dark'] .ant-input,
+[data-theme='dark'] .ant-input:hover,
+[data-theme='dark'] .ant-input:focus,
+[data-theme='dark'] .ant-input-focused,
 [data-theme='dark'] .ant-input-number,
+[data-theme='dark'] .ant-input-number:hover,
+[data-theme='dark'] .ant-input-number:focus,
+[data-theme='dark'] .ant-input-number-focused,
 [data-theme='dark'] .ant-input-number-input,
 [data-theme='dark'] .ant-select-selector,
-[data-theme='dark'] .ant-picker {
-  background-color: #ffffff !important;
-  color: #0f1724 !important;
-  border-color: #e2e8f0 !important;
+[data-theme='dark'] .ant-select-selector:hover,
+[data-theme='dark'] .ant-picker,
+[data-theme='dark'] .ant-picker:hover,
+[data-theme='dark'] .ant-picker-focused {
+  background-color: #0f1720 !important;
+  color: var(--text-primary) !important;
+  border-color: var(--glass-border) !important;
 }
 
 [data-theme='dark'] .ant-input::placeholder,
 [data-theme='dark'] .ant-picker-input input::placeholder,
 [data-theme='dark'] .ant-select-selection-placeholder {
-  color: #9aa4b2 !important;
+  color: var(--muted) !important;
 }
 
 [data-theme='dark'] .ant-select-selection-item {
-  color: #0f1724 !important;
+  color: var(--text-primary) !important;
+}
+
+/* Light theme: Inputs should have visible borders */
+[data-theme='light'] .ant-input,
+[data-theme='light'] .ant-input:hover,
+[data-theme='light'] .ant-input:focus,
+[data-theme='light'] .ant-input-focused,
+[data-theme='light'] .ant-input-number,
+[data-theme='light'] .ant-input-number:hover,
+[data-theme='light'] .ant-input-number:focus,
+[data-theme='light'] .ant-input-number-focused,
+[data-theme='light'] .ant-input-number-input,
+[data-theme='light'] .ant-select-selector,
+[data-theme='light'] .ant-select-selector:hover,
+[data-theme='light'] .ant-picker,
+[data-theme='light'] .ant-picker:hover,
+[data-theme='light'] .ant-picker-focused {
+  background-color: var(--surface-1) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--input-border) !important;
+}
+
+[data-theme='light'] .ant-input:hover,
+[data-theme='light'] .ant-input-number:hover,
+[data-theme='light'] .ant-select-selector:hover,
+[data-theme='light'] .ant-picker:hover {
+  border-color: var(--input-border-hover) !important;
+}
+
+[data-theme='light'] .ant-input:focus,
+[data-theme='light'] .ant-input-focused,
+[data-theme='light'] .ant-input-number:focus,
+[data-theme='light'] .ant-input-number-focused,
+[data-theme='light'] .ant-select-focused .ant-select-selector,
+[data-theme='light'] .ant-picker-focused {
+  border-color: var(--input-border-focus) !important;
+  box-shadow: 0 0 0 2px rgba(var(--brand-rgb), 0.1) !important;
+}
+
+[data-theme='light'] .ant-input::placeholder,
+[data-theme='light'] .ant-picker-input input::placeholder,
+[data-theme='light'] .ant-select-selection-placeholder {
+  color: var(--muted) !important;
+}
+
+[data-theme='light'] .ant-select-selection-item {
+  color: var(--text-primary) !important;
+}
+
+:where(.css-dev-only-do-not-override-kk2c0l).ant-input-outlined {
+  background: transparent !important;
 }
 
 /* Glass table overrides */
@@ -237,7 +297,153 @@ body {
   -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
+/* Purchase form - use proper border colors for all inputs */
+.purchase-form-card .ant-input,
+.purchase-form-card .ant-input-number,
+.purchase-form-card .ant-input-number-input,
+.purchase-form-card .ant-select-selector,
+.purchase-form-card .ant-picker {
+  border-color: var(--input-border) !important;
+}
+
+.purchase-form-card .ant-input:hover,
+.purchase-form-card .ant-input-number:hover,
+.purchase-form-card .ant-select:hover .ant-select-selector,
+.purchase-form-card .ant-picker:hover {
+  border-color: var(--input-border-hover) !important;
+}
+
+.purchase-form-card .ant-input:focus,
+.purchase-form-card .ant-input-focused,
+.purchase-form-card .ant-input-number:focus,
+.purchase-form-card .ant-input-number-focused,
+.purchase-form-card .ant-select-focused .ant-select-selector,
+.purchase-form-card .ant-picker-focused {
+  border-color: var(--input-border-focus) !important;
+  box-shadow: 0 0 0 2px rgba(var(--brand-rgb), 0.1) !important;
+}
+
+[data-theme='dark'] .purchase-form-card .ant-input,
+[data-theme='dark'] .purchase-form-card .ant-input-number,
+[data-theme='dark'] .purchase-form-card .ant-input-number-input,
+[data-theme='dark'] .purchase-form-card .ant-select-selector,
+[data-theme='dark'] .purchase-form-card .ant-picker {
+  border-color: var(--glass-border) !important;
+}
+
+[data-theme='dark'] .purchase-form-card .ant-input:hover,
+[data-theme='dark'] .purchase-form-card .ant-input-number:hover,
+[data-theme='dark'] .purchase-form-card .ant-select:hover .ant-select-selector,
+[data-theme='dark'] .purchase-form-card .ant-picker:hover {
+  border-color: var(--glass-border) !important;
+}
+
+[data-theme='dark'] .purchase-form-card .ant-input:focus,
+[data-theme='dark'] .purchase-form-card .ant-input-focused,
+[data-theme='dark'] .purchase-form-card .ant-input-number:focus,
+[data-theme='dark'] .purchase-form-card .ant-input-number-focused,
+[data-theme='dark'] .purchase-form-card .ant-select-focused .ant-select-selector,
+[data-theme='dark'] .purchase-form-card .ant-picker-focused {
+  border-color: var(--glass-border) !important;
+  box-shadow: 0 0 0 2px rgba(var(--brand-rgb), 0.1) !important;
+}
+
+/* Sales form - use proper border colors for all inputs */
+.sales-form-card .ant-input,
+.sales-form-card .ant-input-number,
+.sales-form-card .ant-input-number-input,
+.sales-form-card .ant-select-selector,
+.sales-form-card .ant-picker {
+  border-color: var(--input-border) !important;
+}
+
+.sales-form-card .ant-input:hover,
+.sales-form-card .ant-input-number:hover,
+.sales-form-card .ant-select:hover .ant-select-selector,
+.sales-form-card .ant-picker:hover {
+  border-color: var(--input-border-hover) !important;
+}
+
+.sales-form-card .ant-input:focus,
+.sales-form-card .ant-input-focused,
+.sales-form-card .ant-input-number:focus,
+.sales-form-card .ant-input-number-focused,
+.sales-form-card .ant-select-focused .ant-select-selector,
+.sales-form-card .ant-picker-focused {
+  border-color: var(--input-border-focus) !important;
+  box-shadow: 0 0 0 2px rgba(var(--brand-rgb), 0.1) !important;
+}
+
+[data-theme='dark'] .sales-form-card .ant-input,
+[data-theme='dark'] .sales-form-card .ant-input-number,
+[data-theme='dark'] .sales-form-card .ant-input-number-input,
+[data-theme='dark'] .sales-form-card .ant-select-selector,
+[data-theme='dark'] .sales-form-card .ant-picker {
+  border-color: var(--glass-border) !important;
+}
+
+[data-theme='dark'] .sales-form-card .ant-input:hover,
+[data-theme='dark'] .sales-form-card .ant-input-number:hover,
+[data-theme='dark'] .sales-form-card .ant-select:hover .ant-select-selector,
+[data-theme='dark'] .sales-form-card .ant-picker:hover {
+  border-color: var(--glass-border) !important;
+}
+
+[data-theme='dark'] .sales-form-card .ant-input:focus,
+[data-theme='dark'] .sales-form-card .ant-input-focused,
+[data-theme='dark'] .sales-form-card .ant-input-number:focus,
+[data-theme='dark'] .sales-form-card .ant-input-number-focused,
+[data-theme='dark'] .sales-form-card .ant-select-focused .ant-select-selector,
+[data-theme='dark'] .sales-form-card .ant-picker-focused {
+  border-color: var(--glass-border) !important;
+  box-shadow: 0 0 0 2px rgba(var(--brand-rgb), 0.1) !important;
+}
+
 .glass-table .ant-pagination-item-active {
   border-color: var(--brand) !important;
   color: var(--brand) !important;
+}
+
+/* Purchase item search input - match date picker style, no hover effect */
+.purchase-item-search-input.ant-input,
+.purchase-item-search-input.ant-input:hover {
+  background-color: var(--surface-1) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--input-border) !important;
+}
+
+[data-theme='light'] .purchase-item-search-input.ant-input,
+[data-theme='light'] .purchase-item-search-input.ant-input:hover {
+  background-color: var(--surface-1) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--input-border) !important;
+}
+
+[data-theme='dark'] .purchase-item-search-input.ant-input,
+[data-theme='dark'] .purchase-item-search-input.ant-input:hover {
+  background-color: #0f1720 !important;
+  color: var(--text-primary) !important;
+  border-color: var(--glass-border) !important;
+}
+
+.purchase-item-search-input.ant-input:focus,
+.purchase-item-search-input.ant-input-focused {
+  background-color: var(--surface-1) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--input-border) !important;
+}
+
+[data-theme='light'] .purchase-item-search-input.ant-input:focus,
+[data-theme='light'] .purchase-item-search-input.ant-input-focused {
+  background-color: var(--surface-1) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--input-border-focus) !important;
+  box-shadow: 0 0 0 2px rgba(var(--brand-rgb), 0.1) !important;
+}
+
+[data-theme='dark'] .purchase-item-search-input.ant-input:focus,
+[data-theme='dark'] .purchase-item-search-input.ant-input-focused {
+  background-color: #0f1720 !important;
+  color: var(--text-primary) !important;
+  border-color: var(--glass-border) !important;
 }

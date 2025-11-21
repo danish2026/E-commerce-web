@@ -33,6 +33,11 @@
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   --glass-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.16);
   --glass-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+
+  /* Input border color for light theme */
+  --input-border: #d1d5db;
+  --input-border-hover: #9ca3af;
+  --input-border-focus: var(--brand);
 }
 
 [data-theme='dark'] {

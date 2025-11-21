@@ -115,7 +115,7 @@ const PurchaseItem = () => {
         <div className="flex justify-between items-center mb-6">
         </div>
 
-        <div className="bg-surface-1 rounded-2xl shadow-card p-8 mb-6">
+        <div className="bg-surface-1 rounded-2xl shadow-card p-8 mb-6 border border-[var(--glass-border)]">
           <Space size="middle" className="w-full" direction="vertical">
             <Space size="middle" className="w-full" wrap>
               <Input
@@ -125,6 +125,7 @@ const PurchaseItem = () => {
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{ width: 600, height: '40px' }}
                 allowClear
+                className="purchase-item-search-input"
               />
               <RangePicker
                 value={dateRange}

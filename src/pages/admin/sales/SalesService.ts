@@ -9,10 +9,10 @@ export enum PaymentStatus {
   OVERDUE = 'OVERDUE',
 }
 
-export interface PurchaseDto {
+export interface SalesDto {
   id: string;
-  supplier: string;
-  buyer: string;
+  customer: string;
+  seller: string;
   gst: number;
   amount: number;
   quantity: number;
@@ -22,34 +22,33 @@ export interface PurchaseDto {
   updatedAt?: string;
 }
 
-export interface CreatePurchasePayload {
-  supplier: string;
-  buyer: string;
+export interface CreateSalesPayload {
+  customer: string;
+  seller: string;
   gst: number;
   amount: number;
   quantity: number;
   paymentStatus: PaymentStatus;
   dueDate: string;
-  totalAmount?: number;
 }
 
-export type UpdatePurchasePayload = Partial<CreatePurchasePayload>;
+export type UpdateSalesPayload = Partial<CreateSalesPayload>;
 
-export interface PaginatedPurchaseResponse {
-  data: PurchaseDto[];
+export interface PaginatedSalesResponse {
+  data: SalesDto[];
   total: number;
   page: number;
   limit: number;
 }
 
-export const fetchPurchases = async (
+export const fetchSales = async (
   search?: string,
   fromDate?: string,
   toDate?: string,
   paymentStatus?: PaymentStatus,
   page: number = 1,
   limit: number = 10
-): Promise<PaginatedPurchaseResponse> => {
+): Promise<PaginatedSalesResponse> => {
   const params: Record<string, string | number> = {};
   
   if (search) {
@@ -71,8 +70,8 @@ export const fetchPurchases = async (
   params.page = page;
   params.limit = limit;
   
-  const { data } = await apiClient.get<PurchaseDto[] | PaginatedPurchaseResponse>(
-    API.PURCHASE, 
+  const { data } = await apiClient.get<SalesDto[] | PaginatedSalesResponse>(
+    API.SALES, 
     { params }
   );
   
@@ -86,29 +85,29 @@ export const fetchPurchases = async (
     };
   }
   
-  return data as PaginatedPurchaseResponse;
+  return data as PaginatedSalesResponse;
 };
 
-export const createPurchase = async (
-  payload: CreatePurchasePayload
-): Promise<PurchaseDto> => {
-  const { data } = await apiClient.post<PurchaseDto>(API.PURCHASE, payload);
+export const createSales = async (
+  payload: CreateSalesPayload
+): Promise<SalesDto> => {
+  const { data } = await apiClient.post<SalesDto>(API.SALES, payload);
   return data;
 };
 
-export const updatePurchase = async (
+export const updateSales = async (
   id: string,
-  payload: UpdatePurchasePayload
-): Promise<PurchaseDto> => {
-  const { data } = await apiClient.patch<PurchaseDto>(
-    `${API.PURCHASE}/${id}`,
+  payload: UpdateSalesPayload
+): Promise<SalesDto> => {
+  const { data } = await apiClient.patch<SalesDto>(
+    `${API.SALES}/${id}`,
     payload
   );
   return data;
 };
 
-export const deletePurchase = async (id: string): Promise<void> => {
-  await apiClient.delete(`${API.PURCHASE}/${id}`);
+export const deleteSales = async (id: string): Promise<void> => {
+  await apiClient.delete(`${API.SALES}/${id}`);
 };
 
 export const mapPaymentStatusToEnum = (payment: string): PaymentStatus => {
@@ -151,4 +150,5 @@ export const getApiErrorMessage = (
 
   return fallbackMessage;
 };
+
 

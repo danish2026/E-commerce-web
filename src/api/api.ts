@@ -6,5 +6,6 @@ export const API = {
 
     PURCHASE:"purchase",
     PURCHASE_ITEM:"purchase-item",
+    SALES:"sales",
     
 };

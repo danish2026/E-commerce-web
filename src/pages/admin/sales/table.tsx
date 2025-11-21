@@ -4,38 +4,36 @@ import { EyeOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } 
 import type { TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
-import { deletePurchase, getApiErrorMessage } from './PurcherseService';
+import { deleteSales, getApiErrorMessage } from './SalesService';
 
 dayjs.extend(advancedFormat);
 
-interface Purchase {
+interface Sale {
   id: string;
-  supplier: string;
-  buyer: string;
+  customer: string;
+  seller: string;
+  gst: string;
+  amount: string;
   quantity: string;
   payment: string;
   dueDate: string;
-  gst: string;
-  amount: string;
-  totalAmount: string;
-  
 }
 
 interface TableProps {
   onNavigate: (path: string, data?: any) => void;
-  purchases: Purchase[];
+  sales: Sale[];
   onDelete?: () => void;
   pagination?: TablePaginationConfig;
 }
 
 const PAGE_SIZE_OPTIONS = [5,10, 20, 50];
 
-const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
+const Table = ({ onNavigate, sales, onDelete, pagination }: TableProps) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 640 : false);
   const [isTablet, setIsTablet] = useState(typeof window !== 'undefined' ? window.innerWidth <= 1024 : false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<Purchase | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<Sale | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   React.useEffect(() => {
@@ -66,9 +64,9 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
     return <Tag color={colorMap[payment] || 'default'}>{payment}</Tag>;
   };
 
-  const handleDelete = (record: Purchase) => {
+  const handleDelete = (record: Sale) => {
     if (!record.id) {
-      message.error('Invalid purchase ID');
+      message.error('Invalid sale ID');
       return;
     }
     setItemToDelete(record);
@@ -77,23 +75,23 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
 
   const handleConfirmDelete = async () => {
     if (!itemToDelete || !itemToDelete.id) {
-      message.error('Invalid purchase ID');
+      message.error('Invalid sale ID');
       return;
     }
 
     setIsDeleting(true);
     try {
-      console.log('Deleting purchase with ID:', itemToDelete.id);
-      await deletePurchase(itemToDelete.id);
-      message.success('Purchase deleted successfully!');
+      console.log('Deleting sale with ID:', itemToDelete.id);
+      await deleteSales(itemToDelete.id);
+      message.success('Sale deleted successfully!');
       setDeleteModalVisible(false);
       setItemToDelete(null);
       if (onDelete) {
         onDelete();
       }
     } catch (error) {
-      console.error('Error deleting purchase:', error);
-      const errorMessage = getApiErrorMessage(error, 'Failed to delete purchase');
+      console.error('Error deleting sale:', error);
+      const errorMessage = getApiErrorMessage(error, 'Failed to delete sale');
       message.error(errorMessage);
     } finally {
       setIsDeleting(false);
@@ -117,7 +115,7 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
 
   const currentPage = pagination?.current || 1;
   const pageSize = pagination?.pageSize || 10;
-  const total = pagination?.total || purchases.length;
+  const total = pagination?.total || sales.length;
   const start = (currentPage - 1) * pageSize + 1;
   const end = Math.min(currentPage * pageSize, total);
   const totalPages = Math.ceil(total / pageSize);
@@ -160,20 +158,20 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-                  Delete Purchase
+                  Delete Sale
                 </h3>
                 <p className="text-sm text-[var(--text-secondary)] mt-1">
-                  Are you sure you want to delete this purchase?
+                  Are you sure you want to delete this sale?
                 </p>
               </div>
             </div>
             <div className="mb-6 p-4 bg-[var(--surface-2)] rounded-lg">
               <p className="text-sm text-[var(--text-primary)] font-medium">
-                Supplier: {itemToDelete.supplier}
+                Customer: {itemToDelete.customer}
               </p>
-              {itemToDelete.buyer && (
+              {itemToDelete.seller && (
                 <p className="text-xs text-[var(--text-secondary)] mt-1">
-                  Buyer: {itemToDelete.buyer}
+                  Seller: {itemToDelete.seller}
                 </p>
               )}
               <div className="mt-2 flex items-center gap-4 text-xs text-[var(--text-secondary)]">
@@ -182,7 +180,7 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
               </div>
             </div>
             <p className="text-sm text-[var(--text-secondary)] mb-6">
-              This action cannot be undone. The purchase will be permanently deleted.
+              This action cannot be undone. The sale will be permanently deleted.
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -288,14 +286,14 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
         {renderDeleteModal()}
         <div className="bg-[var(--surface-1)] rounded-lg shadow-sm border border-[var(--glass-border)] overflow-hidden">
         <div className="space-y-0">
-          {purchases.length === 0 ? (
+          {sales.length === 0 ? (
             <div className="text-center py-12 text-[var(--text-secondary)] text-sm">
-              No purchases found. Click Add Purchase to create one.
+              No sales found. Click Add Sale to create one.
             </div>
           ) : (
-            purchases.map((purchase) => (
+            sales.map((sale) => (
               <div
-                key={purchase.id}
+                key={sale.id}
                 className="px-4 py-4 border-b border-[var(--glass-border)] last:border-b-0 hover:bg-[var(--surface-2)] transition-colors"
               >
                 <div className="flex items-start justify-between mb-3">
@@ -303,19 +301,19 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
                     <input
                       type="checkbox"
                       className="w-4 h-4 rounded border-[var(--glass-border)] text-brand focus:ring-brand focus:ring-2"
-                      checked={selectedRows.has(purchase.id)}
-                      onChange={(e) => handleSelectRow(purchase.id, e.target.checked)}
+                      checked={selectedRows.has(sale.id)}
+                      onChange={(e) => handleSelectRow(sale.id, e.target.checked)}
                     />
                     <div className="flex flex-col">
                       <h3 className="text-[15px] font-semibold text-[var(--text-primary)] truncate flex-1">
-                        {purchase.supplier}
+                        {sale.customer}
                       </h3>
-                      <span className="text-xs text-[var(--text-secondary)]">{purchase.buyer}</span>
+                      <span className="text-xs text-[var(--text-secondary)]">{sale.seller}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-2">
                     <button
-                      onClick={() => onNavigate('view', purchase)}
+                      onClick={() => onNavigate('view', sale)}
                       className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
                       title="View"
                       aria-label="View"
@@ -323,7 +321,7 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
                       <EyeOutlined className="w-4 h-4 text-[var(--text-secondary)]" />
                     </button>
                     <button
-                      onClick={() => onNavigate('form', { ...purchase, mode: 'edit' })}
+                      onClick={() => onNavigate('form', { ...sale, mode: 'edit' })}
                       className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
                       title="Edit"
                       aria-label="Edit"
@@ -331,7 +329,7 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
                       <EditOutlined className="w-4 h-4 text-[var(--text-secondary)]" />
                     </button>
                     <button
-                      onClick={() => handleDelete(purchase)}
+                      onClick={() => handleDelete(sale)}
                       className="p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                       title="Delete"
                       aria-label="Delete"
@@ -341,15 +339,15 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
                   </div>
                 </div>
                 <div className="ml-7 space-y-2 text-xs text-[var(--text-secondary)]">
-                  <div>GST: {purchase.gst || '-'}</div>
+                  <div>GST: {sale.gst || '-'}</div>
                   <div className="flex items-center gap-4 flex-wrap">
-                    <span>Amount: ₹{purchase.amount}</span>
-                    <span>Quantity: {purchase.quantity}</span>
+                    <span>Amount: ₹{sale.amount}</span>
+                    <span>Quantity: {sale.quantity}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {getPaymentTag(purchase.payment)}
+                    {getPaymentTag(sale.payment)}
                     <span className="font-semibold text-[var(--text-primary)]">
-                      Due {formatDate(purchase.dueDate)}
+                      Due {formatDate(sale.dueDate)}
                     </span>
                   </div>
                 </div>
@@ -373,13 +371,13 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
             <tr>
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Supplier</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">Customer</span>
                 </div>
               </th>
               {!isTablet && (
                 <th className="px-[18px] py-6 text-left h-[64px]">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">Buyer</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">Seller</span>
                   </div>
                 </th>
               )}
@@ -408,63 +406,55 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
                   <span className="text-sm font-semibold text-[var(--text-primary)]">Due Date</span>
                 </div>
               </th>
-              <th className="px-[18px] py-6 text-left h-[64px]">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Total Amount</span>
-                </div>
-              </th>
               <th className="px-[18px] py-6 text-left pl-[100px] h-[64px]">
                 <span className="text-sm font-semibold text-[var(--text-primary)]">Actions</span>
               </th>
             </tr>
           </thead>
           <tbody>
-            {purchases.length === 0 ? (
+            {sales.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-[18px] py-12 text-center text-[var(--text-secondary)] text-sm">
-                  No purchases found. Click Add Purchase to create one.
+                  No sales found. Click Add Sale to create one.
                 </td>
               </tr>
             ) : (
-              purchases.map((purchase) => (
+              sales.map((sale) => (
                 <tr
-                  key={purchase.id}
+                  key={sale.id}
                   className="hover:-translate-y-0.5 transition-all duration-200 bg-[var(--surface-1)] border-b border-[var(--glass-border)] hover:bg-[var(--surface-2)] group"
                 >
                   <td className="px-[18px] py-4 h-[56px]">
-                    <div className="text-[15px] font-semibold text-[var(--text-primary)] truncate max-w-[220px]" title={purchase.supplier}>
-                      {purchase.supplier}
+                    <div className="text-[15px] font-semibold text-[var(--text-primary)] truncate max-w-[220px]" title={sale.customer}>
+                      {sale.customer}
                     </div>
                   </td>
                   {!isTablet && (
                     <td className="px-[18px] py-4 h-[56px]">
-                      <div className="text-sm text-[var(--text-primary)] truncate max-w-[200px]" title={purchase.buyer}>
-                        {purchase.buyer}
+                      <div className="text-sm text-[var(--text-primary)] truncate max-w-[200px]" title={sale.seller}>
+                        {sale.seller}
                       </div>
                     </td>
                   )}
                   <td className="px-[18px] py-4 h-[56px]">
-                    <div className="text-sm text-[var(--text-primary)]">{purchase.gst}</div>
+                    <div className="text-sm text-[var(--text-primary)]">{sale.gst}</div>
                   </td>
                   <td className="px-[18px] py-4 h-[56px]">
-                    <div className="text-sm text-[var(--text-primary)]">₹{purchase.amount}</div>
+                    <div className="text-sm text-[var(--text-primary)]">₹{sale.amount}</div>
                   </td>
                   <td className="px-[18px] py-4 h-[56px]">
-                    <div className="text-sm text-[var(--text-primary)]">{purchase.quantity}</div>
+                    <div className="text-sm text-[var(--text-primary)]">{sale.quantity}</div>
                   </td>
                   <td className="px-[18px] py-4 h-[56px]">
-                    {getPaymentTag(purchase.payment)}
+                    {getPaymentTag(sale.payment)}
                   </td>
                   <td className="px-[18px] py-4 h-[56px]">
-                    <div className="text-sm text-[var(--text-primary)]">{formatDate(purchase.dueDate)}</div>
-                  </td>
-                  <td className="px-[18px] py-4 h-[56px]">
-                    <div className="text-sm text-[var(--text-primary)]">₹{purchase.totalAmount}</div>
+                    <div className="text-sm text-[var(--text-primary)]">{formatDate(sale.dueDate)}</div>
                   </td>
                   <td className="px-[18px] py-4 h-[56px] text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
-                        onClick={() => onNavigate('view', purchase)}
+                        onClick={() => onNavigate('view', sale)}
                         className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
                         title="View"
                         aria-label="View"
@@ -472,7 +462,7 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
                         <EyeOutlined className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
                       </button>
                       <button
-                        onClick={() => onNavigate('form', { ...purchase, mode: 'edit' })}
+                        onClick={() => onNavigate('form', { ...sale, mode: 'edit' })}
                         className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
                         title="Edit"
                         aria-label="Edit"
@@ -480,7 +470,7 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
                         <EditOutlined className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
                       </button>
                       <button
-                        onClick={() => handleDelete(purchase)}
+                        onClick={() => handleDelete(sale)}
                         className="p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
                         title="Delete"
                         aria-label="Delete"
@@ -502,3 +492,5 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
 };
 
 export default Table;
+
+

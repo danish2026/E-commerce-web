@@ -14,7 +14,10 @@ import PurchaseItemForm from '../pages/admin/purchaseItem/form';
 import PurchaseItemView from '../pages/admin/purchaseItem/view';
 import NotFound from '../pages/admin/notFound';
 import Sales from '../pages/admin/sales';
+import SalesForm from '../pages/admin/sales/form';
+import SalesView from '../pages/admin/sales/view';
 import { Role } from '../common/enums/role.enum';
+import Setting from '../pages/admin/settings';
 
 const AppRoutes = () => (
   <Routes>
@@ -35,6 +38,8 @@ const AppRoutes = () => (
           element={<RoleProtectedRoute allowedRoles={[Role.SUPER_ADMIN, Role.SALES_MANAGER, Role.SALES_MAN]} />}
         >
           <Route path="sales" element={<Sales />} />
+          <Route path="sales/form" element={<SalesForm />} />
+          <Route path="sales/view" element={<SalesView />} />
         </Route>
 
         {/* Purchase routes - SUPER_ADMIN and SALES_MANAGER only */}
@@ -48,6 +53,7 @@ const AppRoutes = () => (
           <Route path="purchase-item/form" element={<PurchaseItemForm />} />
           <Route path="purchase-item/view" element={<PurchaseItemView />} />
           <Route path="invoice" element={<Invoice />} />
+          <Route path="settings" element={<Setting />} />
         </Route>
 
         {/* User Management - SUPER_ADMIN only */}
