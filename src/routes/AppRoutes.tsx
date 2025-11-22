@@ -18,6 +18,8 @@ import SalesForm from '../pages/admin/sales/form';
 import SalesView from '../pages/admin/sales/view';
 import { Role } from '../common/enums/role.enum';
 import Setting from '../pages/admin/settings';
+import Billing from '../pages/admin/billing';
+// import Billing from '../pages/admin/billing';
 
 const AppRoutes = () => (
   <Routes>
@@ -54,6 +56,7 @@ const AppRoutes = () => (
           <Route path="purchase-item/view" element={<PurchaseItemView />} />
           <Route path="invoice" element={<Invoice />} />
           <Route path="settings" element={<Setting />} />
+          <Route path="billing" element={<Billing />} />
         </Route>
 
         {/* User Management - SUPER_ADMIN only */}

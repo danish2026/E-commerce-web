@@ -64,12 +64,12 @@ class AuthService {
       if (error instanceof TypeError && error.message.includes('fetch')) {
         console.error('❌ Network error:', error);
         console.error('💡 Make sure:');
-        console.error('   1. Backend is running on http://localhost:3000');
+        console.error('   1. Backend is running on http://localhost:3001');
         console.error('   2. Run: cd ecommerce-server && npm run start:dev');
         console.error('   3. Check if the API URL is correct:', this.baseURL);
         return {
           success: false,
-          message: `Unable to connect to server at ${this.baseURL}. Please make sure the backend is running on port 3000.`,
+          message: `Unable to connect to server at ${this.baseURL}. Please make sure the backend is running on port 3001.`,
         };
       }
       

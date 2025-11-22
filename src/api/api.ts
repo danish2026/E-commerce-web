@@ -1,5 +1,5 @@
 export const API = {
-    BASEURL : process.env.REACT_APP_API_URL || "http://localhost:3000/api/",
+    BASEURL : process.env.REACT_APP_API_URL || "http://localhost:3001/api/",
 
     LogIn: "auth/login",
     Register: "auth/register",

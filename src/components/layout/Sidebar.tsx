@@ -51,6 +51,7 @@ const getMenuSections = (userRole: Role | string | null): MenuSection[] => {
   baseSections.push({
     items: [
       { label: 'Sales', to: '/sales', icon: BarChart2 },
+      { label: 'Billing', to: '/billing', icon: CreditCard },
     ],
   });
 
