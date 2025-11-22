@@ -43,7 +43,7 @@ const Dashboard = () => {
             currencies={balancePanel.currencies}
             onCurrencyChange={setCurrency}
           />
-          <CardPreview holderName="Danish Admin" maskedNumber="5321 •••• •••• 3019" expiry="08 / 28" brand="BLISS" />
+          <CardPreview holderName="Danish Admin" maskedNumber="5321 •••• •••• 3019" expiry="08 / 28" brand="SS" />
         </div>
       </section>
 

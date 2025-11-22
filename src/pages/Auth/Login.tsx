@@ -51,23 +51,12 @@ const Login = () => {
 
       <div className="relative z-10 flex min-h-screen flex-col gap-8 px-4 py-10 lg:flex-row lg:gap-12 lg:px-10">
         <section className="flex w-full flex-col rounded-3xl border border-white/5 bg-white/5 p-8 text-white backdrop-blur-2xl dark:border-white/10 lg:w-1/2">
-          <div className="inline-flex items-center gap-3 rounded-full border border-white/20 px-4 py-2 text-sm uppercase tracking-[0.3em] text-white/80">
+          <div className="inline-flex w-[180px] items-center gap-3 rounded-full border border-white/20 px-4 py-2 text-sm uppercase tracking-[0.3em] text-white/80">
             <LogoSpark className="h-6 w-6 text-white" />
-            Bliss Commerce
+             Commerce System            
           </div>
           
-          <div className="flex flex-1 flex-col items-center justify-center space-y-10 text-center">
-            <div className="space-y-4">
-              <h1 className="text-4xl font-semibold leading-tight">Welcome to Your Store</h1>
-              <p className="text-white/70">
-              Sign in to track orders, manage your cart, and explore new deals. 
-              </p>
-            </div>    
-            
-            <p className="text-sm text-white/60">
-              Secure SSO • SOC2 • GDPR • 99.99% uptime
-            </p>
-          </div>
+
         </section>
 
         <section className="flex w-full items-center justify-center lg:w-1/2">

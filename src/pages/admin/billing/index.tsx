@@ -1,8 +1,19 @@
 import { Button, DatePicker, Input, Select, Space, Table } from 'antd';
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom';
 
 const Billing = () => {
     const { RangePicker } = DatePicker;
+    const navigate = useNavigate();
+
+    const handleNavigate = (path: string, data?: any) => {
+        if (path === 'form') {
+            navigate('/billing/form', { state: data });
+        } else if (path === 'view') {
+            navigate('/billing/view', { state: data });
+        }
+    };
+
   
   return (
     <div className="min-h-screen gap-[30px] bg-bg-secondary p-7">
@@ -25,7 +36,7 @@ const Billing = () => {
               <Button
                 type="primary"
                 // icon={<PlusOutlined />}
-                // onClick={() => handleNavigate('form', { mode: 'add' })}
+                onClick={() => handleNavigate('form', { mode: 'add' })}
                 size="large"
                 style={{
                   height: '40px',
