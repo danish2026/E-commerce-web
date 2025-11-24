@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Home, CreditCard, Receipt, Users, BarChart2,
 import { Button } from '../ui';
 import { useAuth } from '../../context/AuthContext';
 import { Role } from '../../common/enums/role.enum';
+import { List, Package } from 'lucide-react';
 
 type SidebarProps = {
   collapsed: boolean;
@@ -50,6 +51,8 @@ const getMenuSections = (userRole: Role | string | null): MenuSection[] => {
   // Sales section - All roles can access
   baseSections.push({
     items: [
+      { label: 'Categories', to: '/categories', icon: List, roles: [Role.SUPER_ADMIN, Role.SALES_MANAGER] },
+      { label: 'Product', to: '/product', icon: Package, roles: [Role.SUPER_ADMIN, Role.SALES_MANAGER] },
       { label: 'Sales', to: '/sales', icon: BarChart2 },
       { label: 'Billing', to: '/billing', icon: CreditCard },
     ],

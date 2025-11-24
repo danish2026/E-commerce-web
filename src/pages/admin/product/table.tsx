@@ -4,23 +4,32 @@ import { EditOutlined, DeleteOutlined, EyeOutlined, ExclamationCircleOutlined } 
 import type { TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
-import { deletePurchaseItem, getApiErrorMessage } from './PurchaseItemService';
+import { deleteProduct, getApiErrorMessage } from './ProductService';
 
 dayjs.extend(advancedFormat);
 
-interface PurchaseItem {
+interface Product {
   id: string;
-  item: string;
-  description?: string;
-  quantity: string;
-  price: string;
-  total: string;
+  name: string;
+  sku: string;
+  categoryId: string;
+  categoryName?: string;
+  brand?: string | null;
+  unit: string;
+  costPrice: string;
+  sellingPrice: string;
+  stock: string;
+  gstPercentage: string;
+  expiryDate?: string | null;
+  hsnCode?: string | null;
+  barcode?: string | null;
+  imageUrl?: string | null;
   createdAt?: string;
 }
 
 interface TableProps {
   onNavigate: (path: string, data?: any) => void;
-  purchaseItems: PurchaseItem[];
+  products: Product[];
   onDelete?: () => void;
   pagination?: TablePaginationConfig;
 }
@@ -42,12 +51,13 @@ const formatCurrency = (value: string | number | undefined | null): string => {
   if (isNaN(numValue)) return '0';
   return numValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
-const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) => {
+
+const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 640 : false);
   const [isTablet, setIsTablet] = useState(typeof window !== 'undefined' ? window.innerWidth <= 1024 : false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<PurchaseItem | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<Product | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   React.useEffect(() => {
@@ -59,9 +69,9 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleDelete = (record: PurchaseItem) => {
+  const handleDelete = (record: Product) => {
     if (!record.id) {
-      message.error('Invalid purchase item ID');
+      message.error('Invalid product ID');
       return;
     }
     setItemToDelete(record);
@@ -70,23 +80,23 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
 
   const handleConfirmDelete = async () => {
     if (!itemToDelete || !itemToDelete.id) {
-      message.error('Invalid purchase item ID');
+      message.error('Invalid product ID');
       return;
     }
 
     setIsDeleting(true);
     try {
-      console.log('Deleting purchase item with ID:', itemToDelete.id);
-      await deletePurchaseItem(itemToDelete.id);
-      message.success('Purchase item deleted successfully!');
+      console.log('Deleting product with ID:', itemToDelete.id);
+      await deleteProduct(itemToDelete.id);
+      message.success('Product deleted successfully!');
       setDeleteModalVisible(false);
       setItemToDelete(null);
       if (onDelete) {
         onDelete();
       }
     } catch (error) {
-      console.error('Error deleting purchase item:', error);
-      const errorMessage = getApiErrorMessage(error, 'Failed to delete purchase item');
+      console.error('Error deleting product:', error);
+      const errorMessage = getApiErrorMessage(error, 'Failed to delete product');
       message.error(errorMessage);
     } finally {
       setIsDeleting(false);
@@ -110,7 +120,7 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
 
   const currentPage = pagination?.current || 1;
   const pageSize = pagination?.pageSize || 10;
-  const total = pagination?.total || purchaseItems.length;
+  const total = pagination?.total || products.length;
   const start = (currentPage - 1) * pageSize + 1;
   const end = Math.min(currentPage * pageSize, total);
   const totalPages = Math.ceil(total / pageSize);
@@ -229,25 +239,23 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-                  Delete Purchase Item
+                  Delete Product
                 </h3>
                 <p className="text-sm text-[var(--text-secondary)] mt-1">
-                  Are you sure you want to delete this purchase item?
+                  Are you sure you want to delete this product?
                 </p>
               </div>
             </div>
             <div className="mb-6 p-4 bg-[var(--surface-2)] rounded-lg">
               <p className="text-sm text-[var(--text-primary)] font-medium">
-                {itemToDelete.item}
+                {itemToDelete.name}
               </p>
-              {itemToDelete.description && (
-                <p className="text-xs text-[var(--text-secondary)] mt-1 truncate">
-                  {itemToDelete.description}
-                </p>
-              )}
+              <p className="text-xs text-[var(--text-secondary)] mt-1">
+                SKU: {itemToDelete.sku}
+              </p>
             </div>
             <p className="text-sm text-[var(--text-secondary)] mb-6">
-              This action cannot be undone. The purchase item will be permanently deleted.
+              This action cannot be undone. The product will be permanently deleted.
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -277,12 +285,12 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
         {renderDeleteModal()}
         <div className="bg-[var(--surface-1)] rounded-lg shadow-sm border border-[var(--glass-border)] overflow-hidden">
         <div className="space-y-0">
-          {purchaseItems.length === 0 ? (
+          {products.length === 0 ? (
             <div className="text-center py-12 text-[var(--text-secondary)] text-sm">
-              No purchase items found. Click Add Purchase Item to create one.
+              No products found. Click Add Product to create one.
             </div>
           ) : (
-            purchaseItems?.map((item) => {
+            products.map((item) => {
               return (
                 <div
                   key={item.id}
@@ -297,7 +305,7 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
                         onChange={(e) => handleSelectRow(item.id, e.target.checked)}
                       />
                       <h3 className="text-[15px] font-semibold text-[var(--text-primary)] truncate flex-1">
-                        {item.item}
+                        {item.name}
                       </h3>
                     </div>
                     <div className="flex items-center gap-2 ml-2">
@@ -324,14 +332,19 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
                       <div>{formatDate(item.createdAt)}</div>
                     )}
                     <div className="flex items-center gap-4 flex-wrap">
-                      <span>Qty: {item.quantity}</span>
-                      <span>Price: ₹{formatCurrency(item.price)}</span>
+                      <span>SKU: {item.sku}</span>
+                      <span>Stock: {item.stock} {item.unit}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[var(--text-primary)]">Total: ₹{formatCurrency(item.total)}</span>
+                      <span>Cost: ₹{formatCurrency(item.costPrice)}</span>
+                      <span>|</span>
+                      <span>Selling: ₹{formatCurrency(item.sellingPrice)}</span>
                     </div>
-                    {item.description && (
-                      <div className="text-xs text-[var(--text-secondary)] truncate">{item.description}</div>
+                    {item.categoryName && (
+                      <div className="text-xs text-[var(--text-secondary)]">Category: {item.categoryName}</div>
+                    )}
+                    {item.brand && (
+                      <div className="text-xs text-[var(--text-secondary)]">Brand: {item.brand}</div>
                     )}
                   </div>
                 </div>
@@ -355,28 +368,35 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
             <tr>
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Item Name</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">Product Name</span>
                 </div>
               </th>
               {!isTablet && (
                 <th className="px-[18px] py-6 text-left h-[64px]">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">Date Created</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">SKU</span>
+                  </div>
+                </th>
+              )}
+              {!isTablet && (
+                <th className="px-[18px] py-6 text-left h-[64px]">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">Category</span>
                   </div>
                 </th>
               )}
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Quantity</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">Stock</span>
                 </div>
               </th>
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Price</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">Cost Price</span>
                 </div>
               </th>
               <th className="px-[18px] py-6 text-left h-[64px]">
-                <span className="text-sm font-semibold text-[var(--text-primary)]">Total</span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">Selling Price</span>
               </th>
               <th className="px-[18px] py-6 text-left pl-[100px] h-[64px]">
                 <span className="text-sm font-semibold text-[var(--text-primary)]">Actions</span>
@@ -384,37 +404,42 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
             </tr>
           </thead>
           <tbody>
-            {purchaseItems.length === 0 ? (
+            {products.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-[18px] py-12 text-center text-[var(--text-secondary)] text-sm">
-                  No purchase items found. Click Add Purchase Item to create one.
+                  No products found. Click Add Product to create one.
                 </td>
               </tr>
             ) : (
-              purchaseItems?.map((item) => {
+              products.map((item) => {
                 return (
                   <tr
                     key={item.id}
                     className="hover:-translate-y-0.5 transition-all duration-200 bg-[var(--surface-1)] border-b border-[var(--glass-border)] hover:bg-[var(--surface-2)] group"
                   >
                     <td className="px-[18px] py-4 h-[56px]">
-                      <div className="text-[15px] font-semibold text-[var(--text-primary)] truncate max-w-[220px]" title={item.item}>
-                        {item.item}
+                      <div className="text-[15px] font-semibold text-[var(--text-primary)] truncate max-w-[220px]" title={item.name}>
+                        {item.name}
                       </div>
                     </td>
                     {!isTablet && (
                       <td className="px-[18px] py-4 h-[56px]">
-                        <div className="text-xs text-[var(--text-secondary)]">{formatDate(item.createdAt)}</div>
+                        <div className="text-sm text-[var(--text-primary)]">{item.sku}</div>
+                      </td>
+                    )}
+                    {!isTablet && (
+                      <td className="px-[18px] py-4 h-[56px]">
+                        <div className="text-sm text-[var(--text-primary)]">{item.categoryName || '-'}</div>
                       </td>
                     )}
                     <td className="px-[18px] py-4 h-[56px]">
-                      <div className="text-sm text-[var(--text-primary)]">{item.quantity}</div>
+                      <div className="text-sm text-[var(--text-primary)]">{item.stock} {item.unit}</div>
                     </td>
                     <td className="px-[18px] py-4 h-[56px]">
-                      <div className="text-sm text-[var(--text-primary)]">₹{formatCurrency(item.price)}</div>
+                      <div className="text-sm text-[var(--text-primary)]">₹{formatCurrency(item.costPrice)}</div>
                     </td>
                     <td className="px-[18px] py-4 h-[56px]">
-                      <div className="text-sm font-semibold text-[var(--text-primary)]">₹{formatCurrency(item.total)}</div>
+                      <div className="text-sm font-semibold text-[var(--text-primary)]">₹{formatCurrency(item.sellingPrice)}</div>
                     </td>
                     <td className="px-[18px] py-4 h-[56px] text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -458,4 +483,5 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
 };
 
 export default Table;
+
 

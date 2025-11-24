@@ -5,35 +5,44 @@ import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import Table from './table';
 import {
-  fetchPurchaseItems,
+  fetchProducts,
   getApiErrorMessage,
-  PurchaseItemDto,
-} from './PurchaseItemService';
+  ProductDto,
+} from './ProductService';
 
 const { RangePicker } = DatePicker;
 
-interface PurchaseItemDisplay {
+interface ProductDisplay {
   id: string;
-  item: string;
-  description?: string;
-  quantity: string;
-  price: string;
-  total: string;
+  name: string;
+  sku: string;
+  categoryId: string;
+  categoryName?: string;
+  brand?: string | null;
+  unit: string;
+  costPrice: string;
+  sellingPrice: string;
+  stock: string;
+  gstPercentage: string;
+  expiryDate?: string | null;
+  hsnCode?: string | null;
+  barcode?: string | null;
+  imageUrl?: string | null;
   createdAt?: string;
 }
 
-const PurchaseItem = () => {
+const Product = () => {
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
-  const [purchaseItems, setPurchaseItems] = useState<PurchaseItemDisplay[]>([]);
+  const [products, setProducts] = useState<ProductDisplay[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
 
-  // Fetch purchase items from API
-  const loadPurchaseItems = useCallback(async () => {
+  // Fetch products from API
+  const loadProducts = useCallback(async () => {
     try {
       setLoading(true);
       const searchParam = searchText.trim() || undefined;
@@ -46,7 +55,7 @@ const PurchaseItem = () => {
         ? dateRange[1].format('YYYY-MM-DD') 
         : undefined;
       
-      const response = await fetchPurchaseItems(
+      const response = await fetchProducts(
         searchParam, 
         fromDateParam, 
         toDateParam,
@@ -55,29 +64,38 @@ const PurchaseItem = () => {
       );
       
       // Transform API data to display format
-      const transformedPurchaseItems: PurchaseItemDisplay[] = response.data.map((item: PurchaseItemDto) => ({
+      const transformedProducts: ProductDisplay[] = response.data.map((item: ProductDto) => ({
         id: item.id,
-        item: item.item,
-        description: item.description,
-        quantity: item.quantity.toString(),
-        price: item.price.toString(),
-        total: item.total.toString(),
+        name: item.name,
+        sku: item.sku,
+        categoryId: item.categoryId,
+        categoryName: item.category?.name,
+        brand: item.brand,
+        unit: item.unit,
+        costPrice: item.costPrice.toString(),
+        sellingPrice: item.sellingPrice.toString(),
+        stock: item.stock.toString(),
+        gstPercentage: item.gstPercentage.toString(),
+        expiryDate: item.expiryDate,
+        hsnCode: item.hsnCode,
+        barcode: item.barcode,
+        imageUrl: item.imageUrl,
         createdAt: item.createdAt,
       }));
       
-      setPurchaseItems(transformedPurchaseItems);
+      setProducts(transformedProducts);
       setTotal(response.total);
     } catch (error) {
-      console.error('Error fetching purchase items:', error);
-      message.error(getApiErrorMessage(error, 'Failed to fetch purchase items'));
+      console.error('Error fetching products:', error);
+      message.error(getApiErrorMessage(error, 'Failed to fetch products'));
     } finally {
       setLoading(false);
     }
   }, [searchText, dateRange, currentPage, pageSize]);
 
   useEffect(() => {
-    loadPurchaseItems();
-  }, [loadPurchaseItems]);
+    loadProducts();
+  }, [loadProducts]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -100,14 +118,14 @@ const PurchaseItem = () => {
 
   const handleNavigate = (path: string, data?: any) => {
     if (path === 'form') {
-      navigate('/purchase-item/form', { state: data });
+      navigate('/product/form', { state: data });
     } else if (path === 'view') {
-      navigate('/purchase-item/view', { state: data });
+      navigate('/product/view', { state: data });
     }
   };
 
   // All filtering is handled by API (search and date range)
-  const filteredPurchaseItems = purchaseItems;
+  const filteredProducts = products;
 
   return (
     <div className="min-h-screen bg-bg-secondary p-7">
@@ -116,13 +134,13 @@ const PurchaseItem = () => {
           <Space size="middle" className="w-full" direction="vertical">
             <Space size="middle" className="w-full" wrap>
               <Input
-                placeholder="Search by item name or description"
+                placeholder="Search by product name, SKU, or brand"
                 prefix={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{ width: 600, height: '40px' }}
                 allowClear
-                className="purchase-item-search-input"
+                className="product-search-input"
               />
               <RangePicker
                 value={dateRange}
@@ -143,7 +161,7 @@ const PurchaseItem = () => {
                   borderColor: 'var(--brand)',
                 }}
               >
-                Add Purchase Item
+                Add Product
               </Button>
             </Space>
           </Space>
@@ -156,8 +174,8 @@ const PurchaseItem = () => {
         ) : (
           <Table 
             onNavigate={handleNavigate} 
-            purchaseItems={filteredPurchaseItems} 
-            onDelete={loadPurchaseItems}
+            products={filteredProducts} 
+            onDelete={loadProducts}
             pagination={{
               current: currentPage,
               pageSize: pageSize,
@@ -165,7 +183,7 @@ const PurchaseItem = () => {
               onChange: handlePageChange,
               onShowSizeChange: handlePageSizeChange,
               showSizeChanger: true,
-              showTotal: (total) => `Total ${total} purchase items`,
+              showTotal: (total) => `Total ${total} products`,
             }}
           />
         )}
@@ -174,4 +192,4 @@ const PurchaseItem = () => {
   );
 };
 
-export default PurchaseItem;
+export default Product;

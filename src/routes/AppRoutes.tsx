@@ -9,6 +9,8 @@ import Purchase from '../pages/admin/purchase';
 import FormComponent from '../pages/admin/purchase/form';
 import View from '../pages/admin/purchase/view';
 import Invoice from '../pages/admin/invoice';
+import InvoiceForm from '../pages/admin/invoice/form';
+import InvoiceView from '../pages/admin/invoice/view';
 import PurcheseItem from '../pages/admin/purchaseItem';
 import PurchaseItemForm from '../pages/admin/purchaseItem/form';
 import PurchaseItemView from '../pages/admin/purchaseItem/view';
@@ -19,7 +21,10 @@ import SalesView from '../pages/admin/sales/view';
 import { Role } from '../common/enums/role.enum';
 import Setting from '../pages/admin/settings';
 import Billing from '../pages/admin/billing';
-// import Billing from '../pages/admin/billing';
+import Product from '../pages/admin/product';
+import ProductForm from '../pages/admin/product/form';
+import ProductView from '../pages/admin/product/view';
+import Categories from '../pages/admin/categories';
 
 const AppRoutes = () => (
   <Routes>
@@ -42,6 +47,10 @@ const AppRoutes = () => (
           <Route path="sales" element={<Sales />} />
           <Route path="sales/form" element={<SalesForm />} />
           <Route path="sales/view" element={<SalesView />} />
+          <Route path="product" element={<Product />} />
+          <Route path="product/form" element={<ProductForm />} />
+          <Route path="product/view" element={<ProductView />} />
+          <Route path="categories" element={<Categories />} />
         </Route>
 
         {/* Purchase routes - SUPER_ADMIN and SALES_MANAGER only */}
@@ -55,6 +64,8 @@ const AppRoutes = () => (
           <Route path="purchase-item/form" element={<PurchaseItemForm />} />
           <Route path="purchase-item/view" element={<PurchaseItemView />} />
           <Route path="invoice" element={<Invoice />} />
+          <Route path="invoice/form" element={<InvoiceForm />} />
+          <Route path="invoice/view" element={<InvoiceView />} />
           <Route path="settings" element={<Setting />} />
           <Route path="billing" element={<Billing />} />
         </Route>

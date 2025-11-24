@@ -56,7 +56,6 @@
   --glass: rgba(255, 255, 255, 0.03);
   --card-shadow: 0 8px 24px rgba(2, 6, 23, 0.6);
 
-  /* Glassmorphism Variables - Dark Theme */
   --glass-bg: rgba(255, 255, 255, 0.06);
   --glass-bg-hover: rgba(255, 255, 255, 0.1);
   --glass-border: rgba(255, 255, 255, 0.12);
