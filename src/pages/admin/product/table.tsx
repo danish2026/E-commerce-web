@@ -485,3 +485,5 @@ const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
 export default Table;
 
 
+
+

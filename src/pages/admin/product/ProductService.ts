@@ -43,11 +43,18 @@ export interface CreateProductPayload {
 
 export type UpdateProductPayload = Partial<CreateProductPayload>;
 
-export interface PaginatedProductResponse {
-  data: ProductDto[];
-  total: number;
+export interface PaginationMeta {
   page: number;
   limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface PaginatedProductResponse {
+  data: ProductDto[];
+  meta: PaginationMeta;
 }
 
 export interface CategoryDto {
@@ -82,21 +89,32 @@ export const fetchProducts = async (
   params.page = page;
   params.limit = limit;
   
-  const { data } = await apiClient.get<ProductDto[] | PaginatedProductResponse>(
+  const { data } = await apiClient.get<PaginatedProductResponse | ProductDto[]>(
     API.PRODUCT, 
     { params }
   );
   
-  // Handle both paginated and non-paginated responses
+  // Handle legacy array responses (should not happen with new API)
   if (Array.isArray(data)) {
     return {
       data,
-      total: data.length,
-      page: 1,
-      limit: data.length,
+      meta: {
+        page: 1,
+        limit: data.length,
+        total: data.length,
+        totalPages: 1,
+        hasNext: false,
+        hasPrev: false,
+      },
     };
   }
   
+  // Ensure the response has the expected structure
+  if (data && 'data' in data && 'meta' in data) {
+    return data;
+  }
+  
+  // Fallback (should not happen)
   return data as PaginatedProductResponse;
 };
 
@@ -111,7 +129,7 @@ export const updateProduct = async (
   id: string,
   payload: UpdateProductPayload
 ): Promise<ProductDto> => {
-  const { data } = await apiClient.put<ProductDto>(
+  const { data } = await apiClient.patch<ProductDto>(
     `${API.PRODUCT}/${id}`,
     payload
   );
@@ -160,5 +178,7 @@ export const getApiErrorMessage = (
 
   return fallbackMessage;
 };
+
+
 
 

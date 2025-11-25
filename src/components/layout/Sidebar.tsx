@@ -42,18 +42,17 @@ const getMenuSections = (userRole: Role | string | null): MenuSection[] => {
     baseSections.push({
       items: [
         { label: 'Purchase', to: '/purchase', icon: Users, roles: [Role.SUPER_ADMIN, Role.SALES_MANAGER] },
-        { label: 'Invoice', to: '/invoice', icon: Receipt, roles: [Role.SUPER_ADMIN, Role.SALES_MANAGER] },
+        // { label: 'Invoice', to: '/invoice', icon: Receipt, roles: [Role.SUPER_ADMIN, Role.SALES_MANAGER] },
         { label: 'Purchase Item', to: '/purchase-item', icon: CreditCard, roles: [Role.SUPER_ADMIN, Role.SALES_MANAGER] },
       ],
     });
   }
 
-  // Sales section - All roles can access
   baseSections.push({
     items: [
       { label: 'Categories', to: '/categories', icon: List, roles: [Role.SUPER_ADMIN, Role.SALES_MANAGER] },
       { label: 'Product', to: '/product', icon: Package, roles: [Role.SUPER_ADMIN, Role.SALES_MANAGER] },
-      { label: 'Sales', to: '/sales', icon: BarChart2 },
+      // { label: 'Sales', to: '/sales', icon: BarChart2 },
       { label: 'Billing', to: '/billing', icon: CreditCard },
     ],
   });
@@ -101,7 +100,7 @@ export const Sidebar = ({ collapsed, onToggleCollapse }: SidebarProps) => {
   return (
     <aside
       className={clsx(
-        'glass-sidebar sticky top-8 h-[calc(100vh-4rem)] transition-all duration-300',
+        'glass-sidebar sticky top-8 h-[calc(100vh-4rem)] overflow-y-auto transition-all duration-300',
         collapsed ? 'w-[5rem] p-2' : 'w-64 p-6',
       )}
       aria-label="Primary navigation"

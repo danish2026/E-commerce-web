@@ -10,5 +10,6 @@ export const API = {
     PRODUCT:"products",
     CATEGORY:"categories",
     CATEGORIES:"categories",
+    ORDERS:"orders",
     
 };

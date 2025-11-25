@@ -1,75 +1,49 @@
 import { Button, DatePicker, Input, Space, Spin } from 'antd';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
-import { fetchPurchaseItems, PurchaseItem } from './api';
+import { fetchOrders, Order } from './api';
 import Table from './table';
 
 const Billing = () => {
   const { RangePicker } = DatePicker;
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
 
-  // Load purchase items
-  const loadPurchaseItems = async () => {
+  // Load orders with server-side pagination and filtering
+  const loadOrders = async () => {
     try {
       setLoading(true);
-      const data = await fetchPurchaseItems();
-      setPurchaseItems(data);
+      const fromDate = dateRange && dateRange[0] ? dateRange[0].format('YYYY-MM-DD') : undefined;
+      const toDate = dateRange && dateRange[1] ? dateRange[1].format('YYYY-MM-DD') : undefined;
+      
+      const response = await fetchOrders(
+        currentPage,
+        pageSize,
+        searchText || undefined,
+        fromDate,
+        toDate
+      );
+      
+      setOrders(response.data);
+      setTotal(response.meta.total);
     } catch (error: any) {
-      console.error('Error loading purchase items:', error);
+      console.error('Error loading orders:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadPurchaseItems();
-  }, []);
-
-  // Filter purchase items based on search and date range
-  const filteredPurchaseItems = useMemo(() => {
-    let filtered = [...purchaseItems];
-
-    // Search filter
-    if (searchText) {
-      const searchLower = searchText.toLowerCase();
-      filtered = filtered.filter(item =>
-        item.item?.toLowerCase().includes(searchLower) ||
-        item.description?.toLowerCase().includes(searchLower) ||
-        item.quantity?.toString().includes(searchLower) ||
-        item.price?.toString().includes(searchLower) ||
-        item.total?.toString().includes(searchLower)
-      );
-    }
-
-    // Date range filter
-    if (dateRange && dateRange[0] && dateRange[1]) {
-      const startDate = dateRange[0];
-      const endDate = dateRange[1];
-      filtered = filtered.filter(item => {
-        if (!item.createdAt) return false;
-        const itemDate = dayjs(item.createdAt);
-        return itemDate.isAfter(startDate.subtract(1, 'day')) && 
-               itemDate.isBefore(endDate.add(1, 'day'));
-      });
-    }
-
-    return filtered;
-  }, [purchaseItems, searchText, dateRange]);
-
-  // Pagination
-  const paginatedItems = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    const end = start + pageSize;
-    return filteredPurchaseItems.slice(start, end);
-  }, [filteredPurchaseItems, currentPage, pageSize]);
+    loadOrders();
+  }, [currentPage, pageSize, searchText, dateRange]);
 
   const handleNavigate = (path: string, data?: any) => {
     if (path === 'form') {
@@ -99,20 +73,24 @@ const Billing = () => {
           <Space size="middle" className="w-full" direction="vertical">
             <Space size="middle" className="w-full" wrap>
               <Input
-                placeholder="Search by item, description, quantity, or amount"
+                placeholder="Search by order number, customer name, phone, or product"
                 style={{ width: 600, height: '40px' }}
                 allowClear
                 value={searchText}
                 onChange={(e) => {
                   setSearchText(e.target.value);
-                  setCurrentPage(1); // Reset to first page on search
+                  setCurrentPage(1);
+                }}
+                onPressEnter={() => {
+                  setCurrentPage(1);
+                  loadOrders();
                 }}
               />
               <RangePicker
                 value={dateRange}
                 onChange={(dates) => {
                   setDateRange(dates as [Dayjs | null, Dayjs | null] | null);
-                  setCurrentPage(1); // Reset to first page on date change
+                  setCurrentPage(1);
                 }}
                 format="YYYY-MM-DD"
                 placeholder={['Start Date', 'End Date']}
@@ -121,7 +99,7 @@ const Billing = () => {
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
-                onClick={() => handleNavigate('form', { mode: 'add' })}
+                onClick={() => navigate('/billing/form')}
                 size="large"
                 style={{
                   height: '40px',
@@ -130,7 +108,7 @@ const Billing = () => {
                   borderColor: 'var(--brand)',
                 }}
               >
-                Add Purchase
+                Create Order
               </Button>
             </Space>
           </Space>
@@ -142,18 +120,18 @@ const Billing = () => {
           </div>
         ) : (
           <Table
-            data={paginatedItems}
+            data={orders}
             loading={loading}
             onNavigate={handleNavigate}
-            onDelete={loadPurchaseItems}
+            onDelete={loadOrders}
             pagination={{
               current: currentPage,
               pageSize: pageSize,
-              total: filteredPurchaseItems.length,
+              total: total,
               onChange: handlePageChange,
               onShowSizeChange: handlePageSizeChange,
               showSizeChanger: true,
-              showTotal: (total: number) => `Total ${total} purchase items`,
+              showTotal: (total: number) => `Total ${total} orders`,
             }}
           />
         )}

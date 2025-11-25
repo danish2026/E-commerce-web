@@ -84,7 +84,7 @@ const Product = () => {
       }));
       
       setProducts(transformedProducts);
-      setTotal(response.total);
+      setTotal(response.meta.total);
     } catch (error) {
       console.error('Error fetching products:', error);
       message.error(getApiErrorMessage(error, 'Failed to fetch products'));

@@ -21,6 +21,8 @@ import SalesView from '../pages/admin/sales/view';
 import { Role } from '../common/enums/role.enum';
 import Setting from '../pages/admin/settings';
 import Billing from '../pages/admin/billing';
+import BillingForm from '../pages/admin/billing/form';
+import BillingView from '../pages/admin/billing/view';
 import Product from '../pages/admin/product';
 import ProductForm from '../pages/admin/product/form';
 import ProductView from '../pages/admin/product/view';
@@ -68,6 +70,8 @@ const AppRoutes = () => (
           <Route path="invoice/view" element={<InvoiceView />} />
           <Route path="settings" element={<Setting />} />
           <Route path="billing" element={<Billing />} />
+          <Route path="billing/form" element={<BillingForm />} />
+          <Route path="billing/view" element={<BillingView />} />
         </Route>
 
         {/* User Management - SUPER_ADMIN only */}
