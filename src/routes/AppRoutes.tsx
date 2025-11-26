@@ -27,67 +27,108 @@ import Product from '../pages/admin/product';
 import ProductForm from '../pages/admin/product/form';
 import ProductView from '../pages/admin/product/view';
 import Categories from '../pages/admin/categories';
+import Permissions from '../pages/admin/permissions';
+import Employees from '../pages/admin/employees';
+import EmployeeForm from '../pages/admin/employees/form';
 
-const AppRoutes = () => (
-  <Routes>
-    <Route path="/login" element={<Login />} />
+const AppRoutes = () => {
+  const superAdminOnly = [Role.SUPER_ADMIN];
+  const salesManagerRoles = [Role.SUPER_ADMIN, Role.SALES_MANAGER];
 
-    <Route element={<ProtectedRoute />}>
-      <Route path="/" element={<MainLayout />}>
-        {/* Dashboard - SUPER_ADMIN only */}
-        <Route
-          element={<RoleProtectedRoute allowedRoles={[Role.SUPER_ADMIN]} />}
-        >
-          <Route index element={<Dashboard />} />
-          <Route path="dashboard" element={<Dashboard />} />
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+
+      <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<MainLayout />}>
+          {/* Dashboard - SUPER_ADMIN & SALES_MANAGER */}
+          <Route
+            element={<RoleProtectedRoute allowedRoles={salesManagerRoles} />}
+          >
+            <Route index element={<Dashboard />} />
+            <Route path="dashboard" element={<Dashboard />} />
+          </Route>
+
+          {/* Sales routes - SUPER_ADMIN & SALES_MANAGER */}
+          <Route
+            element={<RoleProtectedRoute allowedRoles={salesManagerRoles} />}
+          >
+            <Route path="sales" element={<Sales />} />
+            <Route path="sales/form" element={<SalesForm />} />
+            <Route path="sales/view" element={<SalesView />} />
+          </Route>
+
+          {/* Product Management routes - SUPER_ADMIN only */}
+          <Route
+            element={<RoleProtectedRoute allowedRoles={superAdminOnly} />}
+          >
+            <Route path="product" element={<Product />} />
+            <Route path="product/form" element={<ProductForm />} />
+            <Route path="product/view" element={<ProductView />} />
+            <Route path="categories" element={<Categories />} />
+          </Route>
+
+          {/* Purchase routes - SUPER_ADMIN only */}
+          <Route
+            element={<RoleProtectedRoute allowedRoles={superAdminOnly} />}
+          >
+            <Route path="purchase" element={<Purchase />} />
+            <Route path="purchase/form" element={<FormComponent />} />
+            <Route path="purchase/view" element={<View />} />
+            <Route path="purchase-item" element={<PurcheseItem />} />
+            <Route path="purchase-item/form" element={<PurchaseItemForm />} />
+            <Route path="purchase-item/view" element={<PurchaseItemView />} />
+            <Route path="invoice" element={<Invoice />} />
+            <Route path="invoice/form" element={<InvoiceForm />} />
+            <Route path="invoice/view" element={<InvoiceView />} />
+          </Route>
+
+          {/* Settings - SUPER_ADMIN only */}
+          <Route
+            element={<RoleProtectedRoute allowedRoles={superAdminOnly} />}
+          >
+            <Route path="settings" element={<Setting />} />
+          </Route>
+
+          {/* Permissions - SUPER_ADMIN only */}
+          <Route
+            element={<RoleProtectedRoute allowedRoles={superAdminOnly} />}
+          >
+            <Route path="permissions" element={<Permissions />} />
+          </Route>
+
+          {/* Employees - SUPER_ADMIN only */}
+          <Route
+            element={<RoleProtectedRoute allowedRoles={superAdminOnly} />}
+          >
+            <Route path="employees" element={<Employees />} />
+            <Route path="employees/form" element={<EmployeeForm />} />
+          </Route>
+
+          {/* Billing - SUPER_ADMIN only */}
+          <Route
+            element={<RoleProtectedRoute allowedRoles={superAdminOnly} />}
+          >
+            <Route path="billing" element={<Billing />} />
+            <Route path="billing/form" element={<BillingForm />} />
+            <Route path="billing/view" element={<BillingView />} />
+          </Route>
+
+          {/* User Management - SUPER_ADMIN only */}
+          {/* TODO: Create Users page component */}
+          {/* <Route
+            element={<RoleProtectedRoute allowedRoles={superAdminOnly} />}
+          >
+            <Route path="users" element={<Users />} />
+          </Route> */}
+
+          {/* Catch-all routes */}
+          <Route path="*" element={<NotFound />} />
         </Route>
-
-        {/* Sales - All roles can access */}
-        <Route
-          element={<RoleProtectedRoute allowedRoles={[Role.SUPER_ADMIN, Role.SALES_MANAGER, Role.SALES_MAN]} />}
-        >
-          <Route path="sales" element={<Sales />} />
-          <Route path="sales/form" element={<SalesForm />} />
-          <Route path="sales/view" element={<SalesView />} />
-          <Route path="product" element={<Product />} />
-          <Route path="product/form" element={<ProductForm />} />
-          <Route path="product/view" element={<ProductView />} />
-          <Route path="categories" element={<Categories />} />
-        </Route>
-
-        {/* Purchase routes - SUPER_ADMIN and SALES_MANAGER only */}
-        <Route
-          element={<RoleProtectedRoute allowedRoles={[Role.SUPER_ADMIN, Role.SALES_MANAGER]} />}
-        >
-          <Route path="purchase" element={<Purchase />} />
-          <Route path="purchase/form" element={<FormComponent />} />
-          <Route path="purchase/view" element={<View />} />
-          <Route path="purchase-item" element={<PurcheseItem />} />
-          <Route path="purchase-item/form" element={<PurchaseItemForm />} />
-          <Route path="purchase-item/view" element={<PurchaseItemView />} />
-          <Route path="invoice" element={<Invoice />} />
-          <Route path="invoice/form" element={<InvoiceForm />} />
-          <Route path="invoice/view" element={<InvoiceView />} />
-          <Route path="settings" element={<Setting />} />
-          <Route path="billing" element={<Billing />} />
-          <Route path="billing/form" element={<BillingForm />} />
-          <Route path="billing/view" element={<BillingView />} />
-        </Route>
-
-        {/* User Management - SUPER_ADMIN only */}
-        {/* TODO: Create Users page component */}
-        {/* <Route
-          element={<RoleProtectedRoute allowedRoles={[Role.SUPER_ADMIN]} />}
-        >
-          <Route path="users" element={<Users />} />
-        </Route> */}
-
-        {/* Catch-all routes */}
-        <Route path="*" element={<NotFound />} />
       </Route>
-    </Route>
-  </Routes>
-);
+    </Routes>
+  );
+};
 
 export default AppRoutes;
 

@@ -1,11 +1,10 @@
 import { NavLink } from 'react-router-dom';
 import clsx from 'clsx';
 
-import { ChevronLeft, ChevronRight, Home, CreditCard, Receipt, Users, BarChart2, Bell, Settings } from '../icons';
+import { ChevronLeft, ChevronRight, Home, CreditCard, Receipt, Users, BarChart2, Settings, Shield } from '../icons';
 import { Button } from '../ui';
-import { useAuth } from '../../context/AuthContext';
-import { Role } from '../../common/enums/role.enum';
 import { List, Package } from 'lucide-react';
+import { usePermissions } from '../../hooks/usePermissions';
 
 type SidebarProps = {
   collapsed: boolean;
@@ -16,7 +15,7 @@ type MenuItem = {
   label: string;
   to: string;
   icon: React.ComponentType<{ size?: number; className?: string; 'aria-hidden'?: boolean }>;
-  roles?: Role[]; // If not specified, all authenticated users can see it
+  module?: string;
 };
 
 type MenuSection = {
@@ -24,78 +23,67 @@ type MenuSection = {
   items: MenuItem[];
 };
 
-const getMenuSections = (userRole: Role | string | null): MenuSection[] => {
-  const baseSections: MenuSection[] = [];
-  
-  // Dashboard - Only for SUPER_ADMIN
-  if (userRole === Role.SUPER_ADMIN) {
-    baseSections.push({
+// Get all menu sections for SUPER_ADMIN
+const getMenuSections = (): MenuSection[] => {
+  return [
+    {
       label: 'Dashboard',
       items: [
-        { label: 'Dashboard', to: '/dashboard', icon: Home, roles: [Role.SUPER_ADMIN] },
+        { label: 'Dashboard', to: '/dashboard', icon: Home },
       ],
-    });
-  }
-
-  // Purchase section - Only for SUPER_ADMIN and SALES_MANAGER
-  if (userRole === Role.SUPER_ADMIN || userRole === Role.SALES_MANAGER) {
-    baseSections.push({
+    },
+    {
+      label: 'Sales',
       items: [
-        { label: 'Purchase', to: '/purchase', icon: Users, roles: [Role.SUPER_ADMIN, Role.SALES_MANAGER] },
-        // { label: 'Invoice', to: '/invoice', icon: Receipt, roles: [Role.SUPER_ADMIN, Role.SALES_MANAGER] },
-        { label: 'Purchase Item', to: '/purchase-item', icon: CreditCard, roles: [Role.SUPER_ADMIN, Role.SALES_MANAGER] },
+        { label: 'Sales', to: '/sales', icon: BarChart2, module: 'sales' },
       ],
-    });
-  }
-
-  baseSections.push({
-    items: [
-      { label: 'Categories', to: '/categories', icon: List, roles: [Role.SUPER_ADMIN, Role.SALES_MANAGER] },
-      { label: 'Product', to: '/product', icon: Package, roles: [Role.SUPER_ADMIN, Role.SALES_MANAGER] },
-      // { label: 'Sales', to: '/sales', icon: BarChart2 },
-      { label: 'Billing', to: '/billing', icon: CreditCard },
-    ],
-  });
-
-  // User Management - Only for SUPER_ADMIN
-  if (userRole === Role.SUPER_ADMIN) {
-    baseSections.push({
-      label: 'Administration',
+    },
+    {
+      label: 'Purchase',
       items: [
-        // TODO: Uncomment when Users page is created
-        // { label: 'Users', to: '/users', icon: Users, roles: [Role.SUPER_ADMIN] },
+        { label: 'Purchase', to: '/purchase', icon: Users, module: 'purchase' },
+        { label: 'Purchase Item', to: '/purchase-item', icon: CreditCard, module: 'purchase-item' },
+        { label: 'Invoice', to: '/invoice', icon: Receipt, module: 'invoice' },
       ],
-    });
-  }
-
-  // Others section - All authenticated users
-  baseSections.push({
-    label: 'Others',
-    items: [
-      { label: 'Settings', to: '/settings', icon: Settings },
-      { label: 'Support', to: '/support', icon: Bell },
-    ],
-  });
-
-  return baseSections;
+    },
+    {
+      label: 'Product Management',
+      items: [
+        { label: 'Categories', to: '/categories', icon: List, module: 'categories' },
+        { label: 'Product', to: '/product', icon: Package, module: 'product' },
+      ],
+    },
+    {
+      items: [
+        { label: 'Billing', to: '/billing', icon: CreditCard, module: 'billing' },
+      ],
+    },
+    {
+      label: 'Others',
+      items: [
+        { label: 'Settings', to: '/settings', icon: Settings, module: 'settings' },
+        { label: 'Permissions', to: '/permissions', icon: Shield, module: 'permissions' },
+        { label: 'Employees', to: '/employees', icon: Users, module: 'employees' },
+      ],
+    },
+  ];
 };
 
 export const Sidebar = ({ collapsed, onToggleCollapse }: SidebarProps) => {
-  const { role } = useAuth();
-  const sections = getMenuSections(role);
+  const { hasModuleAccess, loading: permissionsLoading } = usePermissions();
+  const sections = getMenuSections();
 
-  // Filter menu items based on user role
-  const filteredSections = sections.map((section) => ({
-    ...section,
-    items: section.items.filter((item) => {
-      // If no roles specified, show to all authenticated users
-      if (!item.roles) {
-        return true;
-      }
-      // Otherwise, check if user role is in allowed roles
-      return role && item.roles.includes(role as Role);
-    }),
-  })).filter((section) => section.items.length > 0); // Remove empty sections
+  const filteredSections = sections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => {
+        if (!item.module) {
+          return true;
+        }
+        return hasModuleAccess(item.module);
+      }),
+    }))
+    .filter((section) => section.items.length > 0);
 
   return (
     <aside
@@ -126,6 +114,11 @@ export const Sidebar = ({ collapsed, onToggleCollapse }: SidebarProps) => {
       </div>
 
       <nav className="mt-6 space-y-6">
+        {filteredSections.length === 0 && !permissionsLoading && (
+          <p className="text-sm text-text-secondary px-2">
+            You do not have access to any modules. Please contact your administrator.
+          </p>
+        )}
         {filteredSections.map((section, sectionIndex) => (
           <div key={section.label || `section-${sectionIndex}`}>
             {!collapsed && section.label && (

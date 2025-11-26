@@ -37,6 +37,8 @@ const Login = () => {
       } else {
         await login(credentials.email, credentials.password);
       }
+      
+      // Redirect to dashboard for all users (all are SUPER_ADMIN)
       navigate('/dashboard', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

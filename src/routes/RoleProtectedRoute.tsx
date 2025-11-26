@@ -3,8 +3,11 @@ import { useAuth } from '../context/AuthContext';
 import { Role } from '../common/enums/role.enum';
 
 type RoleProtectedRouteProps = {
-  allowedRoles: Role[];
+  allowedRoles: Array<Role | string>;
 };
+
+const normalizeRoleValue = (value?: Role | string | null): string =>
+  value ? value.toString().toUpperCase().replace(/\s+/g, '_').trim() : '';
 
 /**
  * RoleProtectedRoute Component
@@ -13,7 +16,7 @@ type RoleProtectedRouteProps = {
  * @param allowedRoles - Array of roles that can access this route
  * 
  * Usage:
- * <Route element={<RoleProtectedRoute allowedRoles={[Role.SUPER_ADMIN, Role.SALES_MANAGER]} />}>
+ * <Route element={<RoleProtectedRoute allowedRoles={[Role.SUPER_ADMIN]} />}>
  *   <Route path="protected" element={<ProtectedPage />} />
  * </Route>
  */
@@ -37,10 +40,55 @@ const RoleProtectedRoute = ({ allowedRoles }: RoleProtectedRouteProps) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Check if user has required role
-  if (!role || !allowedRoles.includes(role as Role)) {
-    // Redirect to sales page (accessible to all authenticated users)
-    return <Navigate to="/sales" replace />;
+  // Check if user has required role (handle both enum and string)
+  if (!role) {
+    // Debug logging (remove in production)
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[RoleProtectedRoute] No role found, redirecting to dashboard');
+    }
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  const roleStr = normalizeRoleValue(role);
+  
+  // Debug logging (remove in production)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[RoleProtectedRoute] Role check:', {
+      userRole: role,
+      normalizedRole: roleStr,
+      allowedRoles: allowedRoles,
+      normalizedAllowedRoles: allowedRoles.map(normalizeRoleValue),
+    });
+  }
+
+  const hasAccess = roleStr !== '' && allowedRoles.some((allowedRole) => {
+    const allowedRoleStr = normalizeRoleValue(allowedRole);
+    const matches = allowedRoleStr === roleStr;
+    
+    if (process.env.NODE_ENV === 'development' && matches) {
+      console.log('[RoleProtectedRoute] Role match found:', {
+        userRole: roleStr,
+        allowedRole: allowedRoleStr,
+      });
+    }
+    
+    return matches;
+  });
+
+  if (!hasAccess) {
+    // Debug logging (remove in production)
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[RoleProtectedRoute] Access denied:', {
+        userRole: roleStr,
+        allowedRoles: allowedRoles.map(normalizeRoleValue),
+        redirectingTo: '/dashboard',
+      });
+    }
+    
+    // If user is authenticated but doesn't have access, redirect to dashboard
+    // (which is accessible to both SUPER_ADMIN and SALES_MANAGER)
+    // Only redirect to login if truly not authenticated (handled above)
+    return <Navigate to="/dashboard" replace />;
   }
 
   // User is authenticated and has required role

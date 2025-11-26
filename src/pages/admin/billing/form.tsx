@@ -32,7 +32,8 @@ const BillingForm = () => {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const response = await fetchProducts(undefined, undefined, undefined, 1, 10);
+        // Fetch all products by using a high limit (1000 should cover most cases)
+        const response = await fetchProducts(undefined, undefined, undefined, 1, 1000);
         setProducts(response.data);
       } catch (error) {
         console.error('Error loading products:', error);

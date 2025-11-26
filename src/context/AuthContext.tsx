@@ -4,6 +4,14 @@ import authService from '../services/auth/authService';
 import { Role } from '../common/enums/role.enum';
 import { getRoleFromToken } from '../utils/jwt';
 
+const normalizeRole = (roleValue?: Role | string | null): Role | string => {
+  if (!roleValue) {
+    return Role.SUPER_ADMIN;
+  }
+
+  return String(roleValue).toUpperCase().replace(/\s+/g, '_').trim();
+};
+
 type User = {
   id: string;
   email: string;
@@ -39,10 +47,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           const response = await authService.verifyAuth();
           if (response.success && response.user) {
-            const userRole: Role | string =
-              (response.user.role as Role | string | undefined) ||
+            // Normalize role - prefer user.role, then token role, default to SUPER_ADMIN
+            const rawRole = (response.user.role as Role | string | undefined) ||
               (tokenRole as Role | string | null) ||
-              Role.SALES_MAN;
+              Role.SUPER_ADMIN;
+            const userRole = normalizeRole(rawRole);
             setIsAuthenticated(true);
             setUser({ ...response.user, role: userRole });
             setRole(userRole);
@@ -71,10 +80,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (response.success && response.user && response.token) {
         const token = response.token;
         const tokenRole = getRoleFromToken(token);
-        const userRole: Role | string =
-          (response.user.role as Role | string | undefined) ||
+        
+        // Normalize role - prefer user.role, then roleName, then token role, default to SUPER_ADMIN
+        const rawRole = (response.user.role as Role | string | undefined) ||
+          ((response.user as any).roleName as Role | string | undefined) ||
           (tokenRole as Role | string | null) ||
-          Role.SALES_MAN;
+          Role.SUPER_ADMIN;
+        const userRole = normalizeRole(rawRole);
+
+        // Debug logging (remove in production)
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[AuthContext] Login successful:', {
+            userRole: response.user.role,
+            roleName: (response.user as any).roleName,
+            tokenRole: tokenRole,
+            normalizedRole: userRole,
+          });
+        }
 
         setIsAuthenticated(true);
         setUser({ ...response.user, role: userRole });
@@ -99,10 +121,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (response.success && response.user && response.token) {
         const token = response.token;
         const tokenRole = getRoleFromToken(token);
-        const userRole: Role | string =
-          (response.user.role as Role | string | undefined) ||
+        // Normalize role - prefer user.role, then token role, default to SUPER_ADMIN
+        const rawRole = (response.user.role as Role | string | null | undefined) ||
           (tokenRole as Role | string | null) ||
-          Role.SALES_MAN;
+          Role.SUPER_ADMIN;
+        const userRole = normalizeRole(rawRole);
 
         setIsAuthenticated(true);
         setUser({ ...response.user, role: userRole });
