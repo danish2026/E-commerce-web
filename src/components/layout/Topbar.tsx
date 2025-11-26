@@ -78,7 +78,7 @@ export const Topbar = () => {
             </Button>
           </div>
           <div className="glass-panel border border-[var(--glass-border)] rounded-full p-1">
-            <Avatar name="Danish Admin" />
+            <Avatar name="Super Admin" />
           </div>
         </div>
       </div>

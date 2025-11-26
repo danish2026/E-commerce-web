@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Form, Input, InputNumber, Button, Card, Space, message, Divider, Select } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Form, Input, InputNumber, Button, Card, Space, message, Divider, Select, notification } from 'antd';
+import { ArrowLeftOutlined, SaveOutlined, PlusOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { createOrder, updateOrder, Order, PaymentType, OrderItem } from './api';
 import { fetchProducts, ProductDto } from '../product/ProductService';
 
@@ -168,8 +168,34 @@ const BillingForm = () => {
       navigate('/billing');
     } catch (error: any) {
       console.error('Error saving order:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to save order';
-      message.error(errorMessage);
+      
+      // Extract error message from API response
+      let errorMessage = 'Failed to save order';
+      
+      if (error.response?.data) {
+        // Handle NestJS error response format
+        errorMessage = error.response.data.message || 
+                      error.response.data.error || 
+                      error.response.data || 
+                      errorMessage;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Show prominent notification for important errors (like expired products)
+      if (errorMessage.toLowerCase().includes('expired') || 
+          errorMessage.toLowerCase().includes('cannot create order')) {
+        notification.error({
+          message: 'Order Creation Failed',
+          description: errorMessage,
+          icon: <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />,
+          duration: 5, // Show for 5 seconds
+          placement: 'topRight',
+        });
+      } else {
+        // Use regular message for other errors
+        message.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
