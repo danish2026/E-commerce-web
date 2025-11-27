@@ -58,6 +58,7 @@ class AuthService {
         message: data.message || 'Login successful',
         token: token,
         user: data.user,
+        permissions: data.permissions || [],
       };
     } catch (error) {
       // Handle network errors (backend not running, CORS issues, etc.)
@@ -136,6 +137,7 @@ class AuthService {
         message: data.message || 'Registration successful',
         token: token,
         user: data.user,
+        permissions: data.permissions || [],
       };
     } catch (error) {
       return {
@@ -310,6 +312,7 @@ class AuthService {
       return {
         success: true,
         user: data.user,
+        permissions: data.permissions || [],
         token: token,
       };
     } catch (error) {

@@ -4,12 +4,19 @@ import authService from '../services/auth/authService';
 import { Role } from '../common/enums/role.enum';
 import { getRoleFromToken } from '../utils/jwt';
 
-const normalizeRole = (roleValue?: Role | string | null): Role | string => {
+const normalizeRole = (roleValue?: Role | string | null): Role | string | null => {
   if (!roleValue) {
-    return Role.SUPER_ADMIN;
+    return null;
   }
 
   return String(roleValue).toUpperCase().replace(/\s+/g, '_').trim();
+};
+
+type Permission = {
+  id: string;
+  module: string;
+  action: string;
+  description?: string;
 };
 
 type User = {
@@ -23,6 +30,7 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   user: User | null;
   role: Role | string | null;
+  permissions: Permission[];
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -35,6 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<Role | string | null>(null);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Check authentication status on mount
@@ -50,21 +59,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // Normalize role - prefer user.role, then token role, default to SUPER_ADMIN
             const rawRole = (response.user.role as Role | string | undefined) ||
               (tokenRole as Role | string | null) ||
-              Role.SUPER_ADMIN;
+              null;
             const userRole = normalizeRole(rawRole);
             setIsAuthenticated(true);
-            setUser({ ...response.user, role: userRole });
+            setUser({ ...response.user, role: userRole || undefined });
             setRole(userRole);
+            setPermissions(response.permissions || []);
           } else {
             setIsAuthenticated(false);
             setUser(null);
             setRole(null);
+            setPermissions([]);
           }
         }
       } catch (error) {
         setIsAuthenticated(false);
         setUser(null);
         setRole(null);
+        setPermissions([]);
       } finally {
         setLoading(false);
       }
@@ -85,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const rawRole = (response.user.role as Role | string | undefined) ||
           ((response.user as any).roleName as Role | string | undefined) ||
           (tokenRole as Role | string | null) ||
-          Role.SUPER_ADMIN;
+          null;
         const userRole = normalizeRole(rawRole);
 
         // Debug logging (remove in production)
@@ -99,8 +111,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         setIsAuthenticated(true);
-        setUser({ ...response.user, role: userRole });
+        setUser({ ...response.user, role: userRole || undefined });
         setRole(userRole);
+        setPermissions(response.permissions || []);
       } else {
         throw new Error(response.message || 'Login failed');
       }
@@ -108,6 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAuthenticated(false);
       setUser(null);
       setRole(null);
+      setPermissions([]);
       throw error;
     } finally {
       setLoading(false);
@@ -124,12 +138,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Normalize role - prefer user.role, then token role, default to SUPER_ADMIN
         const rawRole = (response.user.role as Role | string | null | undefined) ||
           (tokenRole as Role | string | null) ||
-          Role.SUPER_ADMIN;
+          null;
         const userRole = normalizeRole(rawRole);
 
         setIsAuthenticated(true);
-        setUser({ ...response.user, role: userRole });
+        setUser({ ...response.user, role: userRole || undefined });
         setRole(userRole);
+        setPermissions(response.permissions || []);
       } else {
         throw new Error(response.message || 'Registration failed');
       }
@@ -137,6 +152,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAuthenticated(false);
       setUser(null);
       setRole(null);
+      setPermissions([]);
       throw error;
     } finally {
       setLoading(false);
@@ -153,6 +169,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAuthenticated(false);
       setUser(null);
       setRole(null);
+      setPermissions([]);
       setLoading(false);
     }
   };
@@ -162,12 +179,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isAuthenticated,
       user,
       role,
+      permissions,
       login,
       register,
       logout,
       loading,
     }),
-    [isAuthenticated, user, role, loading],
+    [isAuthenticated, user, role, permissions, loading],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

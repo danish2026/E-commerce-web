@@ -9,6 +9,13 @@ export interface RegisterCredentials {
   confirmPassword?: string;
 }
 
+export interface Permission {
+  id: string;
+  module: string;
+  action: string;
+  description?: string;
+}
+
 export interface AuthResponse {
   success: boolean;
   message?: string;
@@ -18,7 +25,10 @@ export interface AuthResponse {
     email: string;
     name?: string;
     role?: string;
+    permissionsRoleId?: string;
+    permissionsRoleName?: string;
   };
+  permissions?: Permission[];
 }
 
 export interface AuthError {
