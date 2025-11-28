@@ -32,12 +32,33 @@ const BillingForm = () => {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        // Fetch all products by using a high limit (1000 should cover most cases)
-        const response = await fetchProducts(undefined, undefined, undefined, 1, 1000);
-        setProducts(response.data);
+        // Fetch all products with pagination (API limit is 100 per page, using 99 to stay within limit)
+        let allProducts: ProductDto[] = [];
+        let currentPage = 1;
+        const pageSize = 99;
+        let hasMore = true;
+
+        while (hasMore) {
+          const response = await fetchProducts(undefined, undefined, undefined, currentPage, pageSize);
+          
+          if (response && response.data && Array.isArray(response.data)) {
+            allProducts = [...allProducts, ...response.data];
+            
+            // Check if there are more pages
+            hasMore = response.meta?.hasNext || false;
+            currentPage++;
+          } else {
+            console.error('Invalid response structure:', response);
+            hasMore = false;
+          }
+        }
+
+        console.log('Loaded products:', allProducts.length, 'products');
+        setProducts(allProducts);
       } catch (error) {
         console.error('Error loading products:', error);
         message.error('Failed to load products');
+        setProducts([]);
       }
     };
     loadProducts();
@@ -298,7 +319,7 @@ const BillingForm = () => {
                       <Select
                         showSearch
                         size="large"
-                        placeholder="Select product"
+                        placeholder={products.length === 0 ? "Loading products..." : "Select product"}
                         value={item.productId || undefined}
                         onChange={(value) => handleProductSelect(index, value)}
                         optionFilterProp="label"
@@ -307,10 +328,13 @@ const BillingForm = () => {
                             ?.toLowerCase()
                             .includes(input.toLowerCase())
                         }
-                        options={products.map(product => ({
-                          value: product.id,
-                          label: product.name,
-                        }))}
+                        notFoundContent={products.length === 0 ? 'No products available. Please add products first.' : 'No products found'}
+                        options={products
+                          .filter(product => product && product.id && product.name)
+                          .map(product => ({
+                            value: product.id,
+                            label: `${product.name}${product.sku ? ` (${product.sku})` : ''}`,
+                          }))}
                       />
                     </Form.Item>
 

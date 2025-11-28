@@ -167,7 +167,7 @@ export function DataTable<T extends Record<string, any>>({
             <select
               value={pageSize}
               onChange={handlePageSizeChange}
-              className="px-2 py-1 rounded border border-[var(--glass-border)] text-[var(--text-primary)] text-sm bg-[var(--surface-1)] focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
+              className="px-2 py-1 rounded border bor der-[var(--glass-border)] text-[var(--text-primary)] text-sm bg-[var(--surface-1)] focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
               aria-label="page"
             >
               {PAGE_SIZE_OPTIONS.map((option) => (

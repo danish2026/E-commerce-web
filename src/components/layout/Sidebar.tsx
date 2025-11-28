@@ -32,18 +32,18 @@ const getMenuSections = (): MenuSection[] => {
         { label: 'Dashboard', to: '/dashboard', icon: Home },
       ],
     },
-    {
-      label: 'Sales',
-      items: [
-        { label: 'Sales', to: '/sales', icon: BarChart2, module: 'sales' },
-      ],
-    },
+    // {
+    //   label: 'Sales',
+    //   items: [
+    //     { label: 'Sales', to: '/sales', icon: BarChart2, module: 'sales' },
+    //   ],
+    // },
     {
       label: 'Purchase',
       items: [
         { label: 'Purchase', to: '/purchase', icon: Users, module: 'purchase' },
         { label: 'Purchase Item', to: '/purchase-item', icon: CreditCard, module: 'purchase-item' },
-        { label: 'Invoice', to: '/invoice', icon: Receipt, module: 'invoice' },
+        // { label: 'Invoice', to: '/invoice', icon: Receipt, module: 'invoice' },
       ],
     },
     {
@@ -51,13 +51,11 @@ const getMenuSections = (): MenuSection[] => {
       items: [
         { label: 'Categories', to: '/categories', icon: List, module: 'categories' },
         { label: 'Product', to: '/product', icon: Package, module: 'product' },
-      ],
-    },
-    {
-      items: [
         { label: 'Billing', to: '/billing', icon: CreditCard, module: 'billing' },
+
       ],
     },
+      
     {
       label: 'Others',
       items: [
