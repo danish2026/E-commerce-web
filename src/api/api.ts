@@ -11,5 +11,6 @@ export const API = {
     CATEGORY: "categories",
     CATEGORIES: "categories",
     ORDERS: "order-item",
+    DASHBOARD:"dashboard"
 
 };

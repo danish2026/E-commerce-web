@@ -17,7 +17,7 @@ import {
   balancePanel,
   merchants,
 } from '../../../data/dashboard';
-import { fetchDashboardStats, DashboardStats, RecentOrder } from './DashboardService';
+import { fetchDashboardStats, DashboardStats, RecentOrder, MonthlyTrendItem } from './DashboardService';
 
 const Dashboard = () => {
   const [currency, setCurrency] = useState(balancePanel.currency);
@@ -46,11 +46,18 @@ const Dashboard = () => {
     loadDashboardData();
   }, []);
 
+  const calcPercent = (part: number, whole: number) => {
+    if (!whole) return '0.0%';
+    const percent = (part / whole) * 100;
+    if (!Number.isFinite(percent)) return '0.0%';
+    return `${percent.toFixed(1)}%`;
+  };
+
   // Transform monthly trend data for ChartCard
-  const cashflowData = stats?.monthlyTrend.map(item => ({
+  const cashflowData = (stats?.monthlyTrend ?? []).map((item: MonthlyTrendItem) => ({
     date: item.month,
     value: item.revenue,
-  })) || [];
+  }));
 
   // Calculate trend percentage (comparing last month to previous month)
   const calculateTrend = () => {
@@ -95,19 +102,19 @@ const Dashboard = () => {
       title: 'Total Revenue',
       value: formatCurrency(stats.revenue.total),
       currencySymbol: '₹',
-      trend: { percent: `${((stats.revenue.monthly / stats.revenue.total) * 100).toFixed(1)}%`, dir: 'up' as const },
+      trend: { percent: calcPercent(stats.revenue.monthly, stats.revenue.total), dir: 'up' as const },
     },
     {
       title: 'Monthly Revenue',
       value: formatCurrency(stats.revenue.monthly),
       currencySymbol: '₹',
-      trend: { percent: `${((stats.revenue.today / stats.revenue.monthly) * 100).toFixed(1)}%`, dir: 'up' as const },
+      trend: { percent: calcPercent(stats.revenue.today, stats.revenue.monthly), dir: 'up' as const },
     },
     {
       title: 'Total Orders',
       value: stats.orders.total.toString(),
       currencySymbol: '',
-      trend: { percent: `${((stats.orders.monthly / stats.orders.total) * 100).toFixed(1)}%`, dir: 'up' as const },
+      trend: { percent: calcPercent(stats.orders.monthly, stats.orders.total), dir: 'up' as const },
     },
   ] : [];
 

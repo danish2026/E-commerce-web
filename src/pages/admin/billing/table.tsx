@@ -39,9 +39,10 @@ const formatDate = (value?: string) => {
 const getPaymentBadgeClasses = (paymentType?: PaymentType) => {
   switch (paymentType) {
     case PaymentType.CASH:
-      return 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300';
+      return 'bg-[rgb(3_78_30)] text-green-900 dark:bg-blue dark:text-green-300';
+
     case PaymentType.CARD:
-      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300';
+      return 'bg-[rgb(98 17 183)] text-blue-700 dark:bg-blue-900/20 dark:text-blue-300';
     case PaymentType.UPI:
       return 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300';
     case PaymentType.CREDIT:
