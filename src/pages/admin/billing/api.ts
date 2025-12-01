@@ -139,20 +139,23 @@ export const fetchOrders = async (
   if (Array.isArray(response.data)) {
     // Map OrderItems to Order structure to prevent UI crash
     const items = response.data as OrderItem[];
-    const mappedOrders: Order[] = items.map(item => ({
-      id: item.id,
-      orderNumber: item.id ? item.id.substring(0, 8).toUpperCase() : 'N/A',
-      customerName: 'Walk-in', // Default since Item doesn't have customer info
-      customerPhone: '',
-      subtotal: Number(item.totalAmount) - (Number(item.gstAmount) || 0),
-      gstTotal: item.gstAmount,
-      discount: 0,
-      grandTotal: item.totalAmount,
-      paymentType: PaymentType.CASH, // Default
-      orderItems: [item], // Wrap the single item
-      createdAt: item.createdAt,
-      updatedAt: item.updatedAt
-    }));
+    const mappedOrders: Order[] = items.map(item => {
+      const anyItem: any = item;
+      return {
+        id: item.id,
+        orderNumber: item.id ? item.id.substring(0, 8).toUpperCase() : 'N/A',
+        customerName: typeof anyItem.customerName !== 'undefined' ? anyItem.customerName : 'Walk-in',
+        customerPhone: typeof anyItem.customerPhone !== 'undefined' ? anyItem.customerPhone : '',
+        subtotal: Number(item.totalAmount) - (Number(item.gstAmount) || 0),
+        gstTotal: item.gstAmount,
+        discount: typeof anyItem.discount !== 'undefined' && anyItem.discount !== null ? anyItem.discount : 0,
+        grandTotal: item.totalAmount,
+        paymentType: typeof anyItem.paymentType !== 'undefined' && anyItem.paymentType !== null ? anyItem.paymentType : PaymentType.CASH,
+        orderItems: [item], // Wrap the single item
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt
+      } as Order;
+    });
 
     return {
       data: mappedOrders,
@@ -176,12 +179,14 @@ export const fetchOrderById = async (id: string): Promise<Order> => {
   // If fetching from order-item, map it
   if (response.data && !response.data.orderItems && !response.data.items) {
     const item = response.data as OrderItem;
+    const anyItem: any = item;
     return {
       id: item.id,
       orderNumber: item.id ? item.id.substring(0, 8).toUpperCase() : 'N/A',
-      customerName: 'Walk-in',
+      customerName: typeof anyItem.customerName !== 'undefined' ? anyItem.customerName : 'Walk-in',
+      customerPhone: typeof anyItem.customerPhone !== 'undefined' ? anyItem.customerPhone : null,
       grandTotal: item.totalAmount,
-      paymentType: PaymentType.CASH,
+      paymentType: typeof anyItem.paymentType !== 'undefined' && anyItem.paymentType !== null ? anyItem.paymentType : PaymentType.CASH,
       orderItems: [item],
       createdAt: item.createdAt,
       updatedAt: item.updatedAt
@@ -204,14 +209,28 @@ export const updateOrder = async (id: string, order: UpdateOrderDto): Promise<Or
     // Transform UpdateOrderDto to UpdateOrderItemDto
     // We assume we are editing the single item that represents this "order"
     const item = order.items && order.items.length > 0 ? order.items[0] : null;
+    // Build update DTO including any top-level order fields that may be present
+    const updateDto: any = {};
     if (item) {
-      const updateDto: UpdateOrderItemDto = {
-        productId: item.productId,
-        quantity: item.quantity
-      };
-      const response = await apiClient.patch(`${API.ORDERS}/${id}`, updateDto);
-      return response.data;
+      if (typeof item.productId !== 'undefined') updateDto.productId = item.productId;
+      if (typeof item.quantity !== 'undefined') updateDto.quantity = item.quantity;
     }
+
+    if (typeof (order as any).customerName !== 'undefined') {
+      updateDto.customerName = (order as any).customerName;
+    }
+    if (typeof (order as any).customerPhone !== 'undefined') {
+      updateDto.customerPhone = (order as any).customerPhone;
+    }
+    if (typeof (order as any).discount !== 'undefined') {
+      updateDto.discount = (order as any).discount;
+    }
+    if (typeof (order as any).paymentType !== 'undefined') {
+      updateDto.paymentType = (order as any).paymentType;
+    }
+
+    const response = await apiClient.patch(`${API.ORDERS}/${id}`, updateDto);
+    return response.data;
   }
   const response = await apiClient.patch(`${API.ORDERS}/${id}`, order);
   console.warn("Low disk space!");

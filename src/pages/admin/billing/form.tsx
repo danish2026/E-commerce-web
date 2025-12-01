@@ -145,6 +145,8 @@ const BillingForm = () => {
 
   const onFinish = async () => {
     try {
+      // Log customer form payload for debugging
+      console.log('Customer Form Payload:', { customerName, customerPhone });
       // Validate all items
       const validItems = items.filter(item => 
         item.productId && item.quantity > 0
@@ -168,9 +170,8 @@ const BillingForm = () => {
       setLoading(true);
 
       // Format data for API
-      const apiData = {
-        customerName: customerName || null,
-        customerPhone: customerPhone || null,
+      // For updates, only include customer fields if they were changed
+      const baseData: any = {
         discount: discount || 0,
         paymentType: paymentType,
         items: validItems.map(item => ({
@@ -178,6 +179,25 @@ const BillingForm = () => {
           quantity: item.quantity
         }))
       };
+
+      const apiData: any = { ...baseData };
+
+      if (!isEditMode) {
+        // For create, include customer fields (can be null)
+        apiData.customerName = customerName || null;
+        apiData.customerPhone = customerPhone || null;
+      } else if (existingOrder) {
+        // For update, include customer fields only when changed
+        if ((customerName || '') !== (existingOrder.customerName || '')) {
+          apiData.customerName = customerName || null;
+        }
+        if ((customerPhone || '') !== (existingOrder.customerPhone || '')) {
+          apiData.customerPhone = customerPhone || null;
+        }
+      }
+
+      // Log the full API payload before sending
+      console.log('Order API Payload:', apiData);
 
       if (isEditMode && existingOrder?.id) {
         await updateOrder(existingOrder.id, apiData);
@@ -268,7 +288,8 @@ const BillingForm = () => {
                     placeholder="Enter customer name (optional)"
                     size="large"
                     value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
+                    onChange={(e) => { setCustomerName(e.target.value);
+                       }}
                   />
                 </Form.Item>
 

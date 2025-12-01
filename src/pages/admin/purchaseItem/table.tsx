@@ -173,7 +173,7 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
             <button
               onClick={() => pagination.onChange?.(currentPage - 1, pageSize)}
               disabled={currentPage === 1}
-              className="px-3 py-1.5 rounded border border-[var(--glass-border)] text-sm text-[var(--text-primary)] hover:bg-[var(--glass-bg)] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
+  className="px-3 py-1.5 rounded border border-[var(--glass-border)] text-[24px] text-[var(--text-primary)] hover:bg-[var(--glass-bg)] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
               aria-label="Previous page"
             >
               ‹
@@ -199,7 +199,7 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
             <button
               onClick={() => pagination.onChange?.(currentPage + 1, pageSize)}
               disabled={currentPage >= totalPages}
-              className="px-3 py-1.5 rounded border border-[var(--glass-border)] text-sm text-[var(--text-primary)] hover:bg-[var(--glass-bg)] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
+  className="px-3 py-1.5 rounded border border-[var(--glass-border)] text-[24px] text-[var(--text-primary)] hover:bg-[var(--glass-bg)] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
               aria-label="Next page"
             >
               ›
