@@ -1,5 +1,7 @@
-import { Button, DatePicker, Input, Space, Spin } from 'antd';
-import React, { useState, useEffect } from 'react';
+import {  DatePicker, Space, Spin } from 'antd';
+import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
+import  { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
@@ -85,16 +87,16 @@ const Employees = () => {
               <Input
                 placeholder="Search by name, email, or phone"
                 style={{ width: 600, height: '40px' }}
-                allowClear
+                // allowClear
                 value={searchText}
                 onChange={(e) => {
                   setSearchText(e.target.value);
                   setCurrentPage(1);
                 }}
-                onPressEnter={() => {
-                  setCurrentPage(1);
-                  loadEmployees();
-                }}
+                // onPressEnter={() => {
+                //   setCurrentPage(1);
+                //   loadEmployees();
+                // }}
               />
               <RangePicker
                 value={dateRange}
@@ -107,10 +109,10 @@ const Employees = () => {
                 style={{ width: 200, height: '40px' }}
               />
               <Button
-                type="primary"
+                // type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => navigate('/employees/form')}
-                size="large"
+                // size="large"
                 disabled={!canCreateEmployee}
                 title={!canCreateEmployee ? 'You do not have permission to create employees' : ''}
                 style={{

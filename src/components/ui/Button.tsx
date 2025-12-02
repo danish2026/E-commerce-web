@@ -9,6 +9,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
   leadingIcon?: ReactNode;
   trailingIcon?: ReactNode;
+  icon?: ReactNode;
+  iconPosition?: 'left' | 'right';
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
@@ -26,23 +28,36 @@ const sizeClasses: Record<ButtonSize, string> = {
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { className, variant = 'primary', size = 'md', leadingIcon, trailingIcon, children, ...props },
+  {
+    className,
+    variant = 'primary',
+    size = 'md',
+    leadingIcon,
+    trailingIcon,
+    icon,
+    iconPosition = 'left',
+    children,
+    ...props
+  },
   ref,
 ) {
+  const computedLeadingIcon = leadingIcon ?? (icon && iconPosition === 'left' ? icon : undefined);
+  const computedTrailingIcon = trailingIcon ?? (icon && iconPosition === 'right' ? icon : undefined);
+
   return (
     <button
       ref={ref}
       className={clsx(
-        'inline-flex items-center justify-center gap-2 rounded-full font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50 disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center gap-2 text-[14px] rounded-[8px] font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50 disabled:cursor-not-allowed',
         variantClasses[variant],
         sizeClasses[size],
         className,
       )}
       {...props}
     >
-      {leadingIcon}
-      <span>{children}</span>
-      {trailingIcon}
+      {computedLeadingIcon && <span className="flex items-center">{computedLeadingIcon}</span>}
+      {children && <span>{children}</span>}
+      {computedTrailingIcon && <span className="flex items-center">{computedTrailingIcon}</span>}
     </button>
   );
 });

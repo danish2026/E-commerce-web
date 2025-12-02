@@ -34,6 +34,7 @@ import PermissionView from '../pages/admin/permissions/view';
 import Employees from '../pages/admin/employees';
 import EmployeeForm from '../pages/admin/employees/form';
 import EmployeeView from '../pages/admin/employees/view';
+import Reporting from '../pages/admin/reporting';
 
 const AppRoutes = () => {
   const salesManagerRoles = [Role.SUPER_ADMIN, Role.SALES_MANAGER];
@@ -110,6 +111,7 @@ const AppRoutes = () => {
             <Route path="billing" element={<Billing />} />
             <Route path="billing/form" element={<BillingForm />} />
             <Route path="billing/view" element={<BillingView />} />
+            <Route path="reporting" element={<Reporting />} />
           </Route>
 
           {/* User Management - SUPER_ADMIN only */}

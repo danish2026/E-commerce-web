@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input, DatePicker, Button, Space, message, Spin } from 'antd';
+import {  DatePicker,  Space, message, Spin } from 'antd';
+import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import Table from './table';
@@ -116,14 +118,13 @@ const PurchaseItem = () => {
           <Space size="middle" className="w-full" direction="vertical">
             <Space size="middle" className="w-full" wrap>
               <Input
-                placeholder="Search by item name or description"
-                prefix={<SearchOutlined />}
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                style={{ width: 600, height: '40px' }}
-                allowClear
-                className="purchase-item-search-input"
-              />
+  placeholder="Search by item name or description"
+  value={searchText}
+  onChange={(e) => setSearchText(e.target.value)}
+  style={{ width: 600, height: '40px' }}
+  onRefresh={() => setSearchText('')}
+/>
+              {/* <Input placeholder="Search by item name or description"  value={searchText} onChange={(e) => setSearchText(e.target.value)} style={{ width: 600, height: '40px' }} /> */}
               <RangePicker
                 value={dateRange}
                 onChange={(dates) => setDateRange(dates as [Dayjs | null, Dayjs | null] | null)}
@@ -132,10 +133,10 @@ const PurchaseItem = () => {
                 style={{ width: 200, height: '40px' }}
               />
               <Button
-                type="primary"
+                // type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => handleNavigate('form', { mode: 'add' })}
-                size="large"
+                // size="large"
                 style={{
                   height: '40px',
                   width: '200px',

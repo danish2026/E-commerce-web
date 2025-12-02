@@ -1,6 +1,8 @@
-import { Button, Input, Space, Spin, Select, Modal, Form, message, Checkbox } from 'antd';
+import {  Space, Spin, Select, Modal, Form, message, Checkbox } from 'antd';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
 import { PlusOutlined, UserAddOutlined, SafetyOutlined } from '@ant-design/icons';
 import { fetchPermissions, Permission, fetchModules, fetchRoles, createRole, createRolePermission, bulkCreatePermissions, Role } from './api';
 import Table from './table';
@@ -189,16 +191,16 @@ const Permissions = () => {
               <Input
                 placeholder="Search by module, action, or description"
                 style={{ width: 550, height: '40px' }}
-                allowClear
+                // allowClear
                 value={searchText}
                 onChange={(e) => {
                   setSearchText(e.target.value);
                   setCurrentPage(1);
                 }}
-                onPressEnter={() => {
-                  setCurrentPage(1);
-                  loadPermissions();
-                }}
+                // onPressEnter={() => {
+                //   setCurrentPage(1);
+                //   loadPermissions();
+                // }}
               />
               <Select
                 placeholder="Filter by Module"
@@ -233,10 +235,10 @@ const Permissions = () => {
                 ))}
               </Select>
               <Button
-                type="primary"
+                // type="primary"
                 icon={<UserAddOutlined />}
                 onClick={() => setAddRoleModalVisible(true)}
-                size="large"
+                // size="large"
                 style={{
                   height: '40px',
                   backgroundColor: 'var(--brand)',
@@ -246,10 +248,10 @@ const Permissions = () => {
                 Add Role
               </Button>
               <Button
-                type="primary"
+                // type="primary"
                 icon={<SafetyOutlined />}
                 onClick={() => setAddRolePermissionModalVisible(true)}
-                size="large"
+                // size="large"
                 style={{
                   height: '40px',
                   backgroundColor: 'var(--brand)',
@@ -259,10 +261,10 @@ const Permissions = () => {
                 Add Role Permission
               </Button>
               <Button
-                type="primary"
+                // type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => setCreatePermissionModalVisible(true)}
-                size="large"
+                // size="large"
                 style={{
                   height: '40px',
                   backgroundColor: 'var(--brand)',
@@ -319,19 +321,19 @@ const Permissions = () => {
             label="Role Name"
             rules={[{ required: true, message: 'Please enter role name' }]}
           >
-            <Input placeholder="Enter role name" size="large" />
+            <Input placeholder="Enter role name"  />
           </Form.Item>
           <Form.Item
             name="description"
             label="Description"
           >
-            <Input.TextArea rows={4} placeholder="Enter role description (optional)" />
+            <Input type="textarea"   placeholder="Enter role description (optional)" />
           </Form.Item>
           <Form.Item>
             <Space>
               <Button
-                type="primary"
-                htmlType="submit"
+                // type="primary"
+                // htmlType="submit"
                 style={{
                   backgroundColor: 'var(--brand)',
                   borderColor: 'var(--brand)',
@@ -408,8 +410,8 @@ const Permissions = () => {
           <Form.Item>
             <Space>
               <Button
-                type="primary"
-                htmlType="submit"
+                // type="primary"
+                // htmlType="submit"
                 style={{
                   backgroundColor: 'var(--brand)',
                   borderColor: 'var(--brand)',
@@ -502,8 +504,8 @@ const Permissions = () => {
           <Form.Item>
             <Space>
               <Button
-                type="primary"
-                htmlType="submit"
+                // type="primary"
+                // htmlType="submit"
                 style={{
                   backgroundColor: 'var(--brand)',
                   borderColor: 'var(--brand)',

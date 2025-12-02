@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Input, DatePicker, Button, Space, message, Spin } from 'antd';
+import { useState, useEffect, useCallback } from 'react';
+import {  DatePicker, Space, message, Spin } from 'antd';
+import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { DataTable, TableColumn } from '../../../components/common/DataTable';
@@ -238,12 +240,12 @@ const Categories = () => {
             <Space size="middle" className="w-full" wrap>
               <Input
                 placeholder="Search by category name or description"
-                prefix={<SearchOutlined />}
+                icon={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{ width: 600, height: '40px' }}
-                allowClear
-                className="category-search-input"
+                // allowClear
+                // className="category-search-input"
               />
               <RangePicker
                 value={dateRange}
@@ -253,10 +255,10 @@ const Categories = () => {
                 style={{ width: 200, height: '40px' }}
               />
               <Button
-                type="primary"
+                // type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => handleOpenFormModal()}
-                size="large"
+                // size="large"
                 style={{
                   height: '40px',
                   width: '200px',

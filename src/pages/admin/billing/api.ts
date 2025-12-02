@@ -110,7 +110,9 @@ export const fetchOrders = async (
   search?: string,
   fromDate?: string,
   toDate?: string,
-  paymentType?: PaymentType
+  paymentType?: PaymentType,
+  minSubtotal?: number,
+  maxSubtotal?: number
 ): Promise<PaginatedOrderResponse> => {
   const params: Record<string, string | number> = {
     page,
@@ -133,29 +135,58 @@ export const fetchOrders = async (
     params.paymentType = paymentType;
   }
 
+  if (minSubtotal !== undefined) {
+    params.minSubtotal = minSubtotal;
+  }
+
+  if (maxSubtotal !== undefined) {
+    params.maxSubtotal = maxSubtotal;
+  }
+
   const response = await apiClient.get(API.ORDERS, { params });
 
-  // Handle if response is just an array (from order-item API)
+  // Helper function to map OrderItem to Order
+  const mapOrderItemToOrder = (item: OrderItem): Order => {
+    const anyItem: any = item;
+    // Generate orderNumber from id - use first 8 chars or fallback to full id or 'N/A'
+    let orderNumber = 'N/A';
+    if (item.id) {
+      orderNumber = item.id.length >= 8 
+        ? item.id.substring(0, 8).toUpperCase().replace(/-/g, '')
+        : item.id.toUpperCase().replace(/-/g, '');
+    }
+    
+    return {
+      id: item.id || '',
+      orderNumber: orderNumber,
+      customerName: typeof anyItem.customerName !== 'undefined' && anyItem.customerName !== null ? anyItem.customerName : 'Walk-in',
+      customerPhone: typeof anyItem.customerPhone !== 'undefined' && anyItem.customerPhone !== null ? anyItem.customerPhone : '',
+      subtotal: Number(item.totalAmount || 0) - (Number(item.gstAmount) || 0),
+      gstTotal: item.gstAmount || 0,
+      discount: typeof anyItem.discount !== 'undefined' && anyItem.discount !== null ? anyItem.discount : 0,
+      grandTotal: item.totalAmount || 0,
+      paymentType: typeof anyItem.paymentType !== 'undefined' && anyItem.paymentType !== null ? anyItem.paymentType : PaymentType.CASH,
+      orderItems: [item], // Wrap the single item
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt
+    } as Order;
+  };
+
+  // Handle paginated response (new format)
+  if (response.data && response.data.data && Array.isArray(response.data.data) && response.data.meta) {
+    const items = response.data.data as OrderItem[];
+    const mappedOrders: Order[] = items.map(mapOrderItemToOrder);
+    
+    return {
+      data: mappedOrders,
+      meta: response.data.meta
+    };
+  }
+
+  // Handle if response is just an array (legacy format)
   if (Array.isArray(response.data)) {
-    // Map OrderItems to Order structure to prevent UI crash
     const items = response.data as OrderItem[];
-    const mappedOrders: Order[] = items.map(item => {
-      const anyItem: any = item;
-      return {
-        id: item.id,
-        orderNumber: item.id ? item.id.substring(0, 8).toUpperCase() : 'N/A',
-        customerName: typeof anyItem.customerName !== 'undefined' ? anyItem.customerName : 'Walk-in',
-        customerPhone: typeof anyItem.customerPhone !== 'undefined' ? anyItem.customerPhone : '',
-        subtotal: Number(item.totalAmount) - (Number(item.gstAmount) || 0),
-        gstTotal: item.gstAmount,
-        discount: typeof anyItem.discount !== 'undefined' && anyItem.discount !== null ? anyItem.discount : 0,
-        grandTotal: item.totalAmount,
-        paymentType: typeof anyItem.paymentType !== 'undefined' && anyItem.paymentType !== null ? anyItem.paymentType : PaymentType.CASH,
-        orderItems: [item], // Wrap the single item
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt
-      } as Order;
-    });
+    const mappedOrders: Order[] = items.map(mapOrderItemToOrder);
 
     return {
       data: mappedOrders,
@@ -170,6 +201,7 @@ export const fetchOrders = async (
     };
   }
 
+  // Handle if response.data is already in Order format (shouldn't happen with order-item API)
   return response.data;
 };
 

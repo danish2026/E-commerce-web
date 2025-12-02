@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Form, Input, InputNumber, Button, Card, Space, message, Divider, Select, notification } from 'antd';
+import { Form, Input, InputNumber, Button, Card, Space, message, Divider, Select, notification, Modal } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, PlusOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { createOrder, updateOrder, Order, PaymentType, OrderItem } from './api';
 import { fetchProducts, ProductDto } from '../product/ProductService';
@@ -94,6 +94,39 @@ const BillingForm = () => {
   // Handle product selection for an item
   const handleProductSelect = (index: number, productId: string) => {
     const product = products.find(p => p.id === productId);
+    
+    if (product) {
+      // Check if product is expired
+      if (product.expiryDate) {
+        const expiryDate = new Date(product.expiryDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        expiryDate.setHours(0, 0, 0, 0);
+        
+        if (expiryDate < today) {
+          Modal.warning({
+            title: 'Product Expired',
+            content: `The product "${product.name}" has expired on ${new Date(product.expiryDate).toLocaleDateString()}. Please check before proceeding.`,
+            icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
+            okText: 'I Understand',
+            width: 500,
+          });
+        }
+      }
+      
+      // Check if product has low stock (10 or less)
+      const stock = Number(product.stock) || 0;
+      if (stock <= 10) {
+        notification.warning({
+          message: 'Low Stock Alert',
+          description: `The product "${product.name}" has only ${stock} items left in stock.`,
+          icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
+          duration: 5,
+          placement: 'topRight',
+        });
+      }
+    }
+    
     updateItem(index, { productId, product });
   };
 

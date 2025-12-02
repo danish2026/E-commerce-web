@@ -17,7 +17,8 @@ import {
   balancePanel,
   merchants,
 } from '../../../data/dashboard';
-import { fetchDashboardStats, DashboardStats, RecentOrder, MonthlyTrendItem } from './DashboardService';
+import { DashboardStats, fetchDashboardStats, MonthlyTrendItem, RecentOrder } from './DashboardService';
+// import { fetchDashboardStats, DashboardStats, RecentOrder, MonthlyTrendItem } from './DashboardService';
 
 const Dashboard = () => {
   const [currency, setCurrency] = useState(balancePanel.currency);

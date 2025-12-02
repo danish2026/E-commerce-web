@@ -62,6 +62,7 @@ const getMenuSections = (): MenuSection[] => {
         { label: 'Settings', to: '/settings', icon: Settings, module: 'settings' },
         { label: 'Permissions', to: '/permissions', icon: Shield, module: 'permissions' },
         { label: 'Employees', to: '/employees', icon: Users, module: 'employees' },
+        { label: 'Reporting', to: '/reporting', icon: BarChart2, module: 'reporting' },
       ],
     },
   ];

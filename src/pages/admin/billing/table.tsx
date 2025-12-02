@@ -245,9 +245,9 @@ const OrderTable: React.FC<TableProps> = ({
               </div>
             </div>
             <div className="mb-6 p-4 bg-[var(--surface-2)] rounded-lg">
-              <p className="text-sm text-[var(--text-primary)] font-medium">
-                Order #{orderToDelete.orderNumber || 'N/A'}
-              </p>
+                <p className="text-sm text-[var(--text-primary)] font-medium">
+                  Order #{orderToDelete.orderNumber || orderToDelete.id?.substring(0, 8).toUpperCase().replace(/-/g, '') || 'N/A'}
+                </p>
               {orderToDelete.customerName && (
                 <p className="text-xs text-[var(--text-secondary)] mt-1">
                   Customer: {orderToDelete.customerName}
@@ -300,7 +300,7 @@ const OrderTable: React.FC<TableProps> = ({
                   <div className="flex items-start justify-between mb-3 gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-[15px] font-semibold text-[var(--text-primary)]">
-                        Order #{order.orderNumber || 'N/A'}
+                        Order #{order.orderNumber || order.id?.substring(0, 8).toUpperCase().replace(/-/g, '') || 'N/A'}
                       </p>
                       <p className="text-xs text-[var(--text-secondary)] mt-1">
                         {formatDate(order.createdAt)}
@@ -441,7 +441,7 @@ const OrderTable: React.FC<TableProps> = ({
                     <td className="px-[18px] py-4 h-[56px]">
                       <div className="flex flex-col">
                         <span className="text-[15px] font-semibold text-[var(--text-primary)]">
-                          #{order.orderNumber || 'N/A'}
+                          #{order.orderNumber || order.id?.substring(0, 8).toUpperCase().replace(/-/g, '') || 'N/A'}
                         </span>
                         <span className="text-xs text-[var(--text-secondary)] mt-1">
                           {formatDate(order.createdAt)}

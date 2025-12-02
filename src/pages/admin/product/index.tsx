@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input, DatePicker, Button, Space, message, Spin } from 'antd';
+import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
+import {  DatePicker, Space, message, Spin } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import Table from './table';
@@ -135,11 +137,11 @@ const Product = () => {
             <Space size="middle" className="w-full" wrap>
               <Input
                 placeholder="Search by product name, SKU, or brand"
-                prefix={<SearchOutlined />}
+                icon={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{ width: 600, height: '40px' }}
-                allowClear
+                // allowClear
                 className="product-search-input"
               />
               <RangePicker
@@ -150,10 +152,8 @@ const Product = () => {
                 style={{ width: 200, height: '40px' }}
               />
               <Button
-                type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => handleNavigate('form', { mode: 'add' })}
-                size="large"
                 style={{
                   height: '40px',
                   width: '200px',
