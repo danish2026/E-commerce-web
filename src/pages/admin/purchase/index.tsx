@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DatePicker, Button, Space, message, Spin, Select } from 'antd';
+import { Button, Space, message, Spin, Select } from 'antd';
+import RangePicker from '../../../components/ui/RangePicker';
 import { Input } from '../../../components/ui/Input';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
@@ -13,7 +14,6 @@ import {
   PaymentStatus,
 } from './PurcherseService';
 
-const { RangePicker } = DatePicker;
 
 interface PurchaseDisplay {
   id: string;
@@ -136,9 +136,11 @@ const Purchase = () => {
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{ width: 490, height: '40px' }}
-                onRefresh={() => setSearchText('')}
-
-                // allowClear
+                allowClear
+                onPressEnter={() => {
+                  setCurrentPage(1);
+                  loadPurchases();
+                }}
               />
               <RangePicker
                 value={dateRange}

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Edit, Package, FileText, Hash, DollarSign } from 'lucide-react';
+import { Button, Card, Descriptions, Tag, Space } from 'antd';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 
 interface ViewData {
   id?: string;
@@ -9,123 +10,167 @@ interface ViewData {
   quantity: string;
   price: string;
   total: string;
+  createdAt?: string | null;
+  updatedAt?: string | null;
 }
 
 const View = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  
-  const data: ViewData = location.state as ViewData || {
-    id: 'PI-2024-001',
-    item: 'Sample Item',
-    description: 'Sample description',
-    quantity: '10',
-    price: '5000',
-    total: '50000'
+  const data = location.state as ViewData | null;
+
+  useEffect(() => {
+    if (!data) {
+      navigate('/purchase-item');
+    }
+  }, [data, navigate]);
+
+  if (!data) {
+    return null;
+  }
+
+  const formatCurrency = (value: string | number): string => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(numValue)) return '0';
+    return numValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <button 
+    <div className="min-h-screen bg-bg-secondary p-8">
+      <div className="max-w-6xl mx-auto">
+        <Button
+          icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/purchase-item')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
+          className="mb-6"
         >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
-        </button>
+          Back to Purchase Items List
+        </Button>
 
-        {/* Main Card */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          {/* Title Bar */}
-          <div className="flex justify-between items-center p-6 border-b border-gray-200">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Purchase Item Details</h1>
-              <p className="text-sm text-gray-500 mt-1">{data.id || 'N/A'}</p>
+        <Card
+          title={<h2 className="text-2xl m-7 font-bold m-0" style={{ color: 'var(--text-primary)' }}>Purchase Item Details</h2>}
+          headStyle={{ 
+            backgroundColor: 'var(--surface-1)', 
+            color: 'var(--text-primary)',
+            padding: '16px 24px', 
+            margin: '-24px -24px 24px -24px', 
+            width: 'calc(100% + 48px)',
+            borderRadius: '8px 8px 0 0',
+            borderBottom: '1px solid var(--glass-border)'
+          }}
+          className="shadow-card bg-surface-1"
+          style={{ boxShadow: 'var(--card-shadow)', overflow: 'hidden', backgroundColor: 'var(--surface-1)', borderColor: 'var(--glass-border)', border: '1px solid var(--glass-border)' }}
+          bodyStyle={{ backgroundColor: 'var(--surface-1)' }}
+        >
+          <Descriptions
+            column={1}
+            bordered
+            labelStyle={{ 
+              fontWeight: 'bold', 
+              backgroundColor: 'var(--surface-2)',
+              color: 'var(--text-primary)',
+              width: '200px'
+            }}
+            contentStyle={{ 
+              backgroundColor: 'var(--surface-1)',
+              color: 'var(--text-primary)'
+            }}
+          >
+            {/* <Descriptions.Item label="Purchase Item ID">
+              <span style={{ fontWeight: 'bold', fontSize: '16px' }}>{data.id || '-'}</span>
+            </Descriptions.Item> */}
+            
+            <Descriptions.Item label="Item Name">
+              <span style={{ fontWeight: 'bold', fontSize: '16px' }}>{data.item || '-'}</span>
+            </Descriptions.Item>
+            
+            {data.description && (
+              <Descriptions.Item label="Description">
+                {data.description}
+              </Descriptions.Item>
+            )}
+            
+            <Descriptions.Item label="Quantity">
+              <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
+                {data.quantity || '0'} units
+              </Tag>
+            </Descriptions.Item>
+            
+            <Descriptions.Item label="Price per Unit">
+              <span style={{ color: 'var(--text-primary)' }}>
+                ₹ {formatCurrency(data.price)}
+              </span>
+            </Descriptions.Item>
+            
+            {data.createdAt && (
+              <Descriptions.Item label="Created At">
+                {new Date(data.createdAt).toLocaleString('en-IN', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </Descriptions.Item>
+            )}
+            
+            {data.updatedAt && (
+              <Descriptions.Item label="Last Updated">
+                {new Date(data.updatedAt).toLocaleString('en-IN', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </Descriptions.Item>
+            )}
+          </Descriptions>
+
+          {/* Purchase Item Summary */}
+          <div className="mt-6 p-4 bg-[var(--surface-2)] rounded-lg border border-[var(--glass-border)]">
+            <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+              Purchase Item Summary
+            </h3>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-[var(--text-secondary)]">Quantity:</span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">
+                  {data.quantity} units
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-[var(--text-secondary)]">Price per Unit:</span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">
+                  ₹ {formatCurrency(data.price)}
+                </span>
+              </div>
+              <div className="border-t border-[var(--glass-border)] pt-2 mt-2">
+                <div className="flex justify-between">
+                  <span className="text-lg font-semibold text-[var(--text-primary)]">Total Amount:</span>
+                  <span className="text-2xl font-bold" style={{ color: 'var(--brand)' }}>
+                    ₹ {formatCurrency(data.total)}
+                  </span>
+                </div>
+              </div>
             </div>
-            <button 
-              onClick={() => navigate('/purchase-item/form', { state: { ...data, mode: 'edit' } })} 
-              className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+          </div>
+
+          <Space className="mt-6">
+            <Button
+              type="primary"
+              onClick={() => navigate('/purchase-item/form', { state: { ...data, mode: 'edit' } })}
+              style={{ 
+                backgroundColor: 'var(--brand)', 
+                borderColor: 'var(--brand)',
+              }}
             >
-              <Edit className="w-4 h-4" />
-              <span>Edit</span>
-            </button>
-          </div>
-
-          {/* Content */}
-          <div className="p-6">
-            {/* Item Details */}
-            <div className="space-y-6 mb-8">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-gray-500 text-sm">
-                  <Package className="w-4 h-4" />
-                  <span>Item Name</span>
-                </div>
-                <p className="text-lg font-semibold text-gray-900">{data.item}</p>
-              </div>
-
-              {data.description && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-gray-500 text-sm">
-                    <FileText className="w-4 h-4" />
-                    <span>Description</span>
-                  </div>
-                  <p className="text-base text-gray-700">{data.description}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Order Details Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-gray-500 text-sm">
-                  <Hash className="w-4 h-4" />
-                  <span>Quantity</span>
-                </div>
-                <p className="text-xl font-bold text-gray-900">{data.quantity}</p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-gray-500 text-sm">
-                  <DollarSign className="w-4 h-4" />
-                  <span>Price per Unit</span>
-                </div>
-                <p className="text-xl font-bold text-gray-900">₹{parseFloat(data.price).toLocaleString()}</p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-gray-500 text-sm">
-                  <DollarSign className="w-4 h-4" />
-                  <span>Total Amount</span>
-                </div>
-                <p className="text-xl font-bold text-gray-900">₹{parseFloat(data.total).toLocaleString()}</p>
-              </div>
-            </div>
-
-            {/* Summary */}
-            <div className="bg-gray-50 rounded-lg p-6 space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Summary</h3>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Quantity</span>
-                <span className="text-lg font-semibold text-gray-900">{data.quantity} units</span>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Price per Unit</span>
-                <span className="text-lg font-semibold text-gray-900">₹{parseFloat(data.price).toLocaleString()}</span>
-              </div>
-
-              <div className="border-t border-gray-200 pt-4 mt-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold text-gray-900">Total Amount</span>
-                  <span className="text-2xl font-bold text-gray-900">₹{parseFloat(data.total).toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+              Edit Purchase Item
+            </Button>
+            <Button onClick={() => navigate('/purchase-item')}>
+              Back to List
+            </Button>
+          </Space>
+        </Card>
       </div>
     </div>
   );

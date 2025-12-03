@@ -1,6 +1,7 @@
-import {  DatePicker, Space, Spin } from 'antd';
+import { Space, Spin } from 'antd';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
+import RangePicker from '../../../components/ui/RangePicker';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
@@ -10,7 +11,6 @@ import Table from './table';
 
 
 const Billing = () => {
-  const { RangePicker } = DatePicker;
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -83,17 +83,17 @@ const Billing = () => {
               <Input
                 placeholder="Search by order number, customer name, or phone"
                 style={{ width: 550, height: '40px' }}
-                // allowClear
+                allowClear
                 icon={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => {
                   setSearchText(e.target.value);
                   setCurrentPage(1);
                 }}
-                // onPressEnter={() => {
-                //   setCurrentPage(1);
-                //   loadOrders();
-                // }}
+                onPressEnter={() => {
+                  setCurrentPage(1);
+                  loadOrders();
+                }}
               />
               <RangePicker
                 value={dateRange}

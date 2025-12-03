@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {  DatePicker,  Space, message, Spin } from 'antd';
+import {  Space, message, Spin } from 'antd';
+import RangePicker from '../../../components/ui/RangePicker';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
@@ -12,7 +13,6 @@ import {
   PurchaseItemDto,
 } from './PurchaseItemService';
 
-const { RangePicker } = DatePicker;
 
 interface PurchaseItemDisplay {
   id: string;
@@ -122,7 +122,11 @@ const PurchaseItem = () => {
   value={searchText}
   onChange={(e) => setSearchText(e.target.value)}
   style={{ width: 500, height: '40px' }}
-  onRefresh={() => setSearchText('')}
+  allowClear
+  onPressEnter={() => {
+    setCurrentPage(1);
+    loadPurchaseItems();
+  }}
 />
               {/* <Input placeholder="Search by item name or description"  value={searchText} onChange={(e) => setSearchText(e.target.value)} style={{ width: 600, height: '40px' }} /> */}
               <RangePicker

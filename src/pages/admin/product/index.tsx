@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
-import {  DatePicker, Space, message, Spin } from 'antd';
+import { Space, message, Spin } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import RangePicker from '../../../components/ui/RangePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import Table from './table';
 import {
@@ -12,7 +13,6 @@ import {
   ProductDto,
 } from './ProductService';
 
-const { RangePicker } = DatePicker;
 
 interface ProductDisplay {
   id: string;

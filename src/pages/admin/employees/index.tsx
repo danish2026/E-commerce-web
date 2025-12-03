@@ -1,8 +1,9 @@
-import {  DatePicker, Space, Spin } from 'antd';
+import {  Space, Spin } from 'antd';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import  { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import RangePicker from '../../../components/ui/RangePicker';
 import { PlusOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { fetchEmployees, Employee } from './api';
@@ -10,7 +11,6 @@ import Table from './table';
 import { usePermissions } from '../../../hooks/usePermissions';
 
 const Employees = () => {
-  const { RangePicker } = DatePicker;
   const navigate = useNavigate();
   const { canCreate, canView, canEdit, canDelete, hasModuleAccess, loading: permissionsLoading } = usePermissions();
   const [loading, setLoading] = useState(false);
@@ -67,9 +67,8 @@ const Employees = () => {
 
   const handlePageChange = (page: number, size?: number) => {
     setCurrentPage(page);
-    if (size) {
+    if (size && size !== pageSize) {
       setPageSize(size);
-      setCurrentPage(1); // Reset to first page when page size changes
     }
   };
 
@@ -86,17 +85,17 @@ const Employees = () => {
             <Space size="middle" className="w-full" wrap>
               <Input
                 placeholder="Search by name, email, or phone"
-                style={{ width: 600, height: '40px' }}
-                // allowClear
+                style={{ width: 550, height: '40px' }}
+                allowClear
                 value={searchText}
                 onChange={(e) => {
                   setSearchText(e.target.value);
                   setCurrentPage(1);
                 }}
-                // onPressEnter={() => {
-                //   setCurrentPage(1);
-                //   loadEmployees();
-                // }}
+                onPressEnter={() => {
+                  setCurrentPage(1);
+                  loadEmployees();
+                }}
               />
               <RangePicker
                 value={dateRange}
@@ -106,7 +105,7 @@ const Employees = () => {
                 }}
                 format="YYYY-MM-DD"
                 placeholder={['Start Date', 'End Date']}
-                style={{ width: 200, height: '40px' }}
+                style={{ width: 250, height: '40px' }}
               />
               <Button
                 // type="primary"

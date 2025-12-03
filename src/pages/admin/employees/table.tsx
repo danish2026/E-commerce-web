@@ -132,9 +132,6 @@ const EmployeeTable: React.FC<TableProps> = ({
     return pages;
   };
 
-  const getDesktopPageNumbers = () =>
-    Array.from({ length: Math.min(5, totalPages) }, (_, index) => index + 1);
-
   const renderPagination = (pages: number[]) => {
     if (!pagination || total <= 0) return null;
 
@@ -484,7 +481,7 @@ const EmployeeTable: React.FC<TableProps> = ({
             </tbody>
           </table>
         </div>
-        {renderPagination(getDesktopPageNumbers())}
+        {renderPagination(getPageNumbers())}
       </div>
     </>
   );

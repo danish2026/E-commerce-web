@@ -39,9 +39,6 @@ interface DashboardApiResponse {
 
 export type ReportFilter = 'Daily' | 'Weekly' | 'Monthly' | 'Yearly';
 
-/**
- * Get date range for Weekly filter (last 7 days)
- */
 const getWeeklyDateRange = (): { startDate: string; endDate: string } => {
   const endDate = dayjs().endOf('day');
   const startDate = endDate.subtract(6, 'days').startOf('day');
@@ -51,9 +48,7 @@ const getWeeklyDateRange = (): { startDate: string; endDate: string } => {
   };
 };
 
-/**
- * Get date range for Monthly filter (current month)
- */
+
 const getMonthlyDateRange = (): { startDate: string; endDate: string } => {
   const startDate = dayjs().startOf('month');
   const endDate = dayjs().endOf('month');
@@ -63,9 +58,6 @@ const getMonthlyDateRange = (): { startDate: string; endDate: string } => {
   };
 };
 
-/**
- * Get date range for Yearly filter (current year)
- */
 const getYearlyDateRange = (): { startDate: string; endDate: string } => {
   const startDate = dayjs().startOf('year');
   const endDate = dayjs().endOf('year');
@@ -75,10 +67,6 @@ const getYearlyDateRange = (): { startDate: string; endDate: string } => {
   };
 };
 
-/**
- * Fetch reporting data based on filter type
- * If custom date range is provided, it overrides the default filter behavior
- */
 export const fetchReportingData = async (
   filter: ReportFilter,
   startDate?: string,
@@ -87,11 +75,9 @@ export const fetchReportingData = async (
   let data: DashboardApiResponse;
   let dateRange: { startDate: string; endDate: string };
 
-  // If custom date range is provided, use it for all filter types
   if (startDate && endDate) {
     dateRange = { startDate, endDate };
   } else {
-    // Otherwise, use default date range based on filter
     switch (filter) {
       case 'Daily':
         const today = dayjs().format('YYYY-MM-DD');
@@ -111,7 +97,6 @@ export const fetchReportingData = async (
     }
   }
 
-  // Fetch data using the determined date range
   const response = await apiClient.get<DashboardApiResponse>(
     `${API.DASHBOARD}/date-range`,
     {
@@ -132,9 +117,6 @@ export const fetchReportingData = async (
   };
 };
 
-/**
- * Get API error message helper
- */
 export const getApiErrorMessage = (error: any, defaultMessage: string): string => {
   if (error?.response?.data?.message) {
     return error.response.data.message;

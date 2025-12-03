@@ -155,15 +155,16 @@ export const fetchEmployees = async (
   
   // Transform to match PaginatedEmployeeResponse format
   if (response.data.meta) {
+    const metaLimit = response.data.meta.limit || response.data.meta.pageSize || limit;
     return {
       data: response.data.data || [],
       meta: {
         page: response.data.meta.page || page,
-        limit: response.data.meta.pageSize || limit,
+        limit: metaLimit,
         total: response.data.meta.total || 0,
-        totalPages: Math.ceil((response.data.meta.total || 0) / (response.data.meta.pageSize || limit)),
-        hasNext: (response.data.meta.page || page) < Math.ceil((response.data.meta.total || 0) / (response.data.meta.pageSize || limit)),
-        hasPrev: (response.data.meta.page || page) > 1,
+        totalPages: response.data.meta.totalPages || Math.ceil((response.data.meta.total || 0) / metaLimit),
+        hasNext: response.data.meta.hasNext !== undefined ? response.data.meta.hasNext : (response.data.meta.page || page) < Math.ceil((response.data.meta.total || 0) / metaLimit),
+        hasPrev: response.data.meta.hasPrev !== undefined ? response.data.meta.hasPrev : (response.data.meta.page || page) > 1,
       },
     };
   }

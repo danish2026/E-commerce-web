@@ -31,44 +31,38 @@ export const fetchPermissions = async (
   
   try {
     const response = await apiClient.get('permissions', { params });
-    // If the API doesn't support pagination, we'll handle it client-side
-    const allPermissions = response.data;
     
-    // Client-side filtering
-    let filtered = allPermissions;
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filtered = filtered.filter((p: Permission) =>
-        p.module.toLowerCase().includes(searchLower) ||
-        p.action.toLowerCase().includes(searchLower) ||
-        (p.description && p.description.toLowerCase().includes(searchLower))
-      );
-    }
-    if (module) {
-      filtered = filtered.filter((p: Permission) => p.module === module);
-    }
-    if (action) {
-      filtered = filtered.filter((p: Permission) => p.action === action);
+    // Handle both array and paginated response (for backward compatibility)
+    if (Array.isArray(response.data)) {
+      return {
+        data: response.data,
+        meta: {
+          total: response.data.length,
+          page: 1,
+          limit: response.data.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
     }
     
-    // Client-side pagination
-    const total = filtered.length;
-    const totalPages = Math.ceil(total / limit);
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const paginatedData = filtered.slice(start, end);
+    // Transform to match expected format
+    if (response.data.meta) {
+      return {
+        data: response.data.data || [],
+        meta: {
+          page: response.data.meta.page || page,
+          limit: response.data.meta.limit || limit,
+          total: response.data.meta.total || 0,
+          totalPages: response.data.meta.totalPages || Math.ceil((response.data.meta.total || 0) / (response.data.meta.limit || limit)),
+          hasNext: response.data.meta.hasNext !== undefined ? response.data.meta.hasNext : (response.data.meta.page || page) < Math.ceil((response.data.meta.total || 0) / (response.data.meta.limit || limit)),
+          hasPrev: response.data.meta.hasPrev !== undefined ? response.data.meta.hasPrev : (response.data.meta.page || page) > 1,
+        },
+      };
+    }
     
-    return {
-      data: paginatedData,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1,
-      },
-    };
+    return response.data;
   } catch (error) {
     console.error('Error fetching permissions:', error);
     throw error;

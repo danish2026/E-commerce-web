@@ -112,9 +112,8 @@ const Permissions = () => {
 
   const handlePageChange = (page: number, size?: number) => {
     setCurrentPage(page);
-    if (size) {
+    if (size && size !== pageSize) {
       setPageSize(size);
-      setCurrentPage(1); // Reset to first page when page size changes
     }
   };
 

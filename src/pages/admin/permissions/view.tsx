@@ -46,7 +46,7 @@ const View = () => {
         </Button>
 
         <Card
-          title={<h2 className="text-2xl font-bold m-0" style={{ color: 'var(--text-primary)' }}>Permission Details</h2>}
+          title={<h2 className="text-2xl m-7 font-bold m-0" style={{ color: 'var(--text-primary)' }}>Permission Details</h2>}
           headStyle={{ 
             backgroundColor: 'var(--surface-1)', 
             color: 'var(--text-primary)',

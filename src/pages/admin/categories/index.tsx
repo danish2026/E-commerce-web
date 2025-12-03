@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import {  DatePicker, Space, message, Spin } from 'antd';
+import { Space, message, Spin } from 'antd';
+import RangePicker from '../../../components/ui/RangePicker';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
@@ -17,7 +18,7 @@ import {
   CategoryDto,
 } from './CategoryService';
 
-const { RangePicker } = DatePicker;
+// const { RangePicker } = DatePicker;
 
 interface CategoryDisplay {
   id: string;

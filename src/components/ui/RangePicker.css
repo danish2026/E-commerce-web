@@ -1,0 +1,157 @@
+/* Custom RangePicker Styling to match Input component design */
+.custom-range-picker-wrapper {
+  width: 100%;
+}
+
+.custom-range-picker.ant-picker {
+  background-color: var(--surface-2) !important;
+  border: 1px solid var(--input-border) !important;
+  border-radius: 0.75rem !important; /* rounded-xl */
+  height: 40px !important;
+  transition: all 0.2s ease !important;
+}
+
+.custom-range-picker.ant-picker:hover {
+  border-color: var(--brand) !important;
+}
+
+.custom-range-picker.ant-picker-focused,
+.custom-range-picker.ant-picker-focused:hover {
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 2px rgba(var(--brand-rgb), 0.4) !important;
+  outline: none !important;
+}
+
+.custom-range-picker .ant-picker-input {
+  height: 100% !important;
+}
+
+.custom-range-picker .ant-picker-input > input {
+  color: var(--text-primary) !important;
+  font-size: 0.875rem !important; /* text-sm */
+  padding: 0 !important;
+  height: 100% !important;
+  background-color: transparent !important;
+}
+
+.custom-range-picker .ant-picker-input > input::placeholder {
+  color: var(--muted) !important;
+}
+
+.custom-range-picker .ant-picker-separator {
+  color: var(--text-primary) !important;
+  margin: 0 8px !important;
+}
+
+.custom-range-picker .ant-picker-suffix {
+  color: var(--muted) !important;
+  margin-left: 8px !important;
+}
+
+.custom-range-picker .ant-picker-clear {
+  color: var(--muted) !important;
+  background-color: transparent !important;
+}
+
+.custom-range-picker .ant-picker-clear:hover {
+  color: var(--brand) !important;
+}
+
+/* Calendar dropdown styling */
+.custom-range-picker .ant-picker-dropdown {
+  z-index: 1050 !important;
+}
+
+.custom-range-picker .ant-picker-panel-container {
+  background-color: var(--surface-1) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: var(--card-shadow) !important;
+}
+
+.custom-range-picker .ant-picker-panel {
+  background-color: var(--surface-1) !important;
+  border: none !important;
+}
+
+.custom-range-picker .ant-picker-header {
+  border-bottom: 1px solid var(--glass-border) !important;
+  background-color: var(--surface-1) !important;
+}
+
+.custom-range-picker .ant-picker-header button {
+  color: var(--text-primary) !important;
+}
+
+.custom-range-picker .ant-picker-header button:hover {
+  color: var(--brand) !important;
+  background-color: var(--surface-2) !important;
+}
+
+.custom-range-picker .ant-picker-header-view {
+  color: var(--text-primary) !important;
+}
+
+.custom-range-picker .ant-picker-header-view:hover {
+  color: var(--brand) !important;
+}
+
+.custom-range-picker .ant-picker-content th {
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
+}
+
+.custom-range-picker .ant-picker-cell {
+  color: var(--text-primary) !important;
+}
+
+.custom-range-picker .ant-picker-cell-in-view {
+  color: var(--text-primary) !important;
+}
+
+.custom-range-picker .ant-picker-cell:hover:not(.ant-picker-cell-disabled):not(.ant-picker-cell-selected) .ant-picker-cell-inner {
+  background-color: var(--surface-2) !important;
+}
+
+.custom-range-picker .ant-picker-cell-selected .ant-picker-cell-inner,
+.custom-range-picker .ant-picker-cell-range-start .ant-picker-cell-inner,
+.custom-range-picker .ant-picker-cell-range-end .ant-picker-cell-inner {
+  background-color: var(--brand) !important;
+  color: white !important;
+}
+
+.custom-range-picker .ant-picker-cell-in-range::before {
+  background-color: rgba(var(--brand-rgb), 0.1) !important;
+}
+
+.custom-range-picker .ant-picker-cell-today .ant-picker-cell-inner {
+  border-color: var(--brand) !important;
+}
+
+.custom-range-picker .ant-picker-cell-disabled {
+  color: var(--muted) !important;
+  opacity: 0.5 !important;
+}
+
+.custom-range-picker .ant-picker-footer {
+  border-top: 1px solid var(--glass-border) !important;
+  background-color: var(--surface-2) !important;
+}
+
+.custom-range-picker .ant-picker-footer-btn {
+  color: var(--text-primary) !important;
+}
+
+.custom-range-picker .ant-picker-footer-btn:hover {
+  color: var(--brand) !important;
+  background-color: var(--surface-1) !important;
+}
+
+/* Range picker specific styles */
+.custom-range-picker .ant-picker-cell-range-hover-start::after,
+.custom-range-picker .ant-picker-cell-range-hover-end::after,
+.custom-range-picker .ant-picker-cell-range-hover::after {
+  border-color: var(--brand) !important;
+  background-color: rgba(var(--brand-rgb), 0.05) !important;
+}
+

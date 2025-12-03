@@ -1,6 +1,7 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, User, Building, Package, Calendar, DollarSign, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Button, Card, Descriptions, Tag, Space } from 'antd';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 
 interface ViewData {
   id?: string;
@@ -11,138 +12,180 @@ interface ViewData {
   quantity: string;
   payment: string;
   dueDate: string;
+  createdAt?: string | null;
+  updatedAt?: string | null;
 }
 
 const View = () => {
   const navigate = useNavigate();
-  
-  // Sample data for demonstration
-  const data: ViewData = {
-    id: 'PO-2024-001',
-    supplier: 'ABC Suppliers Ltd.',
-    buyer: 'John Doe',
-    gst: '18',
-    amount: '50000',
-    quantity: '250',
-    payment: 'Partial',
-    dueDate: '2024-12-31'
+  const location = useLocation();
+  const data = location.state as ViewData | null;
+
+  useEffect(() => {
+    if (!data) {
+      navigate('/purchase');
+    }
+  }, [data, navigate]);
+
+  if (!data) {
+    return null;
+  }
+
+  const formatCurrency = (value: string | number): string => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(numValue)) return '0';
+    return numValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const totalWithGst = data.amount
-    ? (parseFloat(data.amount) * (1 + parseFloat(data.gst) / 100)).toFixed(2)
-    : '0.00';
-
-  const getPaymentIcon = (payment: string) => {
-    if (payment === 'Paid') return <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />;
-    if (payment === 'Pending') return <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />;
-    return <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />;
+  const getPaymentStatusColor = (payment: string) => {
+    const paymentLower = payment.toLowerCase();
+    if (paymentLower === 'paid') return 'green';
+    if (paymentLower === 'pending') return 'orange';
+    if (paymentLower === 'partial') return 'blue';
+    return 'default';
   };
 
-  const getPaymentColor = (payment: string) => {
-    if (payment === 'Paid') return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
-    if (payment === 'Pending') return 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800';
-    return 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
-  };
+  const gstAmount = parseFloat(data.amount) * (parseFloat(data.gst) / 100);
+  const totalWithGst = parseFloat(data.amount) + gstAmount;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-secondary)] p-6">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <button 
+    <div className="min-h-screen bg-bg-secondary p-8">
+      <div className="max-w-6xl mx-auto">
+        <Button
+          icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/purchase')}
-          className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] mb-6"
+          className="mb-6"
         >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
-        </button>
+          Back to Purchase Orders List
+        </Button>
 
-        {/* Main Card */}
-        <div className="bg-[var(--surface-1)] rounded-lg shadow-sm border border-[var(--glass-border)]">
-          {/* Title Bar */}
-          <div className="flex justify-between items-center p-6 border-b border-[var(--glass-border)]">
-            <div>
-              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Purchase Order</h1>
-              <p className="text-sm text-[var(--text-secondary)] mt-1">{data.id}</p>
-            </div>
-            <button onClick={() => navigate('/purchase/form', { state: { ...data, mode: 'edit' } })} className="flex items-center gap-2 px-4 py-2 bg-[var(--brand)] text-white rounded-lg hover:opacity-90 transition-colors">
-              <Edit className="w-4 h-4" />
-              <span>Edit</span>
-            </button>
-          </div>
+        <Card
+          title={<h2 className="text-2xl m-7 font-bold m-0" style={{ color: 'var(--text-primary)' }}>Purchase Order Details</h2>}
+          headStyle={{ 
+            backgroundColor: 'var(--surface-1)', 
+            color: 'var(--text-primary)',
+            padding: '16px 24px', 
+            margin: '-24px -24px 24px -24px', 
+            width: 'calc(100% + 48px)',
+            borderRadius: '8px 8px 0 0',
+            borderBottom: '1px solid var(--glass-border)'
+          }}
+          className="shadow-card bg-surface-1"
+          style={{ boxShadow: 'var(--card-shadow)', overflow: 'hidden', backgroundColor: 'var(--surface-1)', borderColor: 'var(--glass-border)', border: '1px solid var(--glass-border)' }}
+          bodyStyle={{ backgroundColor: 'var(--surface-1)' }}
+        >
+          <Descriptions
+            column={1}
+            bordered
+            labelStyle={{ 
+              fontWeight: 'bold', 
+              backgroundColor: 'var(--surface-2)',
+              color: 'var(--text-primary)',
+              width: '200px'
+            }}
+            contentStyle={{ 
+              backgroundColor: 'var(--surface-1)',
+              color: 'var(--text-primary)'
+            }}
+          >
+            
+            <Descriptions.Item label="Supplier">
+              {data.supplier || '-'}
+            </Descriptions.Item>
+            
+            <Descriptions.Item label="Buyer">
+              {data.buyer || '-'}
+            </Descriptions.Item>
+            
+            <Descriptions.Item label="Quantity">
+              <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
+                {data.quantity || '0'} units
+              </Tag>
+            </Descriptions.Item>
+            
+            <Descriptions.Item label="Due Date">
+              {data.dueDate ? new Date(data.dueDate).toLocaleDateString('en-IN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              }) : '-'}
+            </Descriptions.Item>
+            
+            <Descriptions.Item label="Payment Status">
+              <Tag color={getPaymentStatusColor(data.payment)} style={{ fontSize: '14px', padding: '4px 12px' }}>
+                {data.payment || '-'}
+              </Tag>
+            </Descriptions.Item>
+            
+            {data.createdAt && (
+              <Descriptions.Item label="Created At">
+                {new Date(data.createdAt).toLocaleString('en-IN', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </Descriptions.Item>
+            )}
+            
+            {data.updatedAt && (
+              <Descriptions.Item label="Last Updated">
+                {new Date(data.updatedAt).toLocaleString('en-IN', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </Descriptions.Item>
+            )}
+          </Descriptions>
 
-          {/* Content */}
-          <div className="p-6">
-            {/* Party Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-[var(--text-secondary)] text-sm">
-                  <Building className="w-4 h-4" />
-                  <span>Supplier</span>
-                </div>
-                <p className="text-lg font-semibold text-[var(--text-primary)]">{data.supplier}</p>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-[var(--text-secondary)] text-sm">
-                  <User className="w-4 h-4" />
-                  <span>Buyer</span>
-                </div>
-                <p className="text-lg font-semibold text-[var(--text-primary)]">{data.buyer}</p>
-              </div>
-            </div>
-
-            {/* Order Details Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-[var(--text-secondary)] text-sm">
-                  <Package className="w-4 h-4" />
-                  <span>Quantity</span>
-                </div>
-                <p className="text-xl font-bold text-[var(--text-primary)]">{data.quantity}</p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-[var(--text-secondary)] text-sm">
-                  <Calendar className="w-4 h-4" />
-                  <span>Due Date</span>
-                </div>
-                <p className="text-xl font-bold text-[var(--text-primary)]">{data.dueDate}</p>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-[var(--text-secondary)] text-sm">Payment Status</p>
-                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border ${getPaymentColor(data.payment)}`}>
-                  {getPaymentIcon(data.payment)}
-                  <span className="font-semibold">{data.payment}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Financial Summary */}
-            <div className="bg-[var(--surface-2)] rounded-lg p-6 space-y-4 border border-[var(--glass-border)]">
-              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Financial Summary</h3>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-[var(--text-secondary)]">Base Amount</span>
-                <span className="text-lg font-semibold text-[var(--text-primary)]">₹{parseFloat(data.amount).toLocaleString()}</span>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-[var(--text-secondary)]">GST ({data.gst}%)</span>
-                <span className="text-lg font-semibold text-[var(--text-primary)]">
-                  ₹{(parseFloat(data.amount) * parseFloat(data.gst) / 100).toLocaleString()}
+          <div className="mt-6 p-4 bg-[var(--surface-2)] rounded-lg border border-[var(--glass-border)]">
+            <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+              Financial Summary
+            </h3>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-[var(--text-secondary)]">Base Amount:</span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">
+                  ₹ {formatCurrency(data.amount)}
                 </span>
               </div>
-
-              <div className="border-t border-[var(--glass-border)] pt-4 mt-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold text-[var(--text-primary)]">Total Amount</span>
-                  <span className="text-2xl font-bold text-[var(--text-primary)]">₹{parseFloat(totalWithGst).toLocaleString()}</span>
+              <div className="flex justify-between">
+                <span className="text-sm text-[var(--text-secondary)]">GST ({data.gst}%):</span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">
+                  ₹ {formatCurrency(gstAmount)}
+                </span>
+              </div>
+              <div className="border-t border-[var(--glass-border)] pt-2 mt-2">
+                <div className="flex justify-between">
+                  <span className="text-lg font-semibold text-[var(--text-primary)]">Total Amount:</span>
+                  <span className="text-2xl font-bold" style={{ color: 'var(--brand)' }}>
+                    ₹ {formatCurrency(totalWithGst)}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+
+          <Space className="mt-6">
+            <Button
+              type="primary"
+              onClick={() => navigate('/purchase/form', { state: { ...data, mode: 'edit' } })}
+              style={{ 
+                backgroundColor: 'var(--brand)', 
+                borderColor: 'var(--brand)',
+              }}
+            >
+              Edit Purchase Order
+            </Button>
+            <Button onClick={() => navigate('/purchase')}>
+              Back to List
+            </Button>
+          </Space>
+        </Card>
       </div>
     </div>
   );
