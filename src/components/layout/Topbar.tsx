@@ -48,7 +48,7 @@ export const Topbar = () => {
 
   return (
     // <header className="glass-header fixed flex flex-col gap-4 p-6 mb-6">
-    <header className="glass-header  top-0 left-0 right-0 z-50 flex flex-col gap-4 p-6 mb-6">
+    <header className="glass-header border border-transparent hover:border-[rgb(31,154,138)] top-0 left-0 right-0 z-50 flex flex-col gap-4 p-6 mb-6">
 
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex flex-1 items-center gap-3">
@@ -72,7 +72,7 @@ export const Topbar = () => {
               variant="ghost"
               onClick={handleLogout}
               leadingIcon={<LogOut size={18} />}
-              className="hover:bg-[var(--glass-bg-hover)] transition-colors"
+              className="hover:bg-[var(--glass-bg-hover)]  transition-colors"
             >
               Logout
             </Button>

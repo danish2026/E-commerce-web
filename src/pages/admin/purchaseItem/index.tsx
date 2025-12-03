@@ -121,7 +121,7 @@ const PurchaseItem = () => {
   placeholder="Search by item name or description"
   value={searchText}
   onChange={(e) => setSearchText(e.target.value)}
-  style={{ width: 600, height: '40px' }}
+  style={{ width: 500, height: '40px' }}
   onRefresh={() => setSearchText('')}
 />
               {/* <Input placeholder="Search by item name or description"  value={searchText} onChange={(e) => setSearchText(e.target.value)} style={{ width: 600, height: '40px' }} /> */}
@@ -130,7 +130,7 @@ const PurchaseItem = () => {
                 onChange={(dates) => setDateRange(dates as [Dayjs | null, Dayjs | null] | null)}
                 format="YYYY-MM-DD"
                 placeholder={['Start Date', 'End Date']}
-                style={{ width: 200, height: '40px' }}
+                style={{ width: 300, height: '40px' }}
               />
               <Button
                 // type="primary"

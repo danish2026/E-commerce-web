@@ -12,7 +12,7 @@ const Header = () => {
   };
 
   return (
-    <header className="app-header">
+    <header className="app-header ">
       <div>
         <p className="app-header__eyebrow">Store Overview</p>
         <h1 className="app-header__title">Dashboard</h1>

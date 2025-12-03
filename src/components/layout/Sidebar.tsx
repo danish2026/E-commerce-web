@@ -85,13 +85,18 @@ export const Sidebar = ({ collapsed, onToggleCollapse }: SidebarProps) => {
     .filter((section) => section.items.length > 0);
 
   return (
+
     <aside
-      className={clsx(
-        'glass-sidebar sticky top-8 h-[calc(100vh-4rem)] overflow-y-auto transition-all duration-300',
-        collapsed ? 'w-[5rem] p-2' : 'w-64 p-6',
-      )}
-      aria-label="Primary navigation"
-    >
+  className={clsx(
+    "glass-sidebar sticky top-8 h-[calc(100vh-4rem)] overflow-y-auto transition-all duration-300 scrollbar-hide border border-transparent hover:border-[rgb(31,154,138)]",
+    collapsed ? "w-[5rem] p-2" : "w-64 p-6"
+  )}
+  aria-label="Primary navigation"
+  style={{
+    scrollbarWidth: 'none',
+    msOverflowStyle: 'none',
+  }}
+>
       <div className={clsx(
         'flex items-center pb-6 border-b border-[var(--glass-border)]',
         collapsed ? 'justify-center' : 'justify-between'

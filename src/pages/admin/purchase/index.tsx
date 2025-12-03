@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input, DatePicker, Button, Space, message, Spin, Select } from 'antd';
+import { DatePicker, Button, Space, message, Spin, Select } from 'antd';
+import { Input } from '../../../components/ui/Input';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import Table from './table';
@@ -131,11 +132,13 @@ const Purchase = () => {
             <Space size="middle" className="w-full" wrap>
               <Input
                 placeholder="Search by supplier, buyer, amount, or quantity"
-                prefix={<SearchOutlined />}
+                icon={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{ width: 490, height: '40px' }}
-                allowClear
+                onRefresh={() => setSearchText('')}
+
+                // allowClear
               />
               <RangePicker
                 value={dateRange}

@@ -103,7 +103,7 @@ const Billing = () => {
                 }}
                 format="YYYY-MM-DD"
                 placeholder={['Start Date', 'End Date']}
-                style={{ width: 240, height: '40px' }}
+                style={{ width: 250, height: '40px' }}
               />
               {/* <InputNumber
                 placeholder="Min Subtotal"
