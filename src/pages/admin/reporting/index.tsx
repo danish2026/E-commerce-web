@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, ChangeEvent } from 'react';
-import { DatePicker, Space, Table, message, Spin } from 'antd';
+import { Space, Table, message, Spin } from 'antd';
+import RangePicker from '../../../components/ui/RangePicker';
 import { Select } from '../../../components/ui/Select';
 import { Button } from '../../../components/ui/Button';
 import { FilePdfOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -12,7 +13,6 @@ import {
   ReportingData,
 } from './ReportingService';
 
-const { RangePicker } = DatePicker;
 
 interface ReportTableItem {
   key: string;
@@ -33,7 +33,6 @@ const Reporting = () => {
     setRefetch(!refetch);
   };
 
-  // Fetch reporting data from API
   const loadReportingData = useCallback(async () => {
     try {
       setLoading(true);
@@ -43,7 +42,6 @@ const Reporting = () => {
       const result = await fetchReportingData(filter, startDate, endDate);
       setReportingData(result);
 
-      // Transform data for table display
       const tableData: ReportTableItem[] = [
         {
           key: '1',
@@ -93,12 +91,10 @@ const Reporting = () => {
     const doc = new jsPDF();
     let yPos = 20;
 
-    // Title
     doc.setFontSize(18);
     doc.text(`${filter} Report`, 14, yPos);
     yPos += 15;
 
-    // Date range info
     doc.setFontSize(12);
     if (dateRange && dateRange[0] && dateRange[1]) {
       doc.text(
@@ -111,12 +107,10 @@ const Reporting = () => {
     }
     yPos += 15;
 
-    // Line separator
     doc.setDrawColor(200, 200, 200);
     doc.line(14, yPos, 196, yPos);
     yPos += 10;
 
-    // Report data
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.text('Summary', 14, yPos);
@@ -140,7 +134,6 @@ const Reporting = () => {
     })}`, 14, yPos);
     yPos += 15;
 
-    // Order items section
     if (reportingData.orderItems && reportingData.orderItems.length > 0) {
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
@@ -150,7 +143,6 @@ const Reporting = () => {
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       
-      // Table header
       doc.setFont('helvetica', 'bold');
       doc.text('Date', 14, yPos);
       doc.text('Product', 60, yPos);
@@ -161,12 +153,10 @@ const Reporting = () => {
       doc.line(14, yPos, 196, yPos);
       yPos += 6;
 
-      // Table rows (limit to 20 items to fit on page)
       doc.setFont('helvetica', 'normal');
       const itemsToShow = reportingData.orderItems.slice(0, 20);
       itemsToShow.forEach((item, index) => {
         if (yPos > 270) {
-          // Add new page if needed
           doc.addPage();
           yPos = 20;
         }
@@ -185,7 +175,6 @@ const Reporting = () => {
       });
     }
 
-    // Footer
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
@@ -207,8 +196,6 @@ const Reporting = () => {
 
   const handleFilterChange = (event: ChangeEvent<HTMLSelectElement>) => {
     setFilter(event.target.value as ReportFilter);
-    // Optionally reset date range when switching filters
-    // User can still set custom date range after selecting filter
   };
 
   const handleDateRangeChange = (dates: [Dayjs | null, Dayjs | null] | null) => {
@@ -225,7 +212,6 @@ const Reporting = () => {
     message.success('Filters reset to default');
   };
 
-  // Get date range display text
   const getDateRangeDisplay = () => {
     if (dateRange && dateRange[0] && dateRange[1]) {
       return `${dateRange[0].format('DD MMM YYYY')} - ${dateRange[1].format('DD MMM YYYY')}`;
@@ -238,14 +224,12 @@ const Reporting = () => {
       <div className="max-w-7xl mx-auto">
         <div className="bg-surface-1 rounded-2xl shadow-card p-8 mb-6 border border-[var(--glass-border)]">
           <Space size="middle" className="w-full" direction="vertical">
-            {/* Filter Section */}
             <div className="w-full">
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
                   Report Period
                 </label>
                 <Space size="middle" className="w-full" wrap>
-                  {/* Filter Selector */}
                   <Select value={filter} style={{ width: 150, height: '40px' }} onChange={handleFilterChange}>
                     <option value="Daily">Daily</option>
                     <option value="Weekly">Weekly</option>
@@ -253,17 +237,6 @@ const Reporting = () => {
                     <option value="Yearly">Yearly</option>
                   </Select>
 
-                  {/* Reset Button */}
-                  {/* <Button
-                    icon={<ReloadOutlined />}
-                    onClick={handleReset}
-                    style={{ height: '40px' }}
-                    title="Reset filters to default"
-                  >
-                    Reset
-                  </Button> */}
-
-                  {/* Date Range Picker - Always visible */}
                   <div>
                     <RangePicker
                       value={dateRange}
@@ -273,7 +246,6 @@ const Reporting = () => {
                       style={{ width: 300, height: '40px' }}
                       allowClear
                       disabledDate={(current) => {
-                        // Disable future dates
                         return current && current > dayjs().endOf('day');
                       }}
                     />
@@ -290,7 +262,6 @@ const Reporting = () => {
                   </div>
 
                   <Button
-                    // type="primary"
                     icon={<FilePdfOutlined />}
                     onClick={downloadPDF}
                     disabled={!reportingData || loading}
@@ -301,7 +272,6 @@ const Reporting = () => {
                 </Space>
               </div>
 
-              {/* Date Range Info */}
               <div
                 style={{
                   padding: '8px 12px',
@@ -334,7 +304,6 @@ const Reporting = () => {
               </div>
             </div>
 
-            {/* Report Table */}
             {loading ? (
               <div className="flex justify-center items-center py-12">
                 <Spin size="large" />
@@ -369,7 +338,6 @@ const Reporting = () => {
               </div>
             )}
 
-            {/* Additional Info */}
             {reportingData && reportingData.orderItems && reportingData.orderItems.length > 0 && (
               <div style={{ marginTop: 20, padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
                 <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
