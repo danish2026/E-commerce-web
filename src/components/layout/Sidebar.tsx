@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Home, CreditCard, Receipt, Users, BarChart2,
 import { Button } from '../ui';
 import { List, Package } from 'lucide-react';
 import { usePermissions } from '../../hooks/usePermissions';
+import { useSidebarTranslation } from '../../hooks/useSidebarTranslation';
 
 type SidebarProps = {
   collapsed: boolean;
@@ -24,45 +25,45 @@ type MenuSection = {
 };
 
 // Get all menu sections for SUPER_ADMIN
-const getMenuSections = (): MenuSection[] => {
+const getMenuSections = (t: ReturnType<typeof useSidebarTranslation>['t']): MenuSection[] => {
   return [
     {
-      label: 'Dashboard',
+      label: t.dashboard,
       items: [
-        { label: 'Dashboard', to: '/dashboard', icon: Home },
+        { label: t.dashboard, to: '/dashboard', icon: Home },
       ],
     },
     // {
-    //   label: 'Sales',
+    //   label: t.sales,
     //   items: [
-    //     { label: 'Sales', to: '/sales', icon: BarChart2, module: 'sales' },
+    //     { label: t.sales, to: '/sales', icon: BarChart2, module: 'sales' },
     //   ],
     // },
     {
-      label: 'Purchase',
+      label: t.purchase,
       items: [
-        { label: 'Purchase', to: '/purchase', icon: Users, module: 'purchase' },
-        { label: 'Purchase Item', to: '/purchase-item', icon: CreditCard, module: 'purchase-item' },
-        // { label: 'Invoice', to: '/invoice', icon: Receipt, module: 'invoice' },
+        { label: t.purchase, to: '/purchase', icon: Users, module: 'purchase' },
+        { label: t.purchaseItem, to: '/purchase-item', icon: CreditCard, module: 'purchase-item' },
+        // { label: t.invoice, to: '/invoice', icon: Receipt, module: 'invoice' },
       ],
     },
     {
-      label: 'Product Management',
+      label: t.productManagement,
       items: [
-        { label: 'Categories', to: '/categories', icon: List, module: 'categories' },
-        { label: 'Product', to: '/product', icon: Package, module: 'product' },
-        { label: 'Billing', to: '/billing', icon: CreditCard, module: 'billing' },
+        { label: t.categories, to: '/categories', icon: List, module: 'categories' },
+        { label: t.product, to: '/product', icon: Package, module: 'product' },
+        { label: t.billing, to: '/billing', icon: CreditCard, module: 'billing' },
 
       ],
     },
       
     {
-      label: 'Others',
+      label: t.others,
       items: [
-        { label: 'Settings', to: '/settings', icon: Settings, module: 'settings' },
-        { label: 'Permissions', to: '/permissions', icon: Shield, module: 'permissions' },
-        { label: 'Employees', to: '/employees', icon: Users, module: 'employees' },
-        { label: 'Reporting', to: '/reporting', icon: BarChart2, module: 'reporting' },
+        { label: t.settings, to: '/settings', icon: Settings, module: 'settings' },
+        { label: t.permissions, to: '/permissions', icon: Shield, module: 'permissions' },
+        { label: t.employees, to: '/employees', icon: Users, module: 'employees' },
+        { label: t.reporting, to: '/reporting', icon: BarChart2, module: 'reporting' },
       ],
     },
   ];
@@ -70,7 +71,8 @@ const getMenuSections = (): MenuSection[] => {
 
 export const Sidebar = ({ collapsed, onToggleCollapse }: SidebarProps) => {
   const { hasModuleAccess, loading: permissionsLoading } = usePermissions();
-  const sections = getMenuSections();
+  const { t } = useSidebarTranslation();
+  const sections = getMenuSections(t);
 
   const filteredSections = sections
     .map((section) => ({
@@ -120,7 +122,7 @@ export const Sidebar = ({ collapsed, onToggleCollapse }: SidebarProps) => {
       <nav className="mt-6 space-y-6">
         {filteredSections.length === 0 && !permissionsLoading && (
           <p className="text-sm text-text-secondary px-2">
-            You do not have access to any modules. Please contact your administrator.
+            {t.noAccessMessage}
           </p>
         )}
         {filteredSections.map((section, sectionIndex) => (

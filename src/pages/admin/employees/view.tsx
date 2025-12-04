@@ -2,11 +2,13 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Card, Descriptions, Tag, Space } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
+import { useEmployeeTranslation } from '../../../hooks/useEmployeeTranslation';
 import { Employee } from './api';
 
 const View = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useEmployeeTranslation();
   const employee = location.state as Employee | null;
 
   useEffect(() => {
@@ -44,11 +46,11 @@ const View = () => {
           onClick={() => navigate('/employees')}
           className="mb-6"
         >
-          Back to Employees List
+          {t.backToEmployeesList}
         </Button>
 
         <Card
-          title={<h2 className="text-2xl font-bold m-7" style={{ color: 'var(--text-primary)' }}>Employee Details</h2>}
+          title={<h2 className="text-2xl font-bold m-7" style={{ color: 'var(--text-primary)' }}>{t.employeeDetails}</h2>}
           headStyle={{ 
             backgroundColor: 'var(--surface-1)', 
             color: 'var(--text-primary)',
@@ -76,38 +78,38 @@ const View = () => {
               color: 'var(--text-primary)'
             }}
           >
-            <Descriptions.Item label="First Name">
+            <Descriptions.Item label={t.firstName}>
               <span style={{ fontWeight: 'bold', fontSize: '16px' }}>{employee.firstName || '-'}</span>
             </Descriptions.Item>
             
-            <Descriptions.Item label="Last Name">
+            <Descriptions.Item label={t.lastName}>
               {employee.lastName || '-'}
             </Descriptions.Item>
             
-            <Descriptions.Item label="Email">
+            <Descriptions.Item label={t.email}>
               {employee.email}
             </Descriptions.Item>
             
             {employee.phone && (
-              <Descriptions.Item label="Phone">
+              <Descriptions.Item label={t.phone}>
                 {employee.phone}
               </Descriptions.Item>
             )}
             
-            <Descriptions.Item label="Role">
+            <Descriptions.Item label={t.role}>
               <Tag color={getRoleColor(employee.permissionsRoleName || employee.roleName || employee.role)} style={{ fontSize: '14px', padding: '4px 12px' }}>
                 {employee.permissionsRoleName || employee.roleName || employee.role}
               </Tag>
             </Descriptions.Item>
             
-            <Descriptions.Item label="Status">
+            <Descriptions.Item label={t.status}>
               <Tag color={getStatusColor(employee.isActive)} style={{ fontSize: '14px', padding: '4px 12px' }}>
-                {employee.isActive ? 'Active' : 'Inactive'}
+                {employee.isActive ? t.active : t.inactive}
               </Tag>
             </Descriptions.Item>
             
             {employee.createdAt && (
-              <Descriptions.Item label="Created At">
+              <Descriptions.Item label={t.createdAt}>
                 {new Date(employee.createdAt).toLocaleString('en-IN', {
                   year: 'numeric',
                   month: 'long',
@@ -119,7 +121,7 @@ const View = () => {
             )}
             
             {employee.updatedAt && (
-              <Descriptions.Item label="Last Updated">
+              <Descriptions.Item label={t.lastUpdated}>
                 {new Date(employee.updatedAt).toLocaleString('en-IN', {
                   year: 'numeric',
                   month: 'long',
@@ -140,10 +142,10 @@ const View = () => {
                 borderColor: 'var(--brand)',
               }}
             >
-              Edit Employee
+              {t.editEmployee}
             </Button>
             <Button onClick={() => navigate('/employees')}>
-              Back to List
+              {t.backToList}
             </Button>
           </Space>
         </Card>

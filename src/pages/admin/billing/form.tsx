@@ -464,7 +464,7 @@ const BillingForm = () => {
                     color: 'var(--brand)',
                   }}
                 >
-                  Add More Items
+                  {t.addMoreItems}
                 </Button>
               </div>
             </div>
@@ -474,31 +474,31 @@ const BillingForm = () => {
             {/* Payment and Discount */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-                Payment & Discount
+                {t.paymentAndDiscount}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Form.Item
-                  label="Payment Type"
+                  label={t.paymentTypeLabel}
                   required
                   validateStatus={!paymentType ? 'error' : ''}
-                  help={!paymentType ? 'Payment type is required' : ''}
+                  help={!paymentType ? t.paymentTypeRequired : ''}
                 >
                   <Select
                     size="large"
                     value={paymentType}
                     onChange={setPaymentType}
                     options={[
-                      { value: PaymentType.CASH, label: 'Cash' },
-                      { value: PaymentType.CARD, label: 'Card' },
-                      { value: PaymentType.UPI, label: 'UPI' },
-                      { value: PaymentType.CREDIT, label: 'Credit' },
+                      { value: PaymentType.CASH, label: t.cash },
+                      { value: PaymentType.CARD, label: t.card },
+                      { value: PaymentType.UPI, label: t.upi },
+                      { value: PaymentType.CREDIT, label: t.credit },
                     ]}
                   />
                 </Form.Item>
 
-                <Form.Item label="Discount">
+                <Form.Item label={t.discountLabel}>
                   <InputNumber
-                    placeholder="Enter discount amount"
+                    placeholder={t.discountPlaceholder}
                     style={{ width: '100%' }}
                     size="large"
                     min={0}
@@ -521,20 +521,20 @@ const BillingForm = () => {
               <div className="text-right">
                 <div className="space-y-2">
                   <div className="flex justify-between gap-8">
-                    <span className="text-sm text-[var(--text-secondary)]">Subtotal:</span>
+                    <span className="text-sm text-[var(--text-secondary)]">{t.subtotal}:</span>
                     <span className="text-sm font-semibold text-[var(--text-primary)]">
                       ₹ {subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
                   <div className="flex justify-between gap-8">
-                    <span className="text-sm text-[var(--text-secondary)]">GST Total:</span>
+                    <span className="text-sm text-[var(--text-secondary)]">{t.gstTotal}:</span>
                     <span className="text-sm font-semibold text-[var(--text-primary)]">
                       ₹ {gstTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between gap-8">
-                      <span className="text-sm text-[var(--text-secondary)]">Discount:</span>
+                      <span className="text-sm text-[var(--text-secondary)]">{t.discount}:</span>
                       <span className="text-sm font-semibold text-red-500">
                         - ₹ {discount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
@@ -542,7 +542,7 @@ const BillingForm = () => {
                   )}
                   <Divider className="my-2" />
                   <div className="flex justify-between gap-8">
-                    <span className="text-sm text-[var(--text-secondary)]">Grand Total:</span>
+                    <span className="text-sm text-[var(--text-secondary)]">{t.grandTotal}:</span>
                     <span className="text-2xl font-bold" style={{ color: 'var(--brand)' }}>
                       ₹ {(grandTotal ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
@@ -564,13 +564,13 @@ const BillingForm = () => {
                     borderColor: 'var(--brand)',
                   }}
                 >
-                  {isEditMode ? 'Update Order' : 'Create Order'}
+                  {isEditMode ? t.updateOrderButton : t.createOrderButton}
                 </Button>
                 <Button
                   onClick={() => navigate('/billing')}
                   size="large"
                 >
-                  Cancel
+                  {t.cancel}
                 </Button>
               </Space>
             </Form.Item>

@@ -1,0 +1,182 @@
+export const reportingTranslations = {
+  en: {
+    // Common
+    back: 'Back',
+    cancel: 'Cancel',
+    save: 'Save',
+    search: 'Search',
+    loading: 'Loading...',
+    
+    // Reporting
+    reportPeriod: 'Report Period',
+    daily: 'Daily',
+    weekly: 'Weekly',
+    monthly: 'Monthly',
+    yearly: 'Yearly',
+    startDate: 'Start Date',
+    endDate: 'End Date',
+    clear: 'Clear',
+    downloadPDF: 'Download PDF',
+    customDateRange: 'Custom Date Range',
+    usingFilter: 'Using {filter} Filter',
+    today: 'Today',
+    last7Days: 'Last 7 days',
+    currentMonth: 'Current month',
+    currentYear: 'Current year',
+    selectDatesToUseCustomRange: 'Select dates to use custom range',
+    overridesFilter: 'Overrides {filter} filter',
+    
+    // Metrics
+    revenue: 'Revenue',
+    orders: 'Orders',
+    averageOrderValue: 'Average Order Value',
+    metric: 'Metric',
+    value: 'Value',
+    period: 'Period',
+    noDataAvailable: 'No data available',
+    totalOrderItems: 'Total Order Items',
+    
+    // PDF Report
+    report: 'Report',
+    generatedOn: 'Generated on',
+    summary: 'Summary',
+    totalOrders: 'Total Orders',
+    recentOrders: 'Recent Orders',
+    date: 'Date',
+    product: 'Product',
+    amount: 'Amount',
+    page: 'Page',
+    of: 'of',
+    noDataAvailableToDownload: 'No data available to download',
+    pdfReportDownloadedSuccessfully: 'PDF report downloaded successfully',
+    failedToFetchReportingData: 'Failed to fetch reporting data',
+    filtersResetToDefault: 'Filters reset to default',
+    
+    // Language Selector
+    selectLanguage: 'Select Language',
+    english: 'English',
+    hindi: 'Hindi',
+    arabic: 'Arabic',
+  },
+  hi: {
+    // Common
+    back: 'वापस',
+    cancel: 'रद्द करें',
+    save: 'सहेजें',
+    search: 'खोजें',
+    loading: 'लोड हो रहा है...',
+    
+    // Reporting
+    reportPeriod: 'रिपोर्ट अवधि',
+    daily: 'दैनिक',
+    weekly: 'साप्ताहिक',
+    monthly: 'मासिक',
+    yearly: 'वार्षिक',
+    startDate: 'प्रारंभ तिथि',
+    endDate: 'समाप्ति तिथि',
+    clear: 'साफ करें',
+    downloadPDF: 'PDF डाउनलोड करें',
+    customDateRange: 'कस्टम तिथि सीमा',
+    usingFilter: '{filter} फ़िल्टर का उपयोग कर रहे हैं',
+    today: 'आज',
+    last7Days: 'पिछले 7 दिन',
+    currentMonth: 'वर्तमान महीना',
+    currentYear: 'वर्तमान वर्ष',
+    selectDatesToUseCustomRange: 'कस्टम सीमा का उपयोग करने के लिए तिथियां चुनें',
+    overridesFilter: '{filter} फ़िल्टर को ओवरराइड करता है',
+    
+    // Metrics
+    revenue: 'राजस्व',
+    orders: 'आदेश',
+    averageOrderValue: 'औसत आदेश मूल्य',
+    metric: 'मीट्रिक',
+    value: 'मूल्य',
+    period: 'अवधि',
+    noDataAvailable: 'कोई डेटा उपलब्ध नहीं',
+    totalOrderItems: 'कुल आदेश आइटम',
+    
+    // PDF Report
+    report: 'रिपोर्ट',
+    generatedOn: 'जनरेट किया गया',
+    summary: 'सारांश',
+    totalOrders: 'कुल आदेश',
+    recentOrders: 'हाल के आदेश',
+    date: 'तिथि',
+    product: 'उत्पाद',
+    amount: 'राशि',
+    page: 'पृष्ठ',
+    of: 'का',
+    noDataAvailableToDownload: 'डाउनलोड करने के लिए कोई डेटा उपलब्ध नहीं',
+    pdfReportDownloadedSuccessfully: 'PDF रिपोर्ट सफलतापूर्वक डाउनलोड की गई',
+    failedToFetchReportingData: 'रिपोर्टिंग डेटा प्राप्त करने में विफल',
+    filtersResetToDefault: 'फ़िल्टर डिफ़ॉल्ट पर रीसेट किए गए',
+    
+    // Language Selector
+    selectLanguage: 'भाषा चुनें',
+    english: 'अंग्रेजी',
+    hindi: 'हिंदी',
+    arabic: 'अरबी',
+  },
+  ar: {
+    // Common
+    back: 'رجوع',
+    cancel: 'إلغاء',
+    save: 'حفظ',
+    search: 'بحث',
+    loading: 'جاري التحميل...',
+    
+    // Reporting
+    reportPeriod: 'فترة التقرير',
+    daily: 'يومي',
+    weekly: 'أسبوعي',
+    monthly: 'شهري',
+    yearly: 'سنوي',
+    startDate: 'تاريخ البدء',
+    endDate: 'تاريخ الانتهاء',
+    clear: 'مسح',
+    downloadPDF: 'تحميل PDF',
+    customDateRange: 'نطاق تاريخ مخصص',
+    usingFilter: 'استخدام مرشح {filter}',
+    today: 'اليوم',
+    last7Days: 'آخر 7 أيام',
+    currentMonth: 'الشهر الحالي',
+    currentYear: 'السنة الحالية',
+    selectDatesToUseCustomRange: 'حدد التواريخ لاستخدام نطاق مخصص',
+    overridesFilter: 'يتجاوز مرشح {filter}',
+    
+    // Metrics
+    revenue: 'الإيرادات',
+    orders: 'الطلبات',
+    averageOrderValue: 'متوسط قيمة الطلب',
+    metric: 'المقياس',
+    value: 'القيمة',
+    period: 'الفترة',
+    noDataAvailable: 'لا توجد بيانات متاحة',
+    totalOrderItems: 'إجمالي عناصر الطلب',
+    
+    // PDF Report
+    report: 'التقرير',
+    generatedOn: 'تم الإنشاء في',
+    summary: 'الملخص',
+    totalOrders: 'إجمالي الطلبات',
+    recentOrders: 'الطلبات الأخيرة',
+    date: 'التاريخ',
+    product: 'المنتج',
+    amount: 'المبلغ',
+    page: 'صفحة',
+    of: 'من',
+    noDataAvailableToDownload: 'لا توجد بيانات متاحة للتحميل',
+    pdfReportDownloadedSuccessfully: 'تم تحميل تقرير PDF بنجاح',
+    failedToFetchReportingData: 'فشل في جلب بيانات التقرير',
+    filtersResetToDefault: 'تم إعادة تعيين المرشحات إلى الافتراضي',
+    
+    // Language Selector
+    selectLanguage: 'اختر اللغة',
+    english: 'الإنجليزية',
+    hindi: 'الهندية',
+    arabic: 'العربية',
+  },
+};
+
+export type ReportingTranslationKey = keyof typeof reportingTranslations.en;
+

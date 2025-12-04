@@ -1,9 +1,11 @@
-import {  Space, Spin, Select, Modal, Form, message, Checkbox } from 'antd';
+import {  Space, Spin, Select, Modal, Form, message, Checkbox, Button as AntButton } from 'antd';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { PlusOutlined, UserAddOutlined, SafetyOutlined } from '@ant-design/icons';
+import LanguageSelector from '../../../components/purchase/LanguageSelector';
+import { usePermissionTranslation } from '../../../hooks/usePermissionTranslation';
 import { fetchPermissions, Permission, fetchModules, fetchRoles, createRole, createRolePermission, bulkCreatePermissions, Role } from './api';
 import Table from './table';
 
@@ -11,6 +13,7 @@ const { Option } = Select;
 
 const Permissions = () => {
   const navigate = useNavigate();
+  const { t, translate } = usePermissionTranslation();
   const [loading, setLoading] = useState(false);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [searchText, setSearchText] = useState('');
@@ -126,14 +129,14 @@ const Permissions = () => {
   const handleAddRole = async (values: { name: string; description?: string }) => {
     try {
       await createRole(values);
-      message.success('Role created successfully!');
+      message.success(t.roleCreated);
       setAddRoleModalVisible(false);
       addRoleForm.resetFields();
       // Reload roles
       const fetchedRoles = await fetchRoles();
       setRoles(fetchedRoles);
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to create role';
+      const errorMessage = error.response?.data?.message || error.message || t.failedToCreateRole;
       message.error(errorMessage);
     }
   };
@@ -142,11 +145,11 @@ const Permissions = () => {
   const handleAddRolePermission = async (values: { roleId: string; permissionIds: string[] }) => {
     try {
       await createRolePermission(values);
-      message.success('Role permissions assigned successfully!');
+      message.success(t.rolePermissionsAssigned);
       setAddRolePermissionModalVisible(false);
       addRolePermissionForm.resetFields();
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to assign role permissions';
+      const errorMessage = error.response?.data?.message || error.message || t.failedToAssignRolePermissions;
       message.error(errorMessage);
     }
   };
@@ -168,7 +171,7 @@ const Permissions = () => {
         });
       }
       
-      message.success('Permissions created and assigned to role successfully!');
+      message.success(t.permissionsCreatedAndAssigned);
       setCreatePermissionModalVisible(false);
       createPermissionForm.resetFields();
       loadPermissions(); // Reload permissions table
@@ -176,7 +179,7 @@ const Permissions = () => {
       const response = await fetchPermissions(1, 1000);
       setAllPermissions(response.data);
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to create permissions';
+      const errorMessage = error.response?.data?.message || error.message || t.failedToCreatePermissions;
       message.error(errorMessage);
     }
   };
@@ -187,22 +190,18 @@ const Permissions = () => {
         <div className="bg-surface-1 rounded-2xl shadow-card p-8 mb-6 border border-[var(--glass-border)]">
           <Space size="middle" className="w-full" direction="vertical">
             <Space size="middle" className="w-full" wrap>
+              {/* <LanguageSelector /> */}
               <Input
-                placeholder="Search by module, action, or description"
+                placeholder={t.searchPlaceholder}
                 style={{ width: 550, height: '40px' }}
-                // allowClear
                 value={searchText}
                 onChange={(e) => {
                   setSearchText(e.target.value);
                   setCurrentPage(1);
                 }}
-                // onPressEnter={() => {
-                //   setCurrentPage(1);
-                //   loadPermissions();
-                // }}
               />
               <Select
-                placeholder="Filter by Module"
+                placeholder={t.filterByModule}
                 style={{ width: 230, height: '40px' }}
                 allowClear
                 value={moduleFilter || undefined}
@@ -218,7 +217,7 @@ const Permissions = () => {
                 ))}
               </Select>
               <Select
-                placeholder="Filter by Action"
+                placeholder={t.filterByAction}
                 style={{ width: 230, height: '40px' }}
                 allowClear
                 value={actionFilter || undefined}
@@ -234,43 +233,37 @@ const Permissions = () => {
                 ))}
               </Select>
               <Button
-                // type="primary"
                 icon={<UserAddOutlined />}
                 onClick={() => setAddRoleModalVisible(true)}
-                // size="large"
                 style={{
                   height: '40px',
                   backgroundColor: 'var(--brand)',
                   borderColor: 'var(--brand)',
                 }}
               >
-                Add Role
+                {t.addRole}
               </Button>
               <Button
-                // type="primary"
                 icon={<SafetyOutlined />}
                 onClick={() => setAddRolePermissionModalVisible(true)}
-                // size="large"
                 style={{
                   height: '40px',
                   backgroundColor: 'var(--brand)',
                   borderColor: 'var(--brand)',
                 }}
               >
-                Add Role Permission
+                {t.addRolePermission}
               </Button>
               <Button
-                // type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => setCreatePermissionModalVisible(true)}
-                // size="large"
                 style={{
                   height: '40px',
                   backgroundColor: 'var(--brand)',
                   borderColor: 'var(--brand)',
                 }}
               >
-                Create Permission
+                {t.createPermission}
               </Button>
             </Space>
           </Space>
@@ -293,7 +286,7 @@ const Permissions = () => {
               onChange: handlePageChange,
               onShowSizeChange: handlePageSizeChange,
               showSizeChanger: true,
-              showTotal: (total: number) => `Total ${total} permissions`,
+              showTotal: (total: number) => translate('totalPermissions', { count: total }),
             }}
           />
         )}
@@ -301,7 +294,7 @@ const Permissions = () => {
 
       {/* Add Role Modal */}
       <Modal
-        title="Add Role"
+        title={t.addRole}
         open={addRoleModalVisible}
         onCancel={() => {
           setAddRoleModalVisible(false);
@@ -317,35 +310,35 @@ const Permissions = () => {
         >
           <Form.Item
             name="name"
-            label="Role Name"
-            rules={[{ required: true, message: 'Please enter role name' }]}
+            label={t.roleName}
+            rules={[{ required: true, message: t.roleNameRequired }]}
           >
-            <Input placeholder="Enter role name"  />
+            <Input placeholder={t.roleNamePlaceholder}  />
           </Form.Item>
           <Form.Item
             name="description"
-            label="Description"
+            label={t.roleDescription}
           >
-            <Input type="textarea"   placeholder="Enter role description (optional)" />
+            <Input type="textarea"   placeholder={t.roleDescriptionPlaceholder} />
           </Form.Item>
           <Form.Item>
             <Space>
-              <Button
-                // type="primary"
-                // htmlType="submit"
+              <AntButton
+                type="primary"
+                htmlType="submit"
                 style={{
                   backgroundColor: 'var(--brand)',
                   borderColor: 'var(--brand)',
                 }}
               >
-                Create Role
-              </Button>
-              <Button onClick={() => {
+                {t.createRole}
+              </AntButton>
+              <AntButton onClick={() => {
                 setAddRoleModalVisible(false);
                 addRoleForm.resetFields();
               }}>
-                Cancel
-              </Button>
+                {t.cancel}
+              </AntButton>
             </Space>
           </Form.Item>
         </Form>
@@ -353,7 +346,7 @@ const Permissions = () => {
 
       {/* Add Role Permission Modal */}
       <Modal
-        title="Add Role Permission"
+        title={t.addRolePermission}
         open={addRolePermissionModalVisible}
         onCancel={() => {
           setAddRolePermissionModalVisible(false);
@@ -369,11 +362,11 @@ const Permissions = () => {
         >
           <Form.Item
             name="roleId"
-            label="Role"
-            rules={[{ required: true, message: 'Please select a role' }]}
+            label={t.roleLabel}
+            rules={[{ required: true, message: t.roleRequired }]}
           >
             <Select
-              placeholder="Select a role"
+              placeholder={t.rolePlaceholder}
               size="large"
               showSearch
               optionFilterProp="label"
@@ -388,12 +381,12 @@ const Permissions = () => {
           </Form.Item>
           <Form.Item
             name="permissionIds"
-            label="Permissions"
-            rules={[{ required: true, message: 'Please select at least one permission' }]}
+            label={t.permissionsLabel}
+            rules={[{ required: true, message: t.selectAtLeastOnePermission }]}
           >
             <Select
               mode="multiple"
-              placeholder="Select permissions"
+              placeholder={t.permissionsPlaceholder}
               size="large"
               showSearch
               optionFilterProp="label"
@@ -408,22 +401,22 @@ const Permissions = () => {
           </Form.Item>
           <Form.Item>
             <Space>
-              <Button
-                // type="primary"
-                // htmlType="submit"
+              <AntButton
+                type="primary"
+                htmlType="submit"
                 style={{
                   backgroundColor: 'var(--brand)',
                   borderColor: 'var(--brand)',
                 }}
               >
-                Assign Permissions
-              </Button>
-              <Button onClick={() => {
+                {t.assignPermissions}
+              </AntButton>
+              <AntButton onClick={() => {
                 setAddRolePermissionModalVisible(false);
                 addRolePermissionForm.resetFields();
               }}>
-                Cancel
-              </Button>
+                {t.cancel}
+              </AntButton>
             </Space>
           </Form.Item>
         </Form>
@@ -431,7 +424,7 @@ const Permissions = () => {
 
       {/* Create Permission Modal */}
       <Modal
-        title="Create Permission"
+        title={t.createPermission}
         open={createPermissionModalVisible}
         onCancel={() => {
           setCreatePermissionModalVisible(false);
@@ -447,11 +440,11 @@ const Permissions = () => {
         >
           <Form.Item
             name="roleId"
-            label="Role"
-            rules={[{ required: true, message: 'Please select a role' }]}
+            label={t.roleLabel}
+            rules={[{ required: true, message: t.roleRequired }]}
           >
             <Select
-              placeholder="Select a role"
+              placeholder={t.rolePlaceholder}
               size="large"
               showSearch
               optionFilterProp="label"
@@ -466,11 +459,11 @@ const Permissions = () => {
           </Form.Item>
           <Form.Item
             name="module"
-            label="Module"
-            rules={[{ required: true, message: 'Please select a module' }]}
+            label={t.moduleLabel}
+            rules={[{ required: true, message: t.moduleRequired }]}
           >
             <Select
-              placeholder="Select a module"
+              placeholder={t.modulePlaceholder}
               size="large"
               showSearch
               optionFilterProp="label"
@@ -485,8 +478,8 @@ const Permissions = () => {
           </Form.Item>
           <Form.Item
             name="actions"
-            label="Actions"
-            rules={[{ required: true, message: 'Please select at least one action' }]}
+            label={t.actionsLabel}
+            rules={[{ required: true, message: t.selectAtLeastOneAction }]}
           >
             <Checkbox.Group>
               <div className="space-y-2">
@@ -502,22 +495,22 @@ const Permissions = () => {
           </Form.Item>
           <Form.Item>
             <Space>
-              <Button
-                // type="primary"
-                // htmlType="submit"
+              <AntButton
+                type="primary"
+                htmlType="submit"
                 style={{
                   backgroundColor: 'var(--brand)',
                   borderColor: 'var(--brand)',
                 }}
               >
-                Create Permission
-              </Button>
-              <Button onClick={() => {
+                {t.createPermission}
+              </AntButton>
+              <AntButton onClick={() => {
                 setCreatePermissionModalVisible(false);
                 createPermissionForm.resetFields();
               }}>
-                Cancel
-              </Button>
+                {t.cancel}
+              </AntButton>
             </Space>
           </Form.Item>
         </Form>

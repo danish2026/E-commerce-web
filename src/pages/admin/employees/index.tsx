@@ -6,12 +6,15 @@ import { useNavigate } from 'react-router-dom';
 import RangePicker from '../../../components/ui/RangePicker';
 import { PlusOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
+import LanguageSelector from '../../../components/purchase/LanguageSelector';
+import { useEmployeeTranslation } from '../../../hooks/useEmployeeTranslation';
 import { fetchEmployees, Employee } from './api';
 import Table from './table';
 import { usePermissions } from '../../../hooks/usePermissions';
 
 const Employees = () => {
   const navigate = useNavigate();
+  const { t, translate } = useEmployeeTranslation();
   const { canCreate, canView, canEdit, canDelete, hasModuleAccess, loading: permissionsLoading } = usePermissions();
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -84,7 +87,7 @@ const Employees = () => {
           <Space size="middle" className="w-full" direction="vertical">
             <Space size="middle" className="w-full" wrap>
               <Input
-                placeholder="Search by name, email, or phone"
+                placeholder={t.searchPlaceholder}
                 style={{ width: 550, height: '40px' }}
                 allowClear
                 value={searchText}
@@ -104,14 +107,12 @@ const Employees = () => {
                   setCurrentPage(1);
                 }}
                 format="YYYY-MM-DD"
-                placeholder={['Start Date', 'End Date']}
+                placeholder={[t.startDate, t.endDate]}
                 style={{ width: 250, height: '40px' }}
               />
               <Button
-                // type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => navigate('/employees/form')}
-                // size="large"
                 disabled={!canCreateEmployee}
                 title={!canCreateEmployee ? 'You do not have permission to create employees' : ''}
                 style={{
@@ -121,7 +122,7 @@ const Employees = () => {
                   borderColor: 'var(--brand)',
                 }}
               >
-                Add Employee
+                {t.addEmployee}
               </Button>
             </Space>
           </Space>
@@ -144,7 +145,7 @@ const Employees = () => {
               onChange: handlePageChange,
               onShowSizeChange: handlePageSizeChange,
               showSizeChanger: true,
-              showTotal: (total: number) => `Total ${total} employees`,
+              showTotal: (total: number) => translate('totalEmployees', { count: total }),
             }}
           />
         )}

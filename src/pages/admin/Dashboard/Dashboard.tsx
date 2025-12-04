@@ -17,10 +17,12 @@ import {
   balancePanel,
   merchants,
 } from '../../../data/dashboard';
+import { useDashboardTranslation } from '../../../hooks/useDashboardTranslation';
 import { DashboardStats, fetchDashboardStats, MonthlyTrendItem, RecentOrder } from './DashboardService';
 // import { fetchDashboardStats, DashboardStats, RecentOrder, MonthlyTrendItem } from './DashboardService';
 
 const Dashboard = () => {
+  const { t } = useDashboardTranslation();
   const [currency, setCurrency] = useState(balancePanel.currency);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -38,7 +40,7 @@ const Dashboard = () => {
         setStats(data);
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
-        message.error('Failed to load dashboard data');
+        message.error(t.failedToLoad);
       } finally {
         setLoading(false);
       }
@@ -78,7 +80,7 @@ const Dashboard = () => {
   // Transform recent orders for ActivityList
   const activityItems = stats?.recentOrders.map((order: RecentOrder) => ({
     id: order.id,
-    provider: order.customerName || 'Guest Customer',
+    provider: order.customerName || t.guestCustomer,
     account: order.orderNumber,
     date: dayjs(order.createdAt).format('DD MMM · HH:mm'),
     amount: `₹${order.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
@@ -100,19 +102,19 @@ const Dashboard = () => {
 
   const metrics = stats ? [
     {
-      title: 'Total Revenue',
+      title: t.totalRevenue,
       value: formatCurrency(stats.revenue.total),
       currencySymbol: '₹',
       trend: { percent: calcPercent(stats.revenue.monthly, stats.revenue.total), dir: 'up' as const },
     },
     {
-      title: 'Monthly Revenue',
+      title: t.monthlyRevenue,
       value: formatCurrency(stats.revenue.monthly),
       currencySymbol: '₹',
       trend: { percent: calcPercent(stats.revenue.today, stats.revenue.monthly), dir: 'up' as const },
     },
     {
-      title: 'Total Orders',
+      title: t.totalOrders,
       value: stats.orders.total.toString(),
       currencySymbol: '',
       trend: { percent: calcPercent(stats.orders.monthly, stats.orders.total), dir: 'up' as const },
@@ -129,8 +131,8 @@ const Dashboard = () => {
 
       <section className="grid gap-4 xl:grid-cols-[2fr,1fr]">
         <ChartCard
-          title="Revenue Trend"
-          subtitle="Last 12 months"
+          title={t.revenueTrend}
+          subtitle={t.last12Months}
           change={trend.percent}
           trend={trend.dir}
           data={cashflowData}
@@ -149,28 +151,28 @@ const Dashboard = () => {
       <section className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2 space-y-6">
           <div>
-            <p className="text-sm text-muted">Quick actions</p>
-            <h3 className="text-xl font-semibold text-text-primary">Money ops</h3>
+            <p className="text-sm text-muted">{t.quickActions}</p>
+            <h3 className="text-xl font-semibold text-text-primary">{t.moneyOps}</h3>
           </div>
           <ActionGrid items={quickActions} />
         </Card>
-        <ActivityList items={activityItems} filterRange="Recent Orders" />
+        <ActivityList items={activityItems} filterRange={t.recentOrders} />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <DataTable
-            caption="Order Statistics"
+            caption={t.orderStatistics}
             columns={[
-              { key: 'provider', header: 'Metric', align: 'left' },
-              { key: 'status', header: 'Value', align: 'left' },
-              { key: 'volume', header: 'Period', align: 'right' },
+              { key: 'provider', header: t.metric, align: 'left' },
+              { key: 'status', header: t.value, align: 'left' },
+              { key: 'volume', header: t.period, align: 'right' },
             ]}
             data={[
-              { id: '1', provider: 'Today\'s Revenue', status: `₹${formatCurrency(stats?.revenue.today || 0)}`, volume: 'Today' },
-              { id: '2', provider: 'Today\'s Orders', status: (stats?.orders.today || 0).toString(), volume: 'Today' },
-              { id: '3', provider: 'Monthly Revenue', status: `₹${formatCurrency(stats?.revenue.monthly || 0)}`, volume: 'This Month' },
-              { id: '4', provider: 'Monthly Orders', status: (stats?.orders.monthly || 0).toString(), volume: 'This Month' },
+              { id: '1', provider: t.todaysRevenue, status: `₹${formatCurrency(stats?.revenue.today || 0)}`, volume: t.today },
+              { id: '2', provider: t.todaysOrders, status: (stats?.orders.today || 0).toString(), volume: t.today },
+              { id: '3', provider: t.monthlyRevenueLabel, status: `₹${formatCurrency(stats?.revenue.monthly || 0)}`, volume: t.thisMonth },
+              { id: '4', provider: t.monthlyOrders, status: (stats?.orders.monthly || 0).toString(), volume: t.thisMonth },
             ]}
           />
         </div>

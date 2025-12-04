@@ -2,12 +2,14 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Card, Descriptions, Tag, Space, Table } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
+import { useBillingTranslation } from '../../../hooks/useBillingTranslation';
 import { Order, PaymentType } from './api';
 import type { ColumnsType } from 'antd/es/table';
 
 const View = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useBillingTranslation();
   const order = location.state as Order | null;
 
   useEffect(() => {
@@ -35,9 +37,24 @@ const View = () => {
     }
   };
 
+  const translatePaymentType = (paymentType: PaymentType) => {
+    switch (paymentType) {
+      case PaymentType.CASH:
+        return t.cash;
+      case PaymentType.CARD:
+        return t.card;
+      case PaymentType.UPI:
+        return t.upi;
+      case PaymentType.CREDIT:
+        return t.credit;
+      default:
+        return paymentType;
+    }
+  };
+
   const orderItemsColumns: ColumnsType<any> = [
     {
-      title: 'Product',
+      title: t.product,
       key: 'product',
       render: (_: any, record: any) => (
         <div>
@@ -53,7 +70,7 @@ const View = () => {
       ),
     },
     {
-      title: 'Quantity',
+      title: t.quantity,
       dataIndex: 'quantity',
       key: 'quantity',
       align: 'center',
@@ -64,7 +81,7 @@ const View = () => {
       ),
     },
     {
-      title: 'Unit Price',
+      title: t.unitPrice,
       dataIndex: 'unitPrice',
       key: 'unitPrice',
       align: 'right',
@@ -75,7 +92,7 @@ const View = () => {
       ),
     },
     {
-      title: 'GST %',
+      title: t.gstPercentage,
       dataIndex: 'gstPercentage',
       key: 'gstPercentage',
       align: 'center',
@@ -86,7 +103,7 @@ const View = () => {
       ),
     },
     {
-      title: 'GST Amount',
+      title: t.gstAmount,
       dataIndex: 'gstAmount',
       key: 'gstAmount',
       align: 'right',
@@ -97,7 +114,7 @@ const View = () => {
       ),
     },
     {
-      title: 'Total Price',
+      title: t.totalPrice,
       dataIndex: 'totalPrice',
       key: 'totalPrice',
       align: 'right',
@@ -117,11 +134,11 @@ const View = () => {
           onClick={() => navigate('/billing')}
           className="mb-6"
         >
-          Back to Orders List
+          {t.backToOrdersList}
         </Button>
 
         <Card
-          title={<h2 className="text-2xl m-7 font-bold m-0" style={{ color: 'var(--text-primary)' }}>Order Details</h2>}
+          title={<h2 className="text-2xl m-7 font-bold m-0" style={{ color: 'var(--text-primary)' }}>{t.orderDetails}</h2>}
           headStyle={{ 
             backgroundColor: 'var(--surface-1)', 
             color: 'var(--text-primary)',
@@ -149,28 +166,28 @@ const View = () => {
               color: 'var(--text-primary)'
             }}
           >
-            <Descriptions.Item label="Order Number">
+            <Descriptions.Item label={t.orderNumber}>
               <span style={{ fontWeight: 'bold', fontSize: '16px' }}>{order.orderNumber || '-'}</span>
             </Descriptions.Item>
             
-            <Descriptions.Item label="Customer Name">
-              {order.customerName || <span style={{ fontStyle: 'italic', opacity: 0.5 }}>Walk-in Customer</span>}
+            <Descriptions.Item label={t.customerName}>
+              {order.customerName || <span style={{ fontStyle: 'italic', opacity: 0.5 }}>{t.walkInCustomer}</span>}
             </Descriptions.Item>
             
             {order.customerPhone && (
-              <Descriptions.Item label="Customer Phone">
+              <Descriptions.Item label={t.customerPhone}>
                 {order.customerPhone}
               </Descriptions.Item>
             )}
             
-            <Descriptions.Item label="Payment Type">
+            <Descriptions.Item label={t.paymentType}>
               <Tag color={getPaymentTypeColor(order.paymentType)} style={{ fontSize: '14px', padding: '4px 12px' }}>
-                {order.paymentType}
+                {translatePaymentType(order.paymentType)}
               </Tag>
             </Descriptions.Item>
             
             {order.createdAt && (
-              <Descriptions.Item label="Created At">
+              <Descriptions.Item label={t.createdAt}>
                 {new Date(order.createdAt).toLocaleString('en-IN', {
                   year: 'numeric',
                   month: 'long',
@@ -182,7 +199,7 @@ const View = () => {
             )}
             
             {order.updatedAt && (
-              <Descriptions.Item label="Last Updated">
+              <Descriptions.Item label={t.lastUpdated}>
                 {new Date(order.updatedAt).toLocaleString('en-IN', {
                   year: 'numeric',
                   month: 'long',
@@ -198,7 +215,7 @@ const View = () => {
           {order.orderItems && order.orderItems.length > 0 && (
             <div className="mt-6">
               <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-                Order Items
+                {t.orderItemsTable}
               </h3>
               <Table
                 columns={orderItemsColumns}
@@ -214,24 +231,24 @@ const View = () => {
           {/* Order Summary */}
           <div className="mt-6 p-4 bg-[var(--surface-2)] rounded-lg border border-[var(--glass-border)]">
             <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-              Order Summary
+              {t.orderSummary}
             </h3>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-sm text-[var(--text-secondary)]">Subtotal:</span>
+                <span className="text-sm text-[var(--text-secondary)]">{t.subtotal}:</span>
                 <span className="text-sm font-semibold text-[var(--text-primary)]">
                   ₹ {(Number(order.subtotal) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-[var(--text-secondary)]">GST Total:</span>
+                <span className="text-sm text-[var(--text-secondary)]">{t.gstTotal}:</span>
                 <span className="text-sm font-semibold text-[var(--text-primary)]">
                   ₹ {(Number(order.gstTotal) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
               {Number(order.discount) > 0 && (
                 <div className="flex justify-between">
-                  <span className="text-sm text-[var(--text-secondary)]">Discount:</span>
+                  <span className="text-sm text-[var(--text-secondary)]">{t.discount}:</span>
                   <span className="text-sm font-semibold text-red-500">
                     - ₹ {(Number(order.discount) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
@@ -239,7 +256,7 @@ const View = () => {
               )}
               <div className="border-t border-[var(--glass-border)] pt-2 mt-2">
                 <div className="flex justify-between">
-                  <span className="text-lg font-semibold text-[var(--text-primary)]">Grand Total:</span>
+                  <span className="text-lg font-semibold text-[var(--text-primary)]">{t.grandTotal}:</span>
                   <span className="text-2xl font-bold" style={{ color: 'var(--brand)' }}>
                     ₹ {(Number(order.grandTotal) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
@@ -257,10 +274,10 @@ const View = () => {
                 borderColor: 'var(--brand)',
               }}
             >
-              Edit Order
+              {t.editOrder}
             </Button>
             <Button onClick={() => navigate('/billing')}>
-              Back to List
+              {t.back}
             </Button>
           </Space>
         </Card>

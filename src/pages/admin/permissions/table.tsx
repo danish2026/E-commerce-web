@@ -4,6 +4,7 @@ import type { TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import { EyeOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { usePermissionTranslation } from '../../../hooks/usePermissionTranslation';
 import { Permission, deletePermission } from './api';
 
 dayjs.extend(advancedFormat);
@@ -34,6 +35,7 @@ const PermissionTable: React.FC<TableProps> = ({
   onDelete,
   pagination,
 }) => {
+  const { t } = usePermissionTranslation();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [permissionToDelete, setPermissionToDelete] = useState<Permission | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -56,7 +58,7 @@ const PermissionTable: React.FC<TableProps> = ({
 
   const handleDelete = (permission: Permission) => {
     if (!permission?.id) {
-      message.error('Invalid permission ID');
+      message.error(t.failedToDelete);
       return;
     }
     setPermissionToDelete(permission);
@@ -65,20 +67,20 @@ const PermissionTable: React.FC<TableProps> = ({
 
   const confirmDelete = async () => {
     if (!permissionToDelete?.id) {
-      message.error('Invalid permission ID');
+      message.error(t.failedToDelete);
       return;
     }
 
     try {
       setIsDeleting(true);
       await deletePermission(permissionToDelete.id);
-      message.success('Permission deleted successfully');
+      message.success(t.permissionDeleted);
       setDeleteModalVisible(false);
       setPermissionToDelete(null);
       onDelete?.();
     } catch (error: any) {
       console.error('Error deleting permission:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to delete permission';
+      const errorMessage = error?.response?.data?.message || error?.message || t.failedToDelete;
       message.error(errorMessage);
     } finally {
       setIsDeleting(false);
@@ -211,10 +213,10 @@ const PermissionTable: React.FC<TableProps> = ({
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-                  Delete Permission
+                  {t.deletePermissionTitle}
                 </h3>
                 <p className="text-sm text-[var(--text-secondary)] mt-1">
-                  Are you sure you want to delete this permission?
+                  {t.deletePermissionConfirm}
                 </p>
               </div>
             </div>
@@ -229,7 +231,7 @@ const PermissionTable: React.FC<TableProps> = ({
               )}
             </div>
             <p className="text-sm text-[var(--text-secondary)] mb-6">
-              This action cannot be undone. The permission will be permanently deleted.
+              {t.deletePermissionWarning}
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -237,14 +239,14 @@ const PermissionTable: React.FC<TableProps> = ({
                 disabled={isDeleting}
                 className="px-4 py-2 rounded-lg border border-[var(--glass-border)] text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--surface-2)] focus:outline-none focus:ring-2 focus:ring-[var(--glass-border)] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Cancel
+                {t.cancel}
               </button>
               <button
                 onClick={confirmDelete}
                 disabled={isDeleting}
                 className="px-4 py-2 rounded-lg bg-red-600 dark:bg-red-700 text-sm font-medium text-white hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isDeleting ? 'Deleting...' : 'Delete'}
+                {isDeleting ? t.deleting : t.delete}
               </button>
             </div>
           </div>
@@ -259,10 +261,10 @@ const PermissionTable: React.FC<TableProps> = ({
         {renderDeleteModal()}
         <div className="bg-[var(--surface-1)] rounded-lg shadow-sm border border-[var(--glass-border)] overflow-hidden">
           {loading ? (
-            <div className="py-12 text-center text-[var(--text-secondary)]">Loading permissions...</div>
+            <div className="py-12 text-center text-[var(--text-secondary)]">{t.loadingPermissions}</div>
           ) : data.length === 0 ? (
             <div className="text-center py-12 text-[var(--text-secondary)] text-sm">
-              No permissions found. Click Create Permission to create one.
+              {t.noPermissionsFound}
             </div>
           ) : (
             <div className="space-y-0">
@@ -291,7 +293,7 @@ const PermissionTable: React.FC<TableProps> = ({
                       </div>
                     )}
                     <div className="text-xs">
-                      Updated: {formatDate(permission.updatedAt)}
+                      {t.updatedAt}: {formatDate(permission.updatedAt)}
                     </div>
                   </div>
                   <div className="flex items-center justify-end gap-2 mt-3">
@@ -340,28 +342,28 @@ const PermissionTable: React.FC<TableProps> = ({
               <tr>
                 <th className="px-[18px] py-6 text-left h-[64px]">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">Module</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{t.module}</span>
                   </div>
                 </th>
                 <th className="px-[18px] py-6 text-left h-[64px]">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">Action</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{t.action}</span>
                   </div>
                 </th>
                 <th className="px-[18px] py-6 text-left h-[64px]">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">Description</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{t.description}</span>
                   </div>
                 </th>
                 {!isTablet && (
                   <th className="px-[18px] py-6 text-left h-[64px]">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-[var(--text-primary)]">Created At</span>
+                      <span className="text-sm font-semibold text-[var(--text-primary)]">{t.createdAt}</span>
                     </div>
                   </th>
                 )}
                 <th className="px-[18px] py-6 text-left pl-[100px] h-[64px]">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Actions</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.actions}</span>
                 </th>
               </tr>
             </thead>
@@ -369,13 +371,13 @@ const PermissionTable: React.FC<TableProps> = ({
               {loading ? (
                 <tr>
                   <td colSpan={5} className="px-[18px] py-12 text-center text-[var(--text-secondary)] text-sm">
-                    Loading permissions...
+                    {t.loadingPermissions}
                   </td>
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-[18px] py-12 text-center text-[var(--text-secondary)] text-sm">
-                    No permissions found. Click Create Permission to create one.
+                    {t.noPermissionsFound}
                   </td>
                 </tr>
               ) : (

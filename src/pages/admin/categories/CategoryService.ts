@@ -62,7 +62,7 @@ export const updateCategory = async (
   id: string,
   payload: UpdateCategoryPayload
 ): Promise<CategoryDto> => {
-  const { data } = await apiClient.put<CategoryDto>(
+  const { data } = await apiClient.patch<CategoryDto>(
     `${API.CATEGORIES}/${id}`,
     payload
   );

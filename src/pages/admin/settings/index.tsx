@@ -6,8 +6,10 @@ import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { Space, message } from 'antd';
 import { SettingOutlined, SaveOutlined, ReloadOutlined, MoonOutlined, SunOutlined, BellOutlined, GlobalOutlined, EyeOutlined, DatabaseOutlined } from '@ant-design/icons';
+import LanguageSelector from '../../../components/purchase/LanguageSelector';
 import { useThemeMode } from '../../../context/ThemeContext';
 import { useLanguage } from '../../../context/LanguageContext';
+import { useSettingsTranslation } from '../../../hooks/useSettingsTranslation';
 
 interface AppSettings {
   // Theme
@@ -59,6 +61,7 @@ const SETTINGS_STORAGE_KEY = 'app-settings';
 const Setting = () => {
   const { mode, setMode, toggleMode } = useThemeMode();
   const { language, setLanguage } = useLanguage();
+  const { t } = useSettingsTranslation();
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -69,36 +72,34 @@ const Setting = () => {
     if (savedSettings) {
       try {
         const parsed = JSON.parse(savedSettings);
-        setSettings({ ...DEFAULT_SETTINGS, ...parsed });
+        // Always use current language from context, not from saved settings
+        // This ensures the dropdown shows the current language when you navigate back
+        setSettings({ ...DEFAULT_SETTINGS, ...parsed, language: language });
         // Sync theme with context
         if (parsed.theme && parsed.theme !== mode) {
           setMode(parsed.theme);
         }
-        // Sync language with context
-        if (parsed.language && ['en', 'hi', 'ar'].includes(parsed.language) && parsed.language !== language) {
-          setLanguage(parsed.language as 'en' | 'hi' | 'ar');
-        }
+        // Don't sync language from saved settings - always use current context language
       } catch (error) {
         console.error('Error loading settings:', error);
-        message.error('Failed to load saved settings');
+        message.error(t.failedToLoadSettings);
       }
     } else {
       // Initialize with current theme and language
       setSettings({ ...DEFAULT_SETTINGS, theme: mode, language: language });
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
 
   // Sync theme changes
   useEffect(() => {
     setSettings(prev => ({ ...prev, theme: mode }));
   }, [mode]);
 
-  // Sync language changes
   useEffect(() => {
     setSettings(prev => ({ ...prev, language: language }));
-  }, [language]);
+  }, []); // Only run on mount
 
-  // Track changes
   useEffect(() => {
     const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
     if (savedSettings) {
@@ -119,12 +120,10 @@ const Setting = () => {
   ) => {
     setSettings(prev => ({ ...prev, [key]: value }));
     
-    // Special handling for theme
     if (key === 'theme' && value !== mode) {
       setMode(value as 'light' | 'dark');
     }
     
-    // Special handling for language - change immediately when selected
     if (key === 'language' && ['en', 'hi', 'ar'].includes(value as string) && value !== language) {
       setLanguage(value as 'en' | 'hi' | 'ar');
     }
@@ -133,18 +132,18 @@ const Setting = () => {
   const handleSave = () => {
     try {
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-      message.success('Settings saved successfully!');
+      message.success(t.settingsSaved);
       setHasChanges(false);
     } catch (error) {
       console.error('Error saving settings:', error);
-      message.error('Failed to save settings');
+      message.error(t.failedToSaveSettings);
     }
   };
 
   const handleReset = () => {
     setSettings(DEFAULT_SETTINGS);
     setMode(DEFAULT_SETTINGS.theme);
-    message.info('Settings reset to defaults');
+    message.info(t.settingsReset);
   };
 
   const SettingSection = ({ 
@@ -205,14 +204,15 @@ const Setting = () => {
               <SettingOutlined style={{ fontSize: '28px', color: 'var(--brand)' }} />
               <div>
                 <h1 className="text-3xl font-bold m-0" style={{ color: 'var(--text-primary)' }}>
-                  Settings
+                  {t.settings}
                 </h1>
                 <p className="text-sm mt-1 m-0" style={{ color: 'var(--text-secondary)' }}>
-                  Manage your application preferences and configurations
+                  {t.settingsDescription}
                 </p>
               </div>
             </div>
             <Space>
+              {/* <LanguageSelector /> */}
               <Button
                 icon={<ReloadOutlined />}
                 onClick={handleReset}
@@ -220,7 +220,7 @@ const Setting = () => {
                   height: '40px',
                 }}
               >
-                Reset
+                {t.reset}
               </Button>
               <Button
                 variant="primary"
@@ -234,7 +234,7 @@ const Setting = () => {
                   opacity: hasChanges ? 1 : 0.5,
                 }}
               >
-                Save Changes
+                {t.saveChanges}
               </Button>
             </Space>
           </div>
@@ -242,18 +242,18 @@ const Setting = () => {
 
         {/* Theme Settings */}
         <SettingSection
-          title="Appearance"
+          title={t.appearance}
           icon={<MoonOutlined style={{ fontSize: '20px', color: 'var(--brand)' }} />}
         >
           <SettingRow
-            label="Theme"
-            description="Choose between light and dark mode"
+            label={t.theme}
+            description={t.themeDescription}
           >
             <div className="flex items-center gap-3">
               <SunOutlined style={{ color: mode === 'light' ? 'var(--brand)' : 'var(--text-secondary)' }} />
               <Toggle
                 pressed={settings.theme === 'dark'}
-                label="Toggle theme"
+                label={t.toggleTheme}
                 onClick={() => {
                   const newTheme = settings.theme === 'light' ? 'dark' : 'light';
                   handleSettingChange('theme', newTheme);
@@ -267,27 +267,27 @@ const Setting = () => {
 
         {/* General Settings */}
         <SettingSection
-          title="General"
+          title={t.general}
           icon={<GlobalOutlined style={{ fontSize: '20px', color: 'var(--brand)' }} />}
         >
           <SettingRow
-            label="Language"
-            description="Select your preferred language"
+            label={t.language}
+            description={t.languageDescription}
           >
             <Select
               value={settings.language}
               onChange={(e) => handleSettingChange('language', e.target.value)}
               style={{ width: '100%' }}
             >
-              <option value="en">English</option>
-              <option value="hi">Hindi</option>
-              <option value="ar">Arabic</option>
+              <option value="en">{t.english}</option>
+              <option value="hi">{t.hindi}</option>
+              <option value="ar">{t.arabic}</option>
             </Select>
           </SettingRow>
 
           <SettingRow
-            label="Date Format"
-            description="How dates are displayed"
+            label={t.dateFormat}
+            description={t.dateFormatDescription}
           >
             <Select
               value={settings.dateFormat} 
@@ -302,22 +302,22 @@ const Setting = () => {
           </SettingRow>
 
           <SettingRow
-            label="Time Format"
-            description="12-hour or 24-hour clock"
+            label={t.timeFormat}
+            description={t.timeFormatDescription}
           >
             <Select
               value={settings.timeFormat}
               onChange={(e) => handleSettingChange('timeFormat', e.target.value as '12h' | '24h')}
               style={{ width: '100%' }}
             >
-              <option value="24h">24 Hour</option>
-              <option value="12h">12 Hour</option>
+              <option value="24h">{t.hour24}</option>
+              <option value="12h">{t.hour12}</option>
             </Select>
           </SettingRow>
 
           <SettingRow
-            label="Currency"
-            description="Default currency for transactions"
+            label={t.currency}
+            description={t.currencyDescription}
           >
             <Select
               value={settings.currency}
@@ -334,49 +334,49 @@ const Setting = () => {
 
         {/* Notification Settings */}
         <SettingSection
-          title="Notifications"
+          title={t.notifications}
           icon={<BellOutlined style={{ fontSize: '20px', color: 'var(--brand)' }} />}
         >
           <SettingRow
-            label="Email Notifications"
-            description="Receive notifications via email"
+            label={t.emailNotifications}
+            description={t.emailNotificationsDescription}
           >
             <Toggle
               pressed={settings.emailNotifications}
-              label="Email notifications"
+              label={t.emailNotificationsLabel}
               onClick={() => handleSettingChange('emailNotifications', !settings.emailNotifications)}
             />
           </SettingRow>
 
           <SettingRow
-            label="Push Notifications"
-            description="Receive browser push notifications"
+            label={t.pushNotifications}
+            description={t.pushNotificationsDescription}
           >
             <Toggle
               pressed={settings.pushNotifications}
-              label="Push notifications"
+              label={t.pushNotificationsLabel}
               onClick={() => handleSettingChange('pushNotifications', !settings.pushNotifications)}
             />
           </SettingRow>
 
           <SettingRow
-            label="Order Notifications"
-            description="Get notified about new orders"
+            label={t.orderNotifications}
+            description={t.orderNotificationsDescription}
           >
             <Toggle
               pressed={settings.orderNotifications}
-              label="Order notifications"
+              label={t.orderNotificationsLabel}
               onClick={() => handleSettingChange('orderNotifications', !settings.orderNotifications)}
             />
           </SettingRow>
 
           <SettingRow
-            label="Inventory Alerts"
-            description="Alert when stock is low"
+            label={t.inventoryAlerts}
+            description={t.inventoryAlertsDescription}
           >
             <Toggle
               pressed={settings.inventoryAlerts}
-              label="Inventory alerts"
+              label={t.inventoryAlertsLabel}
               onClick={() => handleSettingChange('inventoryAlerts', !settings.inventoryAlerts)}
             />
           </SettingRow>
@@ -384,12 +384,12 @@ const Setting = () => {
 
         {/* Display Settings */}
         <SettingSection
-          title="Display"
+          title={t.display}
           icon={<EyeOutlined style={{ fontSize: '20px', color: 'var(--brand)' }} />}
         >
           <SettingRow
-            label="Items Per Page"
-            description="Number of items shown in tables"
+            label={t.itemsPerPage}
+            description={t.itemsPerPageDescription}
           >
             <Select
               value={settings.itemsPerPage.toString()}
@@ -405,23 +405,23 @@ const Setting = () => {
           </SettingRow>
 
           <SettingRow
-            label="Show Images"
-            description="Display product images in lists"
+            label={t.showImages}
+            description={t.showImagesDescription}
           >
             <Toggle
               pressed={settings.showImages}
-              label="Show images"
+              label={t.showImagesLabel}
               onClick={() => handleSettingChange('showImages', !settings.showImages)}
             />
           </SettingRow>
 
           <SettingRow
-            label="Compact Mode"
-            description="Use a more compact layout"
+            label={t.compactMode}
+            description={t.compactModeDescription}
           >
             <Toggle
               pressed={settings.compactMode}
-              label="Compact mode"
+              label={t.compactModeLabel}
               onClick={() => handleSettingChange('compactMode', !settings.compactMode)}
             />
           </SettingRow>
@@ -429,24 +429,24 @@ const Setting = () => {
 
         {/* Data Settings */}
         <SettingSection
-          title="Data & Performance"
+          title={t.dataPerformance}
           icon={<DatabaseOutlined style={{ fontSize: '20px', color: 'var(--brand)' }} />}
         >
           <SettingRow
-            label="Auto Refresh"
-            description="Automatically refresh data"
+            label={t.autoRefresh}
+            description={t.autoRefreshDescription}
           >
             <Toggle
               pressed={settings.autoRefresh}
-              label="Auto refresh"
+              label={t.autoRefreshLabel}
               onClick={() => handleSettingChange('autoRefresh', !settings.autoRefresh)}
             />
           </SettingRow>
 
           {settings.autoRefresh && (
             <SettingRow
-              label="Refresh Interval (seconds)"
-              description="How often to refresh data"
+              label={t.refreshInterval}
+              description={t.refreshIntervalDescription}
             >
               <Input
                 type="number"
@@ -460,8 +460,8 @@ const Setting = () => {
           )}
 
           <SettingRow
-            label="Data Retention (days)"
-            description="How long to keep historical data"
+            label={t.dataRetention}
+            description={t.dataRetentionDescription}
           >
             <Input
               type="number"
@@ -477,7 +477,7 @@ const Setting = () => {
         {/* Footer Note */}
         <div className="bg-surface-1 rounded-2xl shadow-card p-6 border border-[var(--glass-border)] text-center">
           <p className="text-sm m-0" style={{ color: 'var(--text-secondary)' }}>
-            Settings are saved locally in your browser. Changes take effect immediately after saving.
+            {t.settingsNote}
           </p>
         </div>
       </div>

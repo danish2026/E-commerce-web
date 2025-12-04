@@ -6,6 +6,8 @@ import { Button } from '../../../components/ui/Button';
 import { FilePdfOutlined, ReloadOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import jsPDF from 'jspdf';
+import LanguageSelector from '../../../components/purchase/LanguageSelector';
+import { useReportingTranslation } from '../../../hooks/useReportingTranslation';
 import {
   fetchReportingData,
   getApiErrorMessage,
@@ -22,6 +24,7 @@ interface ReportTableItem {
 }
 
 const Reporting = () => {
+  const { t, translate } = useReportingTranslation();
   const [filter, setFilter] = useState<ReportFilter>('Daily');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
   const [data, setData] = useState<ReportTableItem[]>([]);
@@ -45,7 +48,7 @@ const Reporting = () => {
       const tableData: ReportTableItem[] = [
         {
           key: '1',
-          metric: 'Revenue',
+          metric: t.revenue,
           value: `₹${result.revenue.toLocaleString('en-IN', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
@@ -54,13 +57,13 @@ const Reporting = () => {
         },
         {
           key: '2',
-          metric: 'Orders',
+          metric: t.orders,
           value: result.orders,
           period: filter,
         },
         {
           key: '3',
-          metric: 'Average Order Value',
+          metric: t.averageOrderValue,
           value: `₹${(result.orders > 0 ? result.revenue / result.orders : 0).toLocaleString('en-IN', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
@@ -72,11 +75,11 @@ const Reporting = () => {
       setData(tableData);
     } catch (error) {
       console.error('Error fetching reporting data:', error);
-      message.error(getApiErrorMessage(error, 'Failed to fetch reporting data'));
+      message.error(getApiErrorMessage(error, t.failedToFetchReportingData));
     } finally {
       setLoading(false);
     }
-  }, [filter, dateRange]);
+  }, [filter, dateRange, t]);
 
   useEffect(() => {
     loadReportingData();
@@ -84,7 +87,7 @@ const Reporting = () => {
 
   const downloadPDF = () => {
     if (!reportingData) {
-      message.warning('No data available to download');
+      message.warning(t.noDataAvailableToDownload);
       return;
     }
 
@@ -92,18 +95,18 @@ const Reporting = () => {
     let yPos = 20;
 
     doc.setFontSize(18);
-    doc.text(`${filter} Report`, 14, yPos);
+    doc.text(`${filter} ${t.report}`, 14, yPos);
     yPos += 15;
 
     doc.setFontSize(12);
     if (dateRange && dateRange[0] && dateRange[1]) {
       doc.text(
-        `Period: ${dateRange[0].format('DD MMM YYYY')} - ${dateRange[1].format('DD MMM YYYY')}`,
+        `${t.period}: ${dateRange[0].format('DD MMM YYYY')} - ${dateRange[1].format('DD MMM YYYY')}`,
         14,
         yPos
       );
     } else {
-      doc.text(`Generated on: ${dayjs().format('DD MMM YYYY, HH:mm')}`, 14, yPos);
+      doc.text(`${t.generatedOn}: ${dayjs().format('DD MMM YYYY, HH:mm')}`, 14, yPos);
     }
     yPos += 15;
 
@@ -113,22 +116,22 @@ const Reporting = () => {
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('Summary', 14, yPos);
+    doc.text(t.summary, 14, yPos);
     yPos += 10;
 
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Revenue: ₹${reportingData.revenue.toLocaleString('en-IN', {
+    doc.text(`${t.revenue}: ₹${reportingData.revenue.toLocaleString('en-IN', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`, 14, yPos);
     yPos += 8;
 
-    doc.text(`Total Orders: ${reportingData.orders}`, 14, yPos);
+    doc.text(`${t.totalOrders}: ${reportingData.orders}`, 14, yPos);
     yPos += 8;
 
     const avgOrderValue = reportingData.orders > 0 ? reportingData.revenue / reportingData.orders : 0;
-    doc.text(`Average Order Value: ₹${avgOrderValue.toLocaleString('en-IN', {
+    doc.text(`${t.averageOrderValue}: ₹${avgOrderValue.toLocaleString('en-IN', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`, 14, yPos);
@@ -137,16 +140,16 @@ const Reporting = () => {
     if (reportingData.orderItems && reportingData.orderItems.length > 0) {
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text('Recent Orders', 14, yPos);
+      doc.text(t.recentOrders, 14, yPos);
       yPos += 10;
 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       
       doc.setFont('helvetica', 'bold');
-      doc.text('Date', 14, yPos);
-      doc.text('Product', 60, yPos);
-      doc.text('Amount', 140, yPos);
+      doc.text(t.date, 14, yPos);
+      doc.text(t.product, 60, yPos);
+      doc.text(t.amount, 140, yPos);
       yPos += 6;
       
       doc.setDrawColor(200, 200, 200);
@@ -180,7 +183,7 @@ const Reporting = () => {
       doc.setPage(i);
       doc.setFontSize(8);
       doc.text(
-        `Page ${i} of ${pageCount} - Generated on ${dayjs().format('DD MMM YYYY, HH:mm')}`,
+        `${t.page} ${i} ${t.of} ${pageCount} - ${t.generatedOn} ${dayjs().format('DD MMM YYYY, HH:mm')}`,
         14,
         285
       );
@@ -191,7 +194,7 @@ const Reporting = () => {
       : `${filter}_Report_${dayjs().format('YYYY-MM-DD')}.pdf`;
     
     doc.save(fileName);
-    message.success('PDF report downloaded successfully');
+    message.success(t.pdfReportDownloadedSuccessfully);
   };
 
   const handleFilterChange = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -209,14 +212,29 @@ const Reporting = () => {
   const handleReset = () => {
     setFilter('Daily');
     setDateRange(null);
-    message.success('Filters reset to default');
+    message.success(t.filtersResetToDefault);
   };
 
   const getDateRangeDisplay = () => {
     if (dateRange && dateRange[0] && dateRange[1]) {
       return `${dateRange[0].format('DD MMM YYYY')} - ${dateRange[1].format('DD MMM YYYY')}`;
     }
-    return 'No date range selected';
+    return '';
+  };
+
+  const getFilterDisplay = () => {
+    switch (filter) {
+      case 'Daily':
+        return t.today;
+      case 'Weekly':
+        return t.last7Days;
+      case 'Monthly':
+        return t.currentMonth;
+      case 'Yearly':
+        return t.currentYear;
+      default:
+        return filter;
+    }
   };
 
   return (
@@ -227,14 +245,15 @@ const Reporting = () => {
             <div className="w-full">
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                  Report Period
+                  {t.reportPeriod}
                 </label>
                 <Space size="middle" className="w-full" wrap>
+                  {/* <LanguageSelector /> */}
                   <Select value={filter} style={{ width: 150, height: '40px' }} onChange={handleFilterChange}>
-                    <option value="Daily">Daily</option>
-                    <option value="Weekly">Weekly</option>
-                    <option value="Monthly">Monthly</option>
-                    <option value="Yearly">Yearly</option>
+                    <option value="Daily">{t.daily}</option>
+                    <option value="Weekly">{t.weekly}</option>
+                    <option value="Monthly">{t.monthly}</option>
+                    <option value="Yearly">{t.yearly}</option>
                   </Select>
 
                   <div>
@@ -242,7 +261,7 @@ const Reporting = () => {
                       value={dateRange}
                       onChange={handleDateRangeChange}
                       format="YYYY-MM-DD"
-                      placeholder={['Start Date', 'End Date']}
+                      placeholder={[t.startDate, t.endDate]}
                       style={{ width: 300, height: '40px' }}
                       allowClear
                       disabledDate={(current) => {
@@ -256,7 +275,7 @@ const Reporting = () => {
                         onClick={clearDateRange}
                         className="h-auto px-0 text-brand hover:text-brand/80"
                       >
-                        Clear
+                        {t.clear}
                       </Button>
                     )}
                   </div>
@@ -267,7 +286,7 @@ const Reporting = () => {
                     disabled={!reportingData || loading}
                     style={{ height: '40px' }}
                   >
-                    Download PDF
+                    {t.downloadPDF}
                   </Button>
                 </Space>
               </div>
@@ -284,20 +303,16 @@ const Reporting = () => {
               >
                 {dateRange && dateRange[0] && dateRange[1] ? (
                   <>
-                    <strong>Custom Date Range:</strong> {getDateRangeDisplay()}
+                    <strong>{t.customDateRange}:</strong> {getDateRangeDisplay()}
                     <span style={{ marginLeft: 12, color: 'var(--text-tertiary)', fontSize: '11px' }}>
-                      (Overrides {filter} filter)
+                      ({translate('overridesFilter', { filter: filter })})
                     </span>
                   </>
                 ) : (
                   <>
-                    <strong>Using {filter} Filter:</strong>{' '}
-                    {filter === 'Daily' && 'Today'}
-                    {filter === 'Weekly' && 'Last 7 days'}
-                    {filter === 'Monthly' && 'Current month'}
-                    {filter === 'Yearly' && 'Current year'}
+                    <strong>{translate('usingFilter', { filter: filter })}:</strong> {getFilterDisplay()}
                     <span style={{ marginLeft: 12, color: 'var(--text-tertiary)', fontSize: '11px' }}>
-                      (Select dates to use custom range)
+                      ({t.selectDatesToUseCustomRange})
                     </span>
                   </>
                 )}
@@ -314,26 +329,26 @@ const Reporting = () => {
                   dataSource={data}
                   columns={[
                     {
-                      title: 'Metric',
+                      title: t.metric,
                       dataIndex: 'metric',
                       key: 'metric',
                       width: '40%',
                     },
                     {
-                      title: 'Value',
+                      title: t.value,
                       dataIndex: 'value',
                       key: 'value',
                       width: '40%',
                     },
                     {
-                      title: 'Period',
+                      title: t.period,
                       dataIndex: 'period',
                       key: 'period',
                       width: '20%',
                     },
                   ]}
                   pagination={false}
-                  locale={{ emptyText: 'No data available' }}
+                  locale={{ emptyText: t.noDataAvailable }}
                 />
               </div>
             )}
@@ -341,7 +356,7 @@ const Reporting = () => {
             {reportingData && reportingData.orderItems && reportingData.orderItems.length > 0 && (
               <div style={{ marginTop: 20, padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
                 <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-                  <strong>Total Order Items:</strong> {reportingData.orderItems.length}
+                  <strong>{t.totalOrderItems}:</strong> {reportingData.orderItems.length}
                 </p>
               </div>
             )}

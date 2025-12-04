@@ -4,6 +4,7 @@ import type { TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import { EyeOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { useEmployeeTranslation } from '../../../hooks/useEmployeeTranslation';
 import { Employee, deleteEmployee } from './api';
 
 dayjs.extend(advancedFormat);
@@ -53,6 +54,7 @@ const EmployeeTable: React.FC<TableProps> = ({
   onDelete,
   pagination,
 }) => {
+  const { t } = useEmployeeTranslation();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -75,7 +77,7 @@ const EmployeeTable: React.FC<TableProps> = ({
 
   const handleDelete = (employee: Employee) => {
     if (!employee?.id) {
-      message.error('Invalid employee ID');
+      message.error(t.failedToDelete);
       return;
     }
     setEmployeeToDelete(employee);
@@ -84,20 +86,20 @@ const EmployeeTable: React.FC<TableProps> = ({
 
   const confirmDelete = async () => {
     if (!employeeToDelete?.id) {
-      message.error('Invalid employee ID');
+      message.error(t.failedToDelete);
       return;
     }
 
     try {
       setIsDeleting(true);
       await deleteEmployee(employeeToDelete.id);
-      message.success('Employee deleted successfully');
+      message.success(t.employeeDeleted);
       setDeleteModalVisible(false);
       setEmployeeToDelete(null);
       onDelete?.();
     } catch (error: any) {
       console.error('Error deleting employee:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to delete employee';
+      const errorMessage = error?.response?.data?.message || error?.message || t.failedToDelete;
       message.error(errorMessage);
     } finally {
       setIsDeleting(false);
@@ -227,10 +229,10 @@ const EmployeeTable: React.FC<TableProps> = ({
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-                  Delete Employee
+                  {t.deleteEmployeeTitle}
                 </h3>
                 <p className="text-sm text-[var(--text-secondary)] mt-1">
-                  Are you sure you want to delete this employee?
+                  {t.deleteEmployeeConfirm}
                 </p>
               </div>
             </div>
@@ -243,7 +245,7 @@ const EmployeeTable: React.FC<TableProps> = ({
               </p>
             </div>
             <p className="text-sm text-[var(--text-secondary)] mb-6">
-              This action cannot be undone. The employee will be permanently deleted.
+              {t.deleteEmployeeWarning}
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -251,14 +253,14 @@ const EmployeeTable: React.FC<TableProps> = ({
                 disabled={isDeleting}
                 className="px-4 py-2 rounded-lg border border-[var(--glass-border)] text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--surface-2)] focus:outline-none focus:ring-2 focus:ring-[var(--glass-border)] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Cancel
+                {t.cancel}
               </button>
               <button
                 onClick={confirmDelete}
                 disabled={isDeleting}
                 className="px-4 py-2 rounded-lg bg-red-600 dark:bg-red-700 text-sm font-medium text-white hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isDeleting ? 'Deleting...' : 'Delete'}
+                {isDeleting ? t.deleting : t.delete}
               </button>
             </div>
           </div>
@@ -273,10 +275,10 @@ const EmployeeTable: React.FC<TableProps> = ({
         {renderDeleteModal()}
         <div className="bg-[var(--surface-1)] rounded-lg shadow-sm border border-[var(--glass-border)] overflow-hidden">
           {loading ? (
-            <div className="py-12 text-center text-[var(--text-secondary)]">Loading employees...</div>
+            <div className="py-12 text-center text-[var(--text-secondary)]">{t.loadingEmployees}</div>
           ) : data.length === 0 ? (
             <div className="text-center py-12 text-[var(--text-secondary)] text-sm">
-              No employees found. Click Add Employee to create one.
+              {t.noEmployeesFound}
             </div>
           ) : (
             <div className="space-y-0">
@@ -299,20 +301,20 @@ const EmployeeTable: React.FC<TableProps> = ({
                         employee.isActive,
                       )}`}
                     >
-                      {employee.isActive ? 'Active' : 'Inactive'}
+                      {employee.isActive ? t.active : t.inactive}
                     </span>
                   </div>
                   <div className="space-y-2 text-xs text-[var(--text-secondary)]">
-                    {employee.phone && <div>Phone: {employee.phone}</div>}
+                    {employee.phone && <div>{t.phone}: {employee.phone}</div>}
                     <div>
-                      Role:{' '}
+                      {t.role}:{' '}
                       <span className={`px-2 py-1 rounded-full text-xs ${getRoleBadgeClasses(employee.permissionsRoleName || employee.roleName || employee.role)}`}>
                         {employee.permissionsRoleName || employee.roleName || employee.role}
                       </span>
                     </div>
                     {employee.createdAt && (
                       <div className="text-xs text-[var(--text-secondary)]">
-                        Created: {formatDate(employee.createdAt)}
+                        {t.createdAt}: {formatDate(employee.createdAt)}
                       </div>
                     )}
                   </div>
@@ -362,29 +364,29 @@ const EmployeeTable: React.FC<TableProps> = ({
               <tr>
                 <th className="px-[18px] py-6 text-left h-[64px]">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">Name</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{t.name}</span>
                   </div>
                 </th>
                 <th className="px-[18px] py-6 text-left h-[64px]">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">Email</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{t.email}</span>
                   </div>
                 </th>
                 {!isTablet && (
                   <th className="px-[18px] py-6 text-left h-[64px]">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-[var(--text-primary)]">Phone</span>
+                      <span className="text-sm font-semibold text-[var(--text-primary)]">{t.phone}</span>
                     </div>
                   </th>
                 )}
                 <th className="px-[18px] py-6 text-left h-[64px]">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Role</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.role}</span>
                 </th>
                 <th className="px-[18px] py-6 text-left h-[64px]">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Status</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.status}</span>
                 </th>
                 <th className="px-[18px] py-6 text-left pl-[100px] h-[64px]">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Actions</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.actions}</span>
                 </th>
               </tr>
             </thead>
@@ -392,13 +394,13 @@ const EmployeeTable: React.FC<TableProps> = ({
               {loading ? (
                 <tr>
                   <td colSpan={6} className="px-[18px] py-12 text-center text-[var(--text-secondary)] text-sm">
-                    Loading employees...
+                    {t.loadingEmployees}
                   </td>
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-[18px] py-12 text-center text-[var(--text-secondary)] text-sm">
-                    No employees found. Click Add Employee to create one.
+                    {t.noEmployeesFound}
                   </td>
                 </tr>
               ) : (
@@ -444,7 +446,7 @@ const EmployeeTable: React.FC<TableProps> = ({
                           employee.isActive,
                         )}`}
                       >
-                        {employee.isActive ? 'Active' : 'Inactive'}
+                        {employee.isActive ? t.active : t.inactive}
                       </span>
                     </td>
                     <td className="px-[18px] py-4 h-[56px] text-right">

@@ -4,6 +4,7 @@ import type { TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import { EyeOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { useBillingTranslation } from '../../../hooks/useBillingTranslation';
 import { Order, deleteOrder, PaymentType } from './api';
 
 dayjs.extend(advancedFormat);
@@ -59,6 +60,7 @@ const OrderTable: React.FC<TableProps> = ({
   onDelete,
   pagination,
 }) => {
+  const { t, translate } = useBillingTranslation();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -79,9 +81,25 @@ const OrderTable: React.FC<TableProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const translatePaymentType = (paymentType?: PaymentType) => {
+    if (!paymentType) return 'N/A';
+    switch (paymentType) {
+      case PaymentType.CASH:
+        return t.cash;
+      case PaymentType.CARD:
+        return t.card;
+      case PaymentType.UPI:
+        return t.upi;
+      case PaymentType.CREDIT:
+        return t.credit;
+      default:
+        return paymentType;
+    }
+  };
+
   const handleDelete = (order: Order) => {
     if (!order?.id) {
-      message.error('Invalid order ID');
+      message.error(t.failedToDelete);
       return;
     }
     setOrderToDelete(order);
@@ -90,20 +108,20 @@ const OrderTable: React.FC<TableProps> = ({
 
   const confirmDelete = async () => {
     if (!orderToDelete?.id) {
-      message.error('Invalid order ID');
+      message.error(t.failedToDelete);
       return;
     }
 
     try {
       setIsDeleting(true);
       await deleteOrder(orderToDelete.id);
-      message.success('Order deleted successfully');
+      message.success(t.orderDeleted);
       setDeleteModalVisible(false);
       setOrderToDelete(null);
       onDelete?.();
     } catch (error: any) {
       console.error('Error deleting order:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to delete order';
+      const errorMessage = error?.response?.data?.message || error?.message || t.failedToDelete;
       message.error(errorMessage);
     } finally {
       setIsDeleting(false);
@@ -237,25 +255,25 @@ const OrderTable: React.FC<TableProps> = ({
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-                  Delete Order
+                  {t.deleteOrderTitle}
                 </h3>
                 <p className="text-sm text-[var(--text-secondary)] mt-1">
-                  Are you sure you want to delete this order?
+                  {t.deleteOrderConfirm}
                 </p>
               </div>
             </div>
             <div className="mb-6 p-4 bg-[var(--surface-2)] rounded-lg">
                 <p className="text-sm text-[var(--text-primary)] font-medium">
-                  Order #{orderToDelete.orderNumber || orderToDelete.id?.substring(0, 8).toUpperCase().replace(/-/g, '') || 'N/A'}
+                  {t.order} #{orderToDelete.orderNumber || orderToDelete.id?.substring(0, 8).toUpperCase().replace(/-/g, '') || 'N/A'}
                 </p>
               {orderToDelete.customerName && (
                 <p className="text-xs text-[var(--text-secondary)] mt-1">
-                  Customer: {orderToDelete.customerName}
+                  {t.customer}: {orderToDelete.customerName}
                 </p>
               )}
             </div>
             <p className="text-sm text-[var(--text-secondary)] mb-6">
-              This action cannot be undone. The order will be permanently deleted.
+              {t.deleteOrderWarning}
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -263,14 +281,14 @@ const OrderTable: React.FC<TableProps> = ({
                 disabled={isDeleting}
                 className="px-4 py-2 rounded-lg border border-[var(--glass-border)] text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--surface-2)] focus:outline-none focus:ring-2 focus:ring-[var(--glass-border)] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Cancel
+                {t.cancel}
               </button>
               <button
                 onClick={confirmDelete}
                 disabled={isDeleting}
                 className="px-4 py-2 rounded-lg bg-red-600 dark:bg-red-700 text-sm font-medium text-white hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isDeleting ? 'Deleting...' : 'Delete'}
+                {isDeleting ? t.deleting : t.delete}
               </button>
             </div>
           </div>
@@ -285,10 +303,10 @@ const OrderTable: React.FC<TableProps> = ({
         {renderDeleteModal()}
         <div className="bg-[var(--surface-1)] rounded-lg shadow-sm border border-[var(--glass-border)] overflow-hidden">
           {loading ? (
-            <div className="py-12 text-center text-[var(--text-secondary)]">Loading orders...</div>
+            <div className="py-12 text-center text-[var(--text-secondary)]">{t.loadingOrders}</div>
           ) : data.length === 0 ? (
             <div className="text-center py-12 text-[var(--text-secondary)] text-sm">
-              No orders found. Click Add Order to create one.
+              {t.noOrdersFound}
             </div>
           ) : (
             <div className="space-y-0">
@@ -311,29 +329,29 @@ const OrderTable: React.FC<TableProps> = ({
                         order.paymentType,
                       )}`}
                     >
-                      {order.paymentType || 'N/A'}
+                      {translatePaymentType(order.paymentType)}
                     </span>
                   </div>
                   <div className="space-y-2 text-xs text-[var(--text-secondary)]">
                     <div>
-                      Customer:{' '}
+                      {t.customer}:{' '}
                       <span className="text-[var(--text-primary)] font-medium">
-                        {order.customerName || 'Walk-in Customer'}
+                        {order.customerName || t.walkInCustomer}
                       </span>
                     </div>
-                    {order.customerPhone && <div>Phone: {order.customerPhone}</div>}
+                    {order.customerPhone && <div>{t.customerPhone}: {order.customerPhone}</div>}
                     <div className="flex items-center gap-2">
-                      <span>Subtotal: ₹{formatCurrency(order.subtotal)}</span>
+                      <span>{t.subtotal}: ₹{formatCurrency(order.subtotal)}</span>
                       <span>|</span>
-                      <span>GST: ₹{formatCurrency(order.gstTotal)}</span>
+                      <span>{t.gst}: ₹{formatCurrency(order.gstTotal)}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-red-500">
-                        Discount: {Number(order.discount) > 0 ? `- ₹${formatCurrency(order.discount)}` : '-'}
+                        {t.discount}: {Number(order.discount) > 0 ? `- ₹${formatCurrency(order.discount)}` : '-'}
                       </span>
                       <span>|</span>
                       <span className="text-[var(--text-primary)] font-semibold">
-                        Grand Total: ₹{formatCurrency(order.grandTotal)}
+                        {t.grandTotal}: ₹{formatCurrency(order.grandTotal)}
                       </span>
                     </div>
                   </div>
@@ -383,39 +401,39 @@ const OrderTable: React.FC<TableProps> = ({
               <tr>
                 <th className="px-[18px] py-6 text-left h-[64px]">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">Order</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{t.order}</span>
                   </div>
                 </th>
                 {!isTablet && (
                   <th className="px-[18px] py-6 text-left h-[64px]">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-[var(--text-primary)]">Customer</span>
+                      <span className="text-sm font-semibold text-[var(--text-primary)]">{t.customer}</span>
                     </div>
                   </th>
                 )}
                 <th className="px-[18px] py-6 text-left h-[64px]">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">Subtotal</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{t.subtotal}</span>
                   </div>
                 </th>
                 <th className="px-[18px] py-6 text-left h-[64px]">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">GST</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{t.gst}</span>
                   </div>
                 </th>
                 <th className="px-[18px] py-6 text-left h-[64px]">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Discount</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.discount}</span>
                 </th>
                 <th className="px-[18px] py-6 text-left h-[64px]">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Grand Total</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.grandTotal}</span>
                 </th>
                 {!isTablet && (
                   <th className="px-[18px] py-6 text-left h-[64px]">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">Payment</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{t.payment}</span>
                   </th>
                 )}
                 <th className="px-[18px] py-6 text-left pl-[100px] h-[64px]">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Actions</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.actions}</span>
                 </th>
               </tr>
             </thead>
@@ -423,13 +441,13 @@ const OrderTable: React.FC<TableProps> = ({
               {loading ? (
                 <tr>
                   <td colSpan={8} className="px-[18px] py-12 text-center text-[var(--text-secondary)] text-sm">
-                    Loading orders...
+                    {t.loadingOrders}
                   </td>
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-[18px] py-12 text-center text-[var(--text-secondary)] text-sm">
-                    No orders found. Click Add Order to create one.
+                    {t.noOrdersFound}
                   </td>
                 </tr>
               ) : (
@@ -451,7 +469,7 @@ const OrderTable: React.FC<TableProps> = ({
                     {!isTablet && (
                       <td className="px-[18px] py-4 h-[56px]">
                         <div className="text-sm text-[var(--text-primary)]">
-                          {order.customerName || 'Walk-in Customer'}
+                          {order.customerName || t.walkInCustomer}
                         </div>
                         {order.customerPhone && (
                           <div className="text-xs text-[var(--text-secondary)] mt-1">{order.customerPhone}</div>
@@ -481,7 +499,7 @@ const OrderTable: React.FC<TableProps> = ({
                             order.paymentType,
                           )}`}
                         >
-                          {order.paymentType || 'N/A'}
+                          {translatePaymentType(order.paymentType)}
                         </span>
                       </td>
                     )}

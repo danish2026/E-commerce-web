@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Form, Input, Button, Card, Space, message, Select, Checkbox } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
+import { usePermissionTranslation } from '../../../hooks/usePermissionTranslation';
 import { createPermission, bulkCreatePermissions, updatePermission, Permission, fetchModules } from './api';
 
 const { Option } = Select;
@@ -26,6 +27,7 @@ const AVAILABLE_MODULES = [
 const PermissionForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = usePermissionTranslation();
   const existingPermission = location.state as Permission | null;
   const isEditMode = !!existingPermission;
   
@@ -72,11 +74,11 @@ const PermissionForm = () => {
       if (isBulkMode && !isEditMode) {
         // Bulk create mode
         if (!selectedModule) {
-          message.error('Please select a module');
+          message.error(t.moduleRequired);
           return;
         }
         if (selectedActions.length === 0) {
-          message.error('Please select at least one action');
+          message.error(t.selectAtLeastOneAction);
           return;
         }
 
@@ -84,7 +86,7 @@ const PermissionForm = () => {
           module: selectedModule,
           actions: selectedActions,
         });
-        message.success('Permissions created successfully!');
+        message.success(t.permissionsCreated);
       } else {
         // Single create or edit mode
         const values = await form.validateFields();
@@ -95,21 +97,21 @@ const PermissionForm = () => {
             action: values.action,
             description: values.description,
           });
-          message.success('Permission updated successfully!');
+          message.success(t.permissionUpdated);
         } else {
           await createPermission({
             module: values.module,
             action: values.action,
             description: values.description,
           });
-          message.success('Permission created successfully!');
+          message.success(t.permissionCreated);
         }
       }
       
       navigate('/permissions');
     } catch (error: any) {
       console.error('Error saving permission:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to save permission';
+      const errorMessage = error.response?.data?.message || error.message || t.failedToSave;
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -124,12 +126,12 @@ const PermissionForm = () => {
           onClick={() => navigate('/permissions')}
           className="mb-6"
         >
-          Back to Permissions List
+          {t.backToPermissionsList}
         </Button>
 
         <Card
           title={<h2 className="text-2xl font-bold p-4 mt-[20px] m-0" style={{ color: 'var(--text-primary)' }}>
-            {isEditMode ? 'Edit Permission' : 'Create New Permission'}
+            {isEditMode ? t.editPermission : t.createNewPermission}
           </h2>}
           headStyle={{ 
             backgroundColor: 'var(--surface-1)', 
@@ -154,7 +156,7 @@ const PermissionForm = () => {
                   className="w-4 h-4"
                 />
                 <span className="text-sm text-[var(--text-primary)]">
-                  Bulk create (create multiple actions for a module at once)
+                  {t.bulkCreate}
                 </span>
               </label>
             </div>
@@ -169,12 +171,12 @@ const PermissionForm = () => {
             {isBulkMode && !isEditMode ? (
               <>
                 <Form.Item
-                  label="Module"
+                  label={t.moduleLabel}
                   name="module"
-                  rules={[{ required: true, message: 'Please select a module' }]}
+                  rules={[{ required: true, message: t.moduleRequired }]}
                 >
                   <Select
-                    placeholder="Select a module"
+                    placeholder={t.modulePlaceholder}
                     size="large"
                     value={selectedModule}
                     onChange={(value) => {
@@ -192,9 +194,9 @@ const PermissionForm = () => {
 
                 {selectedModule && (
                   <Form.Item
-                    label="Actions"
+                    label={t.actionsLabel}
                     name="actions"
-                    rules={[{ required: true, message: 'Please select at least one action' }]}
+                    rules={[{ required: true, message: t.selectAtLeastOneAction }]}
                   >
                     <div className="space-y-2">
                       {STANDARD_ACTIONS.map((action) => (
@@ -219,12 +221,12 @@ const PermissionForm = () => {
             ) : (
               <>
                 <Form.Item
-                  label="Module"
+                  label={t.moduleLabel}
                   name="module"
-                  rules={[{ required: true, message: 'Please select a module' }]}
+                  rules={[{ required: true, message: t.moduleRequired }]}
                 >
                   <Select
-                    placeholder="Select a module"
+                    placeholder={t.modulePlaceholder}
                     size="large"
                     showSearch
                     optionFilterProp="label"
@@ -241,12 +243,12 @@ const PermissionForm = () => {
                 </Form.Item>
 
                 <Form.Item
-                  label="Action"
+                  label={t.actionLabel}
                   name="action"
-                  rules={[{ required: true, message: 'Please enter an action' }]}
+                  rules={[{ required: true, message: t.actionRequired }]}
                 >
                   <Select
-                    placeholder="Select an action"
+                    placeholder={t.actionPlaceholder}
                     size="large"
                     showSearch
                     optionFilterProp="label"
@@ -262,10 +264,10 @@ const PermissionForm = () => {
                   />
                 </Form.Item>
 
-                <Form.Item label="Description" name="description">
+                <Form.Item label={t.descriptionLabel} name="description">
                   <TextArea
                     rows={4}
-                    placeholder="Enter permission description (optional)"
+                    placeholder={t.descriptionPlaceholder}
                     className="resize-none"
                     size="large"
                   />
@@ -286,13 +288,13 @@ const PermissionForm = () => {
                     borderColor: 'var(--brand)',
                   }}
                 >
-                  {isEditMode ? 'Update Permission' : 'Create Permission'}
+                  {isEditMode ? t.updatePermission : t.createPermission}
                 </Button>
                 <Button
                   onClick={() => navigate('/permissions')}
                   size="large"
                 >
-                  Cancel
+                  {t.cancel}
                 </Button>
               </Space>
             </Form.Item>

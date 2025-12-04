@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Form, Input, Button, Card, Space, message, Select, Divider } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
+import { useEmployeeTranslation } from '../../../hooks/useEmployeeTranslation';
 import { createEmployee, getApiErrorMessage, updateEmployee, getRoles, Employee } from './api';
 
 const { Option } = Select;
@@ -23,6 +24,7 @@ interface EmployeeFormData {
 const FormComponent = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useEmployeeTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [roles, setRoles] = useState<{ id: string; name: string; description?: string }[]>([]);
@@ -39,13 +41,13 @@ const FormComponent = () => {
         setRoles(data);
       } catch (error) {
         console.error('Error fetching roles:', error);
-        message.error(getApiErrorMessage(error, 'Failed to load roles'));
+        message.error(getApiErrorMessage(error, t.failedToLoadRoles));
       } finally {
         setRolesLoading(false);
       }
     };
     loadRoles();
-  }, []);
+  }, [t]);
 
   // Map enum value back to role name for the form
   const mapEnumToRoleName = (enumValue: string): string => {
@@ -147,7 +149,7 @@ const FormComponent = () => {
 
       // Validate password match for create mode
       if (!isEditMode && values.password !== values.confirmPassword) {
-        message.error('Passwords do not match');
+        message.error(t.passwordsDoNotMatch);
         return;
       }
 
@@ -155,7 +157,7 @@ const FormComponent = () => {
         roles.find((role) => role.id === values.permissionsRoleId) ||
         roles.find((role) => role.name === values.permissionsRoleName);
       if (!selectedRole?.id) {
-        message.error('Please select a valid role');
+        message.error(t.roleInvalid);
         return;
       }
 
@@ -177,14 +179,14 @@ const FormComponent = () => {
         // Only include password if it's provided
         if (values.password) {
           if (values.password !== values.confirmPassword) {
-            message.error('Passwords do not match');
+            message.error(t.passwordsDoNotMatch);
             return;
           }
           updateData.password = values.password;
         }
 
         await updateEmployee(formData.id, updateData);
-        message.success('Employee updated successfully!');
+        message.success(t.employeeUpdated);
       } else {
         // Create new employee
         await createEmployee({
@@ -198,13 +200,13 @@ const FormComponent = () => {
           password: values.password,
           confirmPassword: values.confirmPassword,
         });
-        message.success('Employee created successfully!');
+        message.success(t.employeeCreated);
       }
 
       navigate('/employees');
     } catch (error: any) {
       console.error('Error saving employee:', error);
-      message.error(getApiErrorMessage(error, 'Failed to save employee'));
+      message.error(getApiErrorMessage(error, t.failedToSave));
     } finally {
       setLoading(false);
     }
@@ -218,12 +220,12 @@ const FormComponent = () => {
           onClick={() => navigate('/employees')}
           className="mb-6"
         >
-          Back to Employees List
+          {t.backToEmployeesList}
         </Button>
 
         <Card
           title={<h2 className="text-2xl font-bold p-4 mt-[20px] m-0" style={{ color: 'var(--text-primary)' }}>
-            {isEditMode ? 'Edit Employee' : 'Create New Employee'}
+            {isEditMode ? t.editEmployee : t.createNewEmployee}
           </h2>}
           headStyle={{ 
             backgroundColor: 'var(--surface-1)', 
@@ -247,23 +249,23 @@ const FormComponent = () => {
             {/* Personal Information */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-                Personal Information
+                {t.personalInformation}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Form.Item
-                  label="First Name"
+                  label={t.firstNameLabel}
                   name="firstName"
-                  rules={[{ required: true, message: 'Please enter first name' }]}
+                  rules={[{ required: true, message: t.firstNameRequired }]}
                 >
-                  <Input placeholder="Enter first name" size="large" />
+                  <Input placeholder={t.firstNamePlaceholder} size="large" />
                 </Form.Item>
 
                 <Form.Item
-                  label="Last Name"
+                  label={t.lastNameLabel}
                   name="lastName"
-                  rules={[{ required: true, message: 'Please enter last name' }]}
+                  rules={[{ required: true, message: t.lastNameRequired }]}
                 >
-                  <Input placeholder="Enter last name" size="large" />
+                  <Input placeholder={t.lastNamePlaceholder} size="large" />
                 </Form.Item>
               </div>
             </div>
@@ -273,28 +275,28 @@ const FormComponent = () => {
             {/* Contact Information */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-                Contact Information
+                {t.contactInformation}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Form.Item
-                  label="Email"
+                  label={t.emailLabel}
                   name="email"
                   rules={[
-                    { required: true, message: 'Please enter email' },
-                    { type: 'email', message: 'Please enter a valid email' },
+                    { required: true, message: t.emailRequired },
+                    { type: 'email', message: t.emailInvalid },
                   ]}
                 >
-                  <Input placeholder="Enter email" type="email" size="large" />
+                  <Input placeholder={t.emailPlaceholder} type="email" size="large" />
                 </Form.Item>
 
                 <Form.Item
-                  label="Phone"
+                  label={t.phoneLabel}
                   name="phone"
                   rules={[
-                    { pattern: /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/, message: 'Please enter a valid phone number' }
+                    { pattern: /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/, message: t.phoneInvalid }
                   ]}
                 >
-                  <Input placeholder="Enter phone number" size="large" />
+                  <Input placeholder={t.phonePlaceholder} size="large" />
                 </Form.Item>
               </div>
             </div>
@@ -304,15 +306,15 @@ const FormComponent = () => {
             {/* Role Information */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-                Role & Access
+                {t.roleAndAccess}
               </h3>
               <Form.Item
-                label="Role"
+                label={t.roleLabel}
                 name="permissionsRoleId"
-                rules={[{ required: true, message: 'Please select a role' }]}
+                rules={[{ required: true, message: t.roleRequired }]}
               >
                 <Select
-                  placeholder="Select a role"
+                  placeholder={t.rolePlaceholder}
                   loading={rolesLoading}
                   showSearch
                   size="large"
@@ -344,37 +346,37 @@ const FormComponent = () => {
             {!isEditMode && (
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-                  Password
+                  {t.password}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Form.Item
-                    label="Password"
+                    label={t.passwordLabel}
                     name="password"
                     rules={[
-                      { required: true, message: 'Please enter password' },
-                      { min: 6, message: 'Password must be at least 6 characters' },
+                      { required: true, message: t.passwordRequired },
+                      { min: 6, message: t.passwordMin },
                     ]}
                   >
-                    <Input.Password placeholder="Enter password" size="large" />
+                    <Input.Password placeholder={t.passwordPlaceholder} size="large" />
                   </Form.Item>
 
                   <Form.Item
-                    label="Confirm Password"
+                    label={t.confirmPasswordLabel}
                     name="confirmPassword"
                     dependencies={['password']}
                     rules={[
-                      { required: true, message: 'Please confirm password' },
+                      { required: true, message: t.confirmPasswordRequired },
                       ({ getFieldValue }) => ({
                         validator(_, value) {
                           if (!value || getFieldValue('password') === value) {
                             return Promise.resolve();
                           }
-                          return Promise.reject(new Error('Passwords do not match'));
+                          return Promise.reject(new Error(t.passwordsDoNotMatch));
                         },
                       }),
                     ]}
                   >
-                    <Input.Password placeholder="Confirm password" size="large" />
+                    <Input.Password placeholder={t.confirmPasswordPlaceholder} size="large" />
                   </Form.Item>
                 </div>
               </div>
@@ -385,21 +387,21 @@ const FormComponent = () => {
                 <Divider className="my-6" />
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-                    Change Password (Optional)
+                    {t.changePassword}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Form.Item
-                      label="New Password"
+                      label={t.newPassword}
                       name="password"
                       rules={[
-                        { min: 6, message: 'Password must be at least 6 characters' },
+                        { min: 6, message: t.passwordMin },
                       ]}
                     >
-                      <Input.Password placeholder="Enter new password (leave blank to keep current)" size="large" />
+                      <Input.Password placeholder={t.newPasswordPlaceholder} size="large" />
                     </Form.Item>
 
                     <Form.Item
-                      label="Confirm New Password"
+                      label={t.confirmNewPassword}
                       name="confirmPassword"
                       dependencies={['password']}
                       rules={[
@@ -412,12 +414,12 @@ const FormComponent = () => {
                             if (password === value) {
                               return Promise.resolve();
                             }
-                            return Promise.reject(new Error('Passwords do not match'));
+                            return Promise.reject(new Error(t.passwordsDoNotMatch));
                           },
                         }),
                       ]}
                     >
-                      <Input.Password placeholder="Confirm new password" size="large" />
+                      <Input.Password placeholder={t.confirmNewPasswordPlaceholder} size="large" />
                     </Form.Item>
                   </div>
                 </div>
@@ -437,13 +439,13 @@ const FormComponent = () => {
                     borderColor: 'var(--brand)',
                   }}
                 >
-                  {isEditMode ? 'Update Employee' : 'Create Employee'}
+                  {isEditMode ? t.updateEmployee : t.createEmployee}
                 </Button>
                 <Button
                   onClick={() => navigate('/employees')}
                   size="large"
                 >
-                  Cancel
+                  {t.cancel}
                 </Button>
               </Space>
             </Form.Item>
