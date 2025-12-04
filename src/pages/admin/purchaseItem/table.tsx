@@ -15,6 +15,8 @@ interface PurchaseItem {
   quantity: string;
   price: string;
   total: string;
+  supplier?: string | null;
+  buyer?: string | null;
   createdAt?: string;
 }
 
@@ -323,6 +325,12 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
                     {item.createdAt && (
                       <div>{formatDate(item.createdAt)}</div>
                     )}
+                    {item.supplier && (
+                      <div>Supplier: <span className="text-[var(--text-primary)]">{item.supplier}</span></div>
+                    )}
+                    {item.buyer && (
+                      <div>Buyer: <span className="text-[var(--text-primary)]">{item.buyer}</span></div>
+                    )}
                     <div className="flex items-center gap-4 flex-wrap">
                       <span>Qty: {item.quantity}</span>
                       <span>Price: ₹{formatCurrency(item.price)}</span>
@@ -359,11 +367,23 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
                 </div>
               </th>
               {!isTablet && (
-                <th className="px-[18px] py-6 text-left h-[64px]">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">Date Created</span>
-                  </div>
-                </th>
+                <>
+                  <th className="px-[18px] py-6 text-left h-[64px]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-[var(--text-primary)]">Supplier</span>
+                    </div>
+                  </th>
+                  <th className="px-[18px] py-6 text-left h-[64px]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-[var(--text-primary)]">Buyer</span>
+                    </div>
+                  </th>
+                  <th className="px-[18px] py-6 text-left h-[64px]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-[var(--text-primary)]">Date Created</span>
+                    </div>
+                  </th>
+                </>
               )}
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
@@ -386,7 +406,7 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
           <tbody>
             {purchaseItems.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-[18px] py-12 text-center text-[var(--text-secondary)] text-sm">
+                <td colSpan={isTablet ? 6 : 8} className="px-[18px] py-12 text-center text-[var(--text-secondary)] text-sm">
                   No purchase items found. Click Add Purchase Item to create one.
                 </td>
               </tr>
@@ -403,9 +423,21 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
                       </div>
                     </td>
                     {!isTablet && (
-                      <td className="px-[18px] py-4 h-[56px]">
-                        <div className="text-xs text-[var(--text-secondary)]">{formatDate(item.createdAt)}</div>
-                      </td>
+                      <>
+                        <td className="px-[18px] py-4 h-[56px]">
+                          <div className="text-sm text-[var(--text-primary)] truncate max-w-[150px]" title={item.supplier || '-'}>
+                            {item.supplier || '-'}
+                          </div>
+                        </td>
+                        <td className="px-[18px] py-4 h-[56px]">
+                          <div className="text-sm text-[var(--text-primary)] truncate max-w-[150px]" title={item.buyer || '-'}>
+                            {item.buyer || '-'}
+                          </div>
+                        </td>
+                        <td className="px-[18px] py-4 h-[56px]">
+                          <div className="text-xs text-[var(--text-secondary)]">{formatDate(item.createdAt)}</div>
+                        </td>
+                      </>
                     )}
                     <td className="px-[18px] py-4 h-[56px]">
                       <div className="text-sm text-[var(--text-primary)]">{item.quantity}</div>

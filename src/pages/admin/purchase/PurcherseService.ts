@@ -133,6 +133,16 @@ export const mapPaymentStatusFromEnum = (
   return mapping[paymentStatus] || 'Pending';
 };
 
+export const getSuppliers = async (): Promise<string[]> => {
+  const { data } = await apiClient.get<string[]>(`${API.PURCHASE}/suppliers/list`);
+  return data;
+};
+
+export const getBuyers = async (): Promise<string[]> => {
+  const { data } = await apiClient.get<string[]>(`${API.PURCHASE}/buyers/list`);
+  return data;
+};
+
 export const getApiErrorMessage = (
   error: unknown,
   fallbackMessage: string

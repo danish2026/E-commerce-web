@@ -21,6 +21,8 @@ interface PurchaseItemDisplay {
   quantity: string;
   price: string;
   total: string;
+  supplier?: string | null;
+  buyer?: string | null;
   createdAt?: string;
 }
 
@@ -64,6 +66,8 @@ const PurchaseItem = () => {
         quantity: item.quantity.toString(),
         price: item.price.toString(),
         total: item.total.toString(),
+        supplier: item.supplier || null,
+        buyer: item.buyer || null,
         createdAt: item.createdAt,
       }));
       

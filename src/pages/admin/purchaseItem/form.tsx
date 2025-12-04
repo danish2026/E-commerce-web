@@ -1,8 +1,9 @@
 import  { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Form, Input, InputNumber, Button, Card, Space, message } from 'antd';
+import { Form, Input, InputNumber, Button, Card, Space, message, AutoComplete } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { createPurchaseItem, getApiErrorMessage, updatePurchaseItem } from './PurchaseItemService';
+import { fetchPurchases, PurchaseDto } from '../purchase/PurcherseService';
 
 
 interface PurchaseItemFormData {
@@ -12,6 +13,8 @@ interface PurchaseItemFormData {
   quantity: string;
   price: string;
   total: string;
+  supplier?: string | null;
+  buyer?: string | null;
   mode?: 'add' | 'edit';
 }
 
@@ -20,8 +23,90 @@ const FormComponent = () => {
   const location = useLocation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [suppliers, setSuppliers] = useState<string[]>([]);
+  const [allBuyers, setAllBuyers] = useState<string[]>([]);
+  const [filteredBuyers, setFilteredBuyers] = useState<string[]>([]);
+  const [supplierBuyerMap, setSupplierBuyerMap] = useState<Map<string, Set<string>>>(new Map());
+  const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+  const [loadingBuyers, setLoadingBuyers] = useState(false);
   const formData = location.state as PurchaseItemFormData | null;
   const isEditMode = formData?.mode === 'edit' || (formData?.id && formData?.mode !== 'add');
+
+  // Fetch suppliers and buyers from purchase API
+  useEffect(() => {
+    const fetchSuppliersAndBuyers = async () => {
+      try {
+        setLoadingSuppliers(true);
+        setLoadingBuyers(true);
+        
+        // Fetch purchases - start with page 1 and limit 100
+        // If there are more pages, we'll fetch them too
+        const suppliersSet = new Set<string>();
+        const buyersSet = new Set<string>();
+        const supplierBuyerRelations = new Map<string, Set<string>>();
+        
+        let currentPage = 1;
+        const limit = 100;
+        let hasMore = true;
+        
+        // Fetch all pages to get complete list of suppliers and buyers
+        while (hasMore) {
+          const response = await fetchPurchases(undefined, undefined, undefined, undefined, currentPage, limit);
+          
+          // Extract suppliers and buyers from this page and build supplier-buyer relationships
+          response.data.forEach((purchase: PurchaseDto) => {
+            if (purchase.supplier && purchase.buyer) {
+              suppliersSet.add(purchase.supplier);
+              buyersSet.add(purchase.buyer);
+              
+              // Build supplier-buyer relationship map
+              if (!supplierBuyerRelations.has(purchase.supplier)) {
+                supplierBuyerRelations.set(purchase.supplier, new Set<string>());
+              }
+              supplierBuyerRelations.get(purchase.supplier)!.add(purchase.buyer);
+            }
+          });
+          
+          // Check if there are more pages
+          const totalPages = Math.ceil(response.total / limit);
+          hasMore = currentPage < totalPages;
+          currentPage++;
+          
+          // Safety limit to prevent infinite loops
+          if (currentPage > 50) {
+            console.warn('Reached maximum page limit while fetching suppliers and buyers');
+            break;
+          }
+        }
+        
+        // Convert Sets to sorted arrays
+        const suppliersList = Array.from(suppliersSet).sort();
+        const buyersList = Array.from(buyersSet).sort();
+        
+        setSuppliers(suppliersList);
+        setAllBuyers(buyersList);
+        setSupplierBuyerMap(supplierBuyerRelations);
+        
+        // If in edit mode and supplier is already set, filter buyers
+        if (isEditMode && formData?.supplier) {
+          const buyersForSupplier = supplierBuyerRelations.get(formData.supplier);
+          if (buyersForSupplier) {
+            setFilteredBuyers(Array.from(buyersForSupplier).sort());
+          } else {
+            setFilteredBuyers([]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching suppliers and buyers from purchases:', error);
+        message.error('Failed to load suppliers and buyers. You can still type them manually.');
+        // Don't block the form, just use empty arrays
+      } finally {
+        setLoadingSuppliers(false);
+        setLoadingBuyers(false);
+      }
+    };
+    fetchSuppliersAndBuyers();
+  }, []);
 
   useEffect(() => {
     if (formData && isEditMode) {
@@ -31,9 +116,49 @@ const FormComponent = () => {
         quantity: formData.quantity ? parseFloat(formData.quantity) : undefined,
         price: formData.price ? parseFloat(formData.price) : undefined,
         total: formData.total ? parseFloat(formData.total) : undefined,
+        supplier: formData.supplier || undefined,
+        buyer: formData.buyer || undefined,
       });
     }
   }, [formData, isEditMode, form]);
+
+  // Filter buyers when supplier is set in edit mode and supplier-buyer map is ready
+  useEffect(() => {
+    if (formData && isEditMode && formData.supplier && supplierBuyerMap.size > 0) {
+      const buyersForSupplier = supplierBuyerMap.get(formData.supplier);
+      if (buyersForSupplier) {
+        setFilteredBuyers(Array.from(buyersForSupplier).sort());
+      } else {
+        setFilteredBuyers([]);
+      }
+    }
+  }, [formData, isEditMode, supplierBuyerMap]);
+
+  // Handle supplier change - filter buyers based on selected supplier
+  const handleSupplierChange = (value: string) => {
+    if (value) {
+      // Get buyers for the selected supplier
+      const buyersForSupplier = supplierBuyerMap.get(value);
+      if (buyersForSupplier) {
+        const filtered = Array.from(buyersForSupplier).sort();
+        setFilteredBuyers(filtered);
+        
+        // Check if current buyer is valid for the new supplier
+        const currentBuyer = form.getFieldValue('buyer');
+        if (currentBuyer && !buyersForSupplier.has(currentBuyer)) {
+          // Clear buyer if it's not valid for the selected supplier
+          form.setFieldsValue({ buyer: undefined });
+        }
+      } else {
+        setFilteredBuyers([]);
+        // Clear buyer if no buyers found for this supplier
+        form.setFieldsValue({ buyer: undefined });
+      }
+    } else {
+      // If supplier is cleared, show all buyers
+      setFilteredBuyers(allBuyers);
+    }
+  };
 
   // Calculate total when quantity or price changes
   const handleQuantityOrPriceChange = () => {
@@ -50,13 +175,21 @@ const FormComponent = () => {
       setLoading(true);
       
       // Format data for API
-      const apiData = {
+      const apiData: any = {
         item: values.item,
         description: values.description || undefined,
         quantity: values.quantity,
         price: values.price,
         total: values.total || (values.quantity * values.price),
       };
+
+      // Add supplier and buyer if provided
+      if (values.supplier) {
+        apiData.supplier = values.supplier;
+      }
+      if (values.buyer) {
+        apiData.buyer = values.buyer;
+      }
 
       if (isEditMode && formData?.id) {
         // Update existing purchase item
@@ -134,6 +267,49 @@ const FormComponent = () => {
                 rows={3}
               />
             </Form.Item>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Form.Item
+                label="Supplier"
+                name="supplier"
+              >
+                <AutoComplete
+                  placeholder="Enter or select supplier"
+                  size="large"
+                  options={suppliers.map(supplier => ({ value: supplier }))}
+                  filterOption={(inputValue, option) =>
+                    option!.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+                  }
+                  allowClear
+                  onChange={handleSupplierChange}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label="Buyer"
+                name="buyer"
+              >
+                <AutoComplete
+                  placeholder={
+                    form.getFieldValue('supplier') 
+                      ? "Enter or select buyer for this supplier" 
+                      : "Select a supplier first, or type buyer name"
+                  }
+                  size="large"
+                  options={
+                    form.getFieldValue('supplier') && filteredBuyers.length > 0
+                      ? filteredBuyers.map(buyer => ({ value: buyer }))
+                      : form.getFieldValue('supplier') && filteredBuyers.length === 0
+                      ? [] // No buyers for this supplier
+                      : allBuyers.map(buyer => ({ value: buyer })) // Show all buyers if no supplier selected
+                  }
+                  filterOption={(inputValue, option) =>
+                    option!.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+                  }
+                  allowClear
+                />
+              </Form.Item>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Form.Item

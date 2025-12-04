@@ -10,6 +10,8 @@ interface ViewData {
   quantity: string;
   price: string;
   total: string;
+  supplier?: string | null;
+  buyer?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
@@ -86,6 +88,18 @@ const View = () => {
             {data.description && (
               <Descriptions.Item label="Description">
                 {data.description}
+              </Descriptions.Item>
+            )}
+            
+            {data.supplier && (
+              <Descriptions.Item label="Supplier">
+                <span style={{ color: 'var(--text-primary)' }}>{data.supplier}</span>
+              </Descriptions.Item>
+            )}
+            
+            {data.buyer && (
+              <Descriptions.Item label="Buyer">
+                <span style={{ color: 'var(--text-primary)' }}>{data.buyer}</span>
               </Descriptions.Item>
             )}
             

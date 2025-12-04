@@ -9,6 +9,8 @@ export interface PurchaseItemDto {
   quantity: number;
   price: number;
   total: number;
+  supplier?: string | null;
+  buyer?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -19,6 +21,9 @@ export interface CreatePurchaseItemPayload {
   quantity: number;
   price: number;
   total: number;
+  supplier?: string;
+  buyer?: string;
+  purchaseId?: string;
 }
 
 export type UpdatePurchaseItemPayload = Partial<CreatePurchaseItemPayload>;
