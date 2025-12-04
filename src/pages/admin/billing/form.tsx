@@ -10,6 +10,8 @@ interface OrderItemFormData {
   productId: string;
   product?: ProductDto;
   quantity: number;
+  productError?: string;
+  quantityError?: string;
 }
 
 const BillingForm = () => {
@@ -23,7 +25,7 @@ const BillingForm = () => {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<ProductDto[]>([]);
   const [items, setItems] = useState<OrderItemFormData[]>([
-    { productId: '', quantity: 1 }
+    { productId: '', quantity: 1, productError: '', quantityError: '' } 
   ]);
   const [customerName, setCustomerName] = useState<string>('');
   const [customerPhone, setCustomerPhone] = useState<string>('');
@@ -79,6 +81,8 @@ const BillingForm = () => {
           productId: item.productId,
           product: item.product as ProductDto,
           quantity: Number(item.quantity) || 1,
+          productError: '',
+          quantityError: '',
         }));
         setItems(formItems);
       }
@@ -96,6 +100,9 @@ const BillingForm = () => {
   // Handle product selection for an item
   const handleProductSelect = (index: number, productId: string) => {
     const product = products.find(p => p.id === productId);
+    const currentItem = items[index];
+    let productError = '';
+    let quantityError = '';
     
     if (product) {
       // Check if product is expired
@@ -106,46 +113,46 @@ const BillingForm = () => {
         expiryDate.setHours(0, 0, 0, 0);
         
         if (expiryDate < today) {
-          Modal.warning({
-            title: t.productExpired,
-            content: translate('productExpiredMessage', { 
-              name: product.name, 
-              date: new Date(product.expiryDate).toLocaleDateString() 
-            }),
-            icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
-            okText: t.iUnderstand,
-            width: 500,
-          });
+          productError = `This product has expired on ${new Date(product.expiryDate).toLocaleDateString()}`;
         }
       }
       
-      // Check if product has low stock (10 or less)
+      // Check quantity against stock
       const stock = Number(product.stock) || 0;
-      if (stock <= 10) {
-        notification.warning({
-          message: t.lowStockAlert,
-          description: translate('lowStockMessage', { 
-            name: product.name, 
-            stock: stock 
-          }),
-          icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
-          duration: 5,
-          placement: 'topRight',
-        });
+      const requestedQuantity = currentItem.quantity || 0;
+      if (requestedQuantity > stock) {
+        quantityError = `Insufficient stock. Only ${stock} item(s) available.`;
       }
     }
     
-    updateItem(index, { productId, product });
+    updateItem(index, { productId, product, productError, quantityError });
   };
 
   // Handle quantity change
   const handleQuantityChange = (index: number, quantity: number | null) => {
-    updateItem(index, { quantity: quantity || 1 });
+    const currentItem = items[index];
+    const newQuantity = quantity || 1;
+    let quantityError = '';
+    
+    // Check if product is selected and validate stock
+    if (currentItem.product) {
+      const stock = Number(currentItem.product.stock) || 0;
+      if (newQuantity > stock) {
+        quantityError = `Insufficient stock. Only ${stock} item(s) available.`;
+      }
+    }
+    
+    // Preserve existing productError if any
+    updateItem(index, { 
+      quantity: newQuantity, 
+      quantityError,
+      productError: currentItem.productError || ''
+    });
   };
 
   // Add a new item
   const handleAddItem = () => {
-    setItems([...items, { productId: '', quantity: 1 }]);
+    setItems([...items, { productId: '', quantity: 1, productError: '', quantityError: '' }]);
   };
 
   // Remove an item
@@ -205,6 +212,75 @@ const BillingForm = () => {
 
       if (!paymentType) {
         message.error(t.selectPaymentType);
+        return;
+      }
+
+      // Validate for expired products and insufficient stock
+      let hasExpiredProduct = false;
+      let hasInsufficientStock = false;
+      const errorMessages: string[] = [];
+      const updatedItems = [...items];
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        let productError = '';
+        let quantityError = '';
+        
+        if (!item.productId || !item.quantity) {
+          continue;
+        }
+
+        const product = products.find(p => p.id === item.productId);
+        
+        if (!product) {
+          continue;
+        }
+
+        // Check if product is expired
+        if (product.expiryDate) {
+          const expiryDate = new Date(product.expiryDate);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          expiryDate.setHours(0, 0, 0, 0);
+          
+          if (expiryDate < today) {
+            hasExpiredProduct = true;
+            productError = `This product has expired on ${new Date(product.expiryDate).toLocaleDateString()}`;
+            errorMessages.push(`Item ${i + 1}: Product "${product.name}" has expired on ${new Date(product.expiryDate).toLocaleDateString()}`);
+          }
+        }
+
+        // Check if quantity exceeds available stock
+        const stock = Number(product.stock) || 0;
+        const requestedQuantity = Number(item.quantity) || 0;
+        if (requestedQuantity > stock) {
+          hasInsufficientStock = true;
+          quantityError = `Insufficient stock. Only ${stock} item(s) available.`;
+          errorMessages.push(`Item ${i + 1}: Insufficient stock for "${product.name}". Only ${stock} item(s) available, but ${requestedQuantity} requested.`);
+        }
+
+        // Update item with errors if any
+        if (productError || quantityError) {
+          updatedItems[i] = {
+            ...item,
+            productError,
+            quantityError,
+          };
+        }
+      }
+
+      // If there are validation errors, update items with errors and prevent submission
+      if (hasExpiredProduct || hasInsufficientStock) {
+        setItems(updatedItems);
+        const errorMessage = errorMessages.join('\n');
+        message.error('Cannot save order. Please fix the following errors:');
+        notification.error({
+          message: 'Validation Error',
+          description: errorMessage,
+          icon: <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />,
+          duration: 8,
+          placement: 'topRight',
+        });
         return;
       }
 
@@ -375,8 +451,8 @@ const BillingForm = () => {
                     <Form.Item
                       label={t.productLabel}
                       required
-                      validateStatus={!item.productId ? 'error' : ''}
-                      help={!item.productId ? t.productRequired : ''}
+                      validateStatus={!item.productId || item.productError ? 'error' : ''}
+                      help={item.productError || (!item.productId ? t.productRequired : '')}
                     >
                       <Select
                         showSearch
@@ -403,8 +479,8 @@ const BillingForm = () => {
                     <Form.Item
                       label={t.quantityLabel}
                       required
-                      validateStatus={!item.quantity || item.quantity <= 0 ? 'error' : ''}
-                      help={!item.quantity || item.quantity <= 0 ? t.quantityRequired : ''}
+                      validateStatus={!item.quantity || item.quantity <= 0 || item.quantityError ? 'error' : ''}
+                      help={item.quantityError || (!item.quantity || item.quantity <= 0 ? t.quantityRequired : '')}
                     >
                       <InputNumber
                         placeholder={t.quantityPlaceholder}
