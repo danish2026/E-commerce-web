@@ -4,6 +4,7 @@ import { Form, Input, InputNumber, Button, Card, Space, message, Divider, Select
 import { ArrowLeftOutlined, SaveOutlined, PlusOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { createOrder, updateOrder, Order, PaymentType, OrderItem } from './api';
 import { fetchProducts, ProductDto } from '../product/ProductService';
+import { useBillingTranslation } from '../../../hooks/useBillingTranslation';
 
 interface OrderItemFormData {
   productId: string;
@@ -14,6 +15,7 @@ interface OrderItemFormData {
 const BillingForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t, translate } = useBillingTranslation();
   const existingOrder = location.state as Order | null;
   const isEditMode = !!existingOrder;
   
@@ -57,12 +59,12 @@ const BillingForm = () => {
         setProducts(allProducts);
       } catch (error) {
         console.error('Error loading products:', error);
-        message.error('Failed to load products');
+        message.error(t.failedToLoadProducts);
         setProducts([]);
       }
     };
     loadProducts();
-  }, []);
+  }, [t]);
 
   // Load existing order data if in edit mode
   useEffect(() => {
@@ -105,10 +107,13 @@ const BillingForm = () => {
         
         if (expiryDate < today) {
           Modal.warning({
-            title: 'Product Expired',
-            content: `The product "${product.name}" has expired on ${new Date(product.expiryDate).toLocaleDateString()}. Please check before proceeding.`,
+            title: t.productExpired,
+            content: translate('productExpiredMessage', { 
+              name: product.name, 
+              date: new Date(product.expiryDate).toLocaleDateString() 
+            }),
             icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
-            okText: 'I Understand',
+            okText: t.iUnderstand,
             width: 500,
           });
         }
@@ -118,8 +123,11 @@ const BillingForm = () => {
       const stock = Number(product.stock) || 0;
       if (stock <= 10) {
         notification.warning({
-          message: 'Low Stock Alert',
-          description: `The product "${product.name}" has only ${stock} items left in stock.`,
+          message: t.lowStockAlert,
+          description: translate('lowStockMessage', { 
+            name: product.name, 
+            stock: stock 
+          }),
           icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
           duration: 5,
           placement: 'topRight',
@@ -146,7 +154,7 @@ const BillingForm = () => {
       const updatedItems = items.filter((_, i) => i !== index);
       setItems(updatedItems);
     } else {
-      message.warning('At least one item is required');
+      message.warning(t.atLeastOneItem);
     }
   };
 
@@ -186,17 +194,17 @@ const BillingForm = () => {
       );
 
       if (validItems.length === 0) {
-        message.error('Please add at least one valid item');
+        message.error(t.addAtLeastOneItem);
         return;
       }
 
       if (validItems.length !== items.length) {
-        message.error('Please fill in all required fields for all items');
+        message.error(t.fillAllRequiredFields);
         return;
       }
 
       if (!paymentType) {
-        message.error('Please select a payment type');
+        message.error(t.selectPaymentType);
         return;
       }
 
@@ -234,10 +242,10 @@ const BillingForm = () => {
 
       if (isEditMode && existingOrder?.id) {
         await updateOrder(existingOrder.id, apiData);
-        message.success('Order updated successfully!');
+        message.success(t.orderUpdated);
       } else {
         await createOrder(apiData);
-        message.success('Order created successfully!');
+        message.success(t.orderCreated);
       }
       
       navigate('/billing');
@@ -245,7 +253,7 @@ const BillingForm = () => {
       console.error('Error saving order:', error);
       
       // Extract error message from API response
-      let errorMessage = 'Failed to save order';
+      let errorMessage = t.failedToSave;
       
       if (error.response?.data) {
         // Handle NestJS error response format
@@ -261,7 +269,7 @@ const BillingForm = () => {
       if (errorMessage.toLowerCase().includes('expired') || 
           errorMessage.toLowerCase().includes('cannot create order')) {
         notification.error({
-          message: 'Order Creation Failed',
+          message: t.orderCreationFailed,
           description: errorMessage,
           icon: <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />,
           duration: 5, // Show for 5 seconds
@@ -284,12 +292,12 @@ const BillingForm = () => {
           onClick={() => navigate('/billing')}
           className="mb-6"
         >
-          Back to Orders List
+          {t.backToOrdersList}
         </Button>
 
         <Card
           title={<h2 className="text-2xl font-bold p-4 mt-[20px] m-0" style={{ color: 'var(--text-primary)' }}>
-            {isEditMode ? 'Edit Order' : 'Create New Order'}
+            {isEditMode ? t.editOrder : t.createNewOrder}
           </h2>}
           headStyle={{ 
             backgroundColor: 'var(--surface-1)', 
@@ -313,12 +321,12 @@ const BillingForm = () => {
             {/* Customer Information */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-                Customer Information
+                {t.customerInformation}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Form.Item label="Customer Name">
+                <Form.Item label={t.customerNameLabel}>
                   <Input
-                    placeholder="Enter customer name (optional)"
+                    placeholder={t.customerNamePlaceholder}
                     size="large"
                     value={customerName}
                     onChange={(e) => { setCustomerName(e.target.value);
@@ -326,9 +334,9 @@ const BillingForm = () => {
                   />
                 </Form.Item>
 
-                <Form.Item label="Customer Phone">
+                <Form.Item label={t.customerPhoneLabel}>
                   <Input
-                    placeholder="Enter customer phone (optional)"
+                    placeholder={t.customerPhonePlaceholder}
                     size="large"
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
@@ -342,13 +350,13 @@ const BillingForm = () => {
             {/* Order Items */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-                Order Items
+                {t.orderItems}
               </h3>
               {items.map((item, index) => (
                 <div key={index} className="mb-4 p-4 border border-[var(--glass-border)] rounded-lg">
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="text-md font-semibold" style={{ color: 'var(--text-primary)' }}>
-                      Item {index + 1}
+                      {t.item} {index + 1}
                     </h4>
                     {items.length > 1 && (
                       <Button
@@ -358,22 +366,22 @@ const BillingForm = () => {
                         onClick={() => handleRemoveItem(index)}
                         size="small"
                       >
-                        Remove
+                        {t.remove}
                       </Button>
                     )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Form.Item
-                      label="Product"
+                      label={t.productLabel}
                       required
                       validateStatus={!item.productId ? 'error' : ''}
-                      help={!item.productId ? 'Product is required' : ''}
+                      help={!item.productId ? t.productRequired : ''}
                     >
                       <Select
                         showSearch
                         size="large"
-                        placeholder={products.length === 0 ? "Loading products..." : "Select product"}
+                        placeholder={products.length === 0 ? t.loadingProducts : t.selectProduct}
                         value={item.productId || undefined}
                         onChange={(value) => handleProductSelect(index, value)}
                         optionFilterProp="label"
@@ -382,7 +390,7 @@ const BillingForm = () => {
                             ?.toLowerCase()
                             .includes(input.toLowerCase())
                         }
-                        notFoundContent={products.length === 0 ? 'No products available. Please add products first.' : 'No products found'}
+                        notFoundContent={products.length === 0 ? t.noProductsAvailable : t.noProductsFound}
                         options={products
                           .filter(product => product && product.id && product.name)
                           .map(product => ({
@@ -393,13 +401,13 @@ const BillingForm = () => {
                     </Form.Item>
 
                     <Form.Item
-                      label="Quantity"
+                      label={t.quantityLabel}
                       required
                       validateStatus={!item.quantity || item.quantity <= 0 ? 'error' : ''}
-                      help={!item.quantity || item.quantity <= 0 ? 'Quantity must be greater than 0' : ''}
+                      help={!item.quantity || item.quantity <= 0 ? t.quantityRequired : ''}
                     >
                       <InputNumber
-                        placeholder="Enter quantity"
+                        placeholder={t.quantityPlaceholder}
                         style={{ width: '100%' }}
                         size="large"
                         min={1}
@@ -413,25 +421,25 @@ const BillingForm = () => {
                     <div className="mt-4 p-3 bg-[var(--surface-2)] rounded">
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div>
-                          <span className="text-[var(--text-secondary)]">Unit Price:</span>
+                          <span className="text-[var(--text-secondary)]">{t.unitPrice}:</span>
                           <span className="ml-2 font-semibold text-[var(--text-primary)]">
                             ₹{Number(item.product.sellingPrice).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                           </span>
                         </div>
                         <div>
-                          <span className="text-[var(--text-secondary)]">GST:</span>
+                          <span className="text-[var(--text-secondary)]">{t.gstPercentage}:</span>
                           <span className="ml-2 font-semibold text-[var(--text-primary)]">
                             {Number(item.product.gstPercentage)}%
                           </span>
                         </div>
                         <div>
-                          <span className="text-[var(--text-secondary)]">Subtotal:</span>
+                          <span className="text-[var(--text-secondary)]">{t.itemSubtotal}:</span>
                           <span className="ml-2 font-semibold text-[var(--text-primary)]">
                             ₹{(Number(item.product.sellingPrice) * Number(item.quantity)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                           </span>
                         </div>
                         <div>
-                          <span className="text-[var(--text-secondary)]">GST Amount:</span>
+                          <span className="text-[var(--text-secondary)]">{t.gstAmount}:</span>
                           <span className="ml-2 font-semibold text-[var(--text-primary)]">
                             ₹{((Number(item.product.sellingPrice) * Number(item.quantity) * Number(item.product.gstPercentage)) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                           </span>

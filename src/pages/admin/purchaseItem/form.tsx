@@ -4,6 +4,7 @@ import { Form, Input, InputNumber, Button, Card, Space, message, AutoComplete } 
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { createPurchaseItem, getApiErrorMessage, updatePurchaseItem } from './PurchaseItemService';
 import { fetchPurchases, PurchaseDto } from '../purchase/PurcherseService';
+import { usePurchaseTranslation } from '../../../hooks/usePurchaseTranslation';
 
 
 interface PurchaseItemFormData {
@@ -21,6 +22,7 @@ interface PurchaseItemFormData {
 const FormComponent = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = usePurchaseTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState<string[]>([]);
@@ -98,7 +100,7 @@ const FormComponent = () => {
         }
       } catch (error) {
         console.error('Error fetching suppliers and buyers from purchases:', error);
-        message.error('Failed to load suppliers and buyers. You can still type them manually.');
+        message.error(t.failedToFetchPurchaseItems);
         // Don't block the form, just use empty arrays
       } finally {
         setLoadingSuppliers(false);
@@ -194,17 +196,17 @@ const FormComponent = () => {
       if (isEditMode && formData?.id) {
         // Update existing purchase item
         await updatePurchaseItem(formData.id, apiData);
-        message.success('Purchase item updated successfully!');
+        message.success(t.purchaseItemUpdated);
       } else {
         // Create new purchase item
         await createPurchaseItem(apiData);
-        message.success('Purchase item created successfully!');
+        message.success(t.purchaseItemCreated);
       }
       
       navigate('/purchase-item');
     } catch (error) {
       console.error('Error saving purchase item:', error);
-      message.error(getApiErrorMessage(error, 'Failed to save purchase item'));
+      message.error(getApiErrorMessage(error, t.failedToSavePurchaseItem));
     } finally {
       setLoading(false);
     }
@@ -212,7 +214,7 @@ const FormComponent = () => {
 
   const onFinishFailed = (errorInfo: any) => {
     console.log('Failed:', errorInfo);
-    message.error('Please fill in all required fields');
+    message.error(t.fillRequiredFields);
   };
 
   return (
@@ -223,11 +225,11 @@ const FormComponent = () => {
           onClick={() => navigate('/purchase-item')}
           className="mb-6"
         >
-          Back to Purchase Item List
+          {t.backToPurchaseItemList}
         </Button>
 
         <Card
-          title={<h2 className="text-2xl font-bold p-4 mt-[20px] m-0" style={{ color: 'var(--text-primary)' }}>{isEditMode ? 'Edit Purchase Item' : 'Add New Purchase Item'}</h2>}
+          title={<h2 className="text-2xl font-bold p-4 mt-[20px] m-0" style={{ color: 'var(--text-primary)' }}>{isEditMode ? t.editPurchaseItem : t.addNewPurchaseItem}</h2>}
           headStyle={{ 
             backgroundColor: 'var(--surface-1)', 
             color: 'var(--text-primary)',
@@ -249,32 +251,43 @@ const FormComponent = () => {
             autoComplete="off"
             className="purchase-form"
           >
-            <Form.Item
-              label="Item"
-              name="item"
-              rules={[{ required: true, message: 'Please enter item name' }]}
-            >
-              <Input placeholder="Enter item name" size="large" />
-            </Form.Item>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Form.Item
+                label={t.itemLabel}
+                name="item"
+                rules={[{ required: true, message: t.itemRequired }]}
+              >
+                <Input placeholder={t.itemPlaceholder} size="large" />
+              </Form.Item>
 
-            <Form.Item
-              label="Description"
-              name="description"
-            >
-              <Input.TextArea 
-                placeholder="Enter item description (optional)" 
-                size="large"
-                rows={3}
-              />
-            </Form.Item>
+              <Form.Item
+                label={t.quantityLabel}
+                name="quantity"
+                rules={[
+                  { required: true, message: t.quantityRequired },
+                  { type: 'number', min: 1, message: t.quantityMin },
+                ]}
+              >
+                <InputNumber
+                  placeholder={t.quantityPlaceholder}
+                  style={{ width: '100%' }}
+                  size="large"
+                  type='number'
+                  min={1}
+                  onChange={handleQuantityOrPriceChange}
+                />
+              </Form.Item>
+            </div>
+
+         
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Form.Item
-                label="Supplier"
+                label={t.supplierLabel}
                 name="supplier"
               >
                 <AutoComplete
-                  placeholder="Enter or select supplier"
+                  placeholder={t.supplierPlaceholder}
                   size="large"
                   options={suppliers.map(supplier => ({ value: supplier }))}
                   filterOption={(inputValue, option) =>
@@ -286,14 +299,14 @@ const FormComponent = () => {
               </Form.Item>
 
               <Form.Item
-                label="Buyer"
+                label={t.buyerLabel}
                 name="buyer"
               >
                 <AutoComplete
                   placeholder={
                     form.getFieldValue('supplier') 
-                      ? "Enter or select buyer for this supplier" 
-                      : "Select a supplier first, or type buyer name"
+                      ? t.buyerPlaceholder
+                      : t.buyerPlaceholder
                   }
                   size="large"
                   options={
@@ -310,73 +323,63 @@ const FormComponent = () => {
                 />
               </Form.Item>
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Form.Item
+              label={t.priceLabel}
+              name="price"
+              rules={[
+                { required: true, message: t.priceRequired },
+                { type: 'number', min: 0, message: t.priceMin },
+              ]}
+            >
+              <InputNumber
+                placeholder={t.pricePlaceholder}
+                style={{ width: '100%' }}
+                size="large"
+                min={0}
+                formatter={(value) => value !== undefined && value !== null ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+                parser={(value) => {
+                  const cleaned = value?.replace(/₹\s?|(,*)/g, '') || '';
+                  const num = cleaned ? parseFloat(cleaned) : undefined;
+                  return num as any;
+                }}
+                onChange={handleQuantityOrPriceChange}
+              />
+            </Form.Item>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Form.Item
-                label="Quantity"
-                name="quantity"
-                rules={[
-                  { required: true, message: 'Please enter quantity' },
-                  { type: 'number', min: 1, message: 'Quantity must be at least 1' },
-                ]}
-              >
-                <InputNumber
-                  placeholder="Enter quantity"
-                  style={{ width: '100%' }}
-                  size="large"
-                  min={1}
-                  onChange={handleQuantityOrPriceChange}
-                />
-              </Form.Item>
+            <Form.Item
+              label={t.totalLabel}
+              name="total"
+              rules={[
+                { required: true, message: t.totalRequired },
+                { type: 'number', min: 0, message: t.totalMin },
+              ]}
+            >
+              <InputNumber
+                placeholder={t.totalPlaceholder}
+                style={{ width: '100%' }}
+                size="large"
+                min={0}
+                formatter={(value) => value !== undefined && value !== null ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+                parser={(value) => {
+                  const cleaned = value?.replace(/₹\s?|(,*)/g, '') || '';
+                  const num = cleaned ? parseFloat(cleaned) : undefined;
+                  return num as any;
+                }}
+              />
+            </Form.Item>
 
-              <Form.Item
-                label="Price"
-                name="price"
-                rules={[
-                  { required: true, message: 'Please enter price' },
-                  { type: 'number', min: 0, message: 'Price must be greater than 0' },
-                ]}
-              >
-                <InputNumber
-                  placeholder="Enter price"
-                  style={{ width: '100%' }}
-                  size="large"
-                  min={0}
-                  // prefix="₹"
-                  formatter={(value) => value !== undefined && value !== null ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-                  parser={(value) => {
-                    const cleaned = value?.replace(/₹\s?|(,*)/g, '') || '';
-                    const num = cleaned ? parseFloat(cleaned) : undefined;
-                    return num as any;
-                  }}
-                  onChange={handleQuantityOrPriceChange}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label="Total"
-                name="total"
-                rules={[
-                  { required: true, message: 'Total is required' },
-                  { type: 'number', min: 0, message: 'Total must be greater than 0' },
-                ]}
-              >
-                <InputNumber
-                  placeholder="Total (auto-calculated)"
-                  style={{ width: '100%' }}
-                  size="large"
-                  min={0}
-                  // prefix="₹"
-                  formatter={(value) => value !== undefined && value !== null ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-                  parser={(value) => {
-                    const cleaned = value?.replace(/₹\s?|(,*)/g, '') || '';
-                    const num = cleaned ? parseFloat(cleaned) : undefined;
-                    return num as any;
-                  }}
-                />
-              </Form.Item>
             </div>
-
+            <Form.Item
+              label={t.descriptionLabel}
+              name="description"
+            >
+              <Input.TextArea 
+                placeholder={t.descriptionPlaceholder} 
+                size="large"
+                rows={3}
+              />
+            </Form.Item>
             <Form.Item>
               <Space>
                 <Button
@@ -398,13 +401,13 @@ const FormComponent = () => {
                     e.currentTarget.style.opacity = '1';
                   }}
                 >
-                  {isEditMode ? 'Update Purchase Item' : 'Create Purchase Item'}
+                  {isEditMode ? t.updatePurchaseItem : t.createPurchaseItem}
                 </Button>
                 <Button
                   onClick={() => navigate('/purchase-item')}
                   size="large"
                 >
-                  Cancel
+                  {t.cancel}
                 </Button>
               </Space>
             </Form.Item>

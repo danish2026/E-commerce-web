@@ -7,6 +7,8 @@ import { Input } from '../../../components/ui/Input';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import Table from './table';
+import LanguageSelector from '../../../components/purchase/LanguageSelector';
+import { usePurchaseTranslation } from '../../../hooks/usePurchaseTranslation';
 import {
   fetchPurchaseItems,
   getApiErrorMessage,
@@ -28,6 +30,7 @@ interface PurchaseItemDisplay {
 
 const PurchaseItem = () => {
   const navigate = useNavigate();
+  const { t, translate } = usePurchaseTranslation();
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
   const [purchaseItems, setPurchaseItems] = useState<PurchaseItemDisplay[]>([]);
@@ -75,11 +78,11 @@ const PurchaseItem = () => {
       setTotal(response.total);
     } catch (error) {
       console.error('Error fetching purchase items:', error);
-      message.error(getApiErrorMessage(error, 'Failed to fetch purchase items'));
+      message.error(getApiErrorMessage(error, t.failedToFetchPurchaseItems));
     } finally {
       setLoading(false);
     }
-  }, [searchText, dateRange, currentPage, pageSize]);
+  }, [searchText, dateRange, currentPage, pageSize, t]);
 
   useEffect(() => {
     loadPurchaseItems();
@@ -121,30 +124,28 @@ const PurchaseItem = () => {
         <div className="bg-surface-1 rounded-2xl shadow-card p-8 mb-6 border border-[var(--glass-border)]">
           <Space size="middle" className="w-full" direction="vertical">
             <Space size="middle" className="w-full" wrap>
+              {/* <LanguageSelector /> */}
               <Input
-  placeholder="Search by item name or description"
-  value={searchText}
-  onChange={(e) => setSearchText(e.target.value)}
-  style={{ width: 500, height: '40px' }}
-  allowClear
-  onPressEnter={() => {
-    setCurrentPage(1);
-    loadPurchaseItems();
-  }}
-/>
-              {/* <Input placeholder="Search by item name or description"  value={searchText} onChange={(e) => setSearchText(e.target.value)} style={{ width: 600, height: '40px' }} /> */}
+                placeholder={t.searchPurchaseItemPlaceholder}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                style={{ width: 500, height: '40px' }}
+                allowClear
+                onPressEnter={() => {
+                  setCurrentPage(1);
+                  loadPurchaseItems();
+                }}
+              />
               <RangePicker
                 value={dateRange}
                 onChange={(dates) => setDateRange(dates as [Dayjs | null, Dayjs | null] | null)}
                 format="YYYY-MM-DD"
-                placeholder={['Start Date', 'End Date']}
+                placeholder={[t.startDate, t.endDate]}
                 style={{ width: 300, height: '40px' }}
               />
               <Button
-                // type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => handleNavigate('form', { mode: 'add' })}
-                // size="large"
                 style={{
                   height: '40px',
                   width: '200px',
@@ -152,7 +153,7 @@ const PurchaseItem = () => {
                   borderColor: 'var(--brand)',
                 }}
               >
-                Add Purchase Item
+                {t.addPurchaseItem}
               </Button>
             </Space>
           </Space>
@@ -174,7 +175,7 @@ const PurchaseItem = () => {
               onChange: handlePageChange,
               onShowSizeChange: handlePageSizeChange,
               showSizeChanger: true,
-              showTotal: (total) => `Total ${total} purchase items`,
+              showTotal: (total) => translate('totalPurchaseItems', { count: total }),
             }}
           />
         )}

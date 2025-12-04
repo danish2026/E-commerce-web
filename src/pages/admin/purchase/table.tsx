@@ -5,6 +5,7 @@ import type { TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import { deletePurchase, getApiErrorMessage } from './PurcherseService';
+import { usePurchaseTranslation } from '../../../hooks/usePurchaseTranslation';
 
 dayjs.extend(advancedFormat);
 
@@ -31,6 +32,7 @@ interface TableProps {
 const PAGE_SIZE_OPTIONS = [5,10, 20, 50];
 
 const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
+  const { t } = usePurchaseTranslation();
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 640 : false);
   const [isTablet, setIsTablet] = useState(typeof window !== 'undefined' ? window.innerWidth <= 1024 : false);
@@ -56,14 +58,29 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
     }
   };
 
+  const translatePaymentStatus = (payment: string): string => {
+    const paymentLower = payment.toLowerCase();
+    if (paymentLower === 'paid' || payment === t.paid) return t.paid;
+    if (paymentLower === 'pending' || payment === t.pending) return t.pending;
+    if (paymentLower === 'partial' || payment === t.partial) return t.partial;
+    if (paymentLower === 'overdue' || payment === t.overdue) return t.overdue;
+    return payment;
+  };
+
   const getPaymentTag = (payment: string) => {
+    const translatedPayment = translatePaymentStatus(payment);
     const colorMap: Record<string, string> = {
-      Paid: 'success',
-      Pending: 'warning',
-      Partial: 'processing',
-      Overdue: 'error',
+      [t.paid]: 'success',
+      [t.pending]: 'warning',
+      [t.partial]: 'processing',
+      [t.overdue]: 'error',
+      // Fallback for English values
+      'Paid': 'success',
+      'Pending': 'warning',
+      'Partial': 'processing',
+      'Overdue': 'error',
     };
-    return <Tag color={colorMap[payment] || 'default'}>{payment}</Tag>;
+    return <Tag color={colorMap[translatedPayment] || colorMap[payment] || 'default'}>{translatedPayment}</Tag>;
   };
 
   const handleDelete = (record: Purchase) => {
@@ -85,7 +102,7 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
     try {
       console.log('Deleting purchase with ID:', itemToDelete.id);
       await deletePurchase(itemToDelete.id);
-      message.success('Purchase deleted successfully!');
+      message.success(t.purchaseDeleted);
       setDeleteModalVisible(false);
       setItemToDelete(null);
       if (onDelete) {
@@ -93,7 +110,7 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
       }
     } catch (error) {
       console.error('Error deleting purchase:', error);
-      const errorMessage = getApiErrorMessage(error, 'Failed to delete purchase');
+      const errorMessage = getApiErrorMessage(error, t.failedToDelete);
       message.error(errorMessage);
     } finally {
       setIsDeleting(false);
@@ -160,29 +177,29 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-                  Delete Purchase
+                  {t.deletePurchaseTitle}
                 </h3>
                 <p className="text-sm text-[var(--text-secondary)] mt-1">
-                  Are you sure you want to delete this purchase?
+                  {t.deletePurchaseConfirm}
                 </p>
               </div>
             </div>
             <div className="mb-6 p-4 bg-[var(--surface-2)] rounded-lg">
               <p className="text-sm text-[var(--text-primary)] font-medium">
-                Supplier: {itemToDelete.supplier}
+                {t.supplier}: {itemToDelete.supplier}
               </p>
               {itemToDelete.buyer && (
                 <p className="text-xs text-[var(--text-secondary)] mt-1">
-                  Buyer: {itemToDelete.buyer}
+                  {t.buyer}: {itemToDelete.buyer}
                 </p>
               )}
               <div className="mt-2 flex items-center gap-4 text-xs text-[var(--text-secondary)]">
-                <span>Amount: ₹{itemToDelete.amount}</span>
-                <span>Quantity: {itemToDelete.quantity}</span>
+                <span>{t.amount}: ₹{itemToDelete.amount}</span>
+                <span>{t.quantity}: {itemToDelete.quantity}</span>
               </div>
             </div>
             <p className="text-sm text-[var(--text-secondary)] mb-6">
-              This action cannot be undone. The purchase will be permanently deleted.
+              {t.deletePurchaseWarning}
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -190,14 +207,14 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
                 disabled={isDeleting}
                 className="px-4 py-2 rounded-lg border border-[var(--glass-border)] text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--surface-2)] focus:outline-none focus:ring-2 focus:ring-[var(--glass-border)] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Cancel
+                {t.cancel}
               </button>
               <button
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
                 className="px-4 py-2 rounded-lg bg-red-600 dark:bg-red-700 text-sm font-medium text-white hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isDeleting ? 'Deleting...' : 'Delete'}
+                {isDeleting ? t.deleting : t.delete}
               </button>
             </div>
           </div>
@@ -290,7 +307,7 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
         <div className="space-y-0">
           {purchases.length === 0 ? (
             <div className="text-center py-12 text-[var(--text-secondary)] text-sm">
-              No purchases found. Click Add Purchase to create one.
+              {t.noPurchasesFound}
             </div>
           ) : (
             purchases.map((purchase) => (
@@ -340,16 +357,16 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
                     </button>
                   </div>
                 </div>
-                <div className="ml-7 space-y-2 text-xs text-[var(--text-secondary)]">
-                  <div>GST: {purchase.gst || '-'}</div>
+                  <div className="ml-7 space-y-2 text-xs text-[var(--text-secondary)]">
+                  <div>{t.gst}: {purchase.gst || '-'}</div>
                   <div className="flex items-center gap-4 flex-wrap">
-                    <span>Amount: ₹{purchase.amount}</span>
-                    <span>Quantity: {purchase.quantity}</span>
+                    <span>{t.amount}: ₹{purchase.amount}</span>
+                    <span>{t.quantity}: {purchase.quantity}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     {getPaymentTag(purchase.payment)}
                     <span className="font-semibold text-[var(--text-primary)]">
-                      Due {formatDate(purchase.dueDate)}
+                      {t.dueDate} {formatDate(purchase.dueDate)}
                     </span>
                   </div>
                 </div>
@@ -373,48 +390,48 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
             <tr>
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Supplier</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.supplier}</span>
                 </div>
               </th>
               {!isTablet && (
                 <th className="px-[18px] py-6 text-left h-[64px]">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">Buyer</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{t.buyer}</span>
                   </div>
                 </th>
               )}
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">GST</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.gst}</span>
                 </div>
               </th>
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Amount</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.amount}</span>
                 </div>
               </th>
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Quantity</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.quantity}</span>
                 </div>
               </th>
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Payment</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.payment}</span>
                 </div>
               </th>
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Due Date</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.dueDate}</span>
                 </div>
               </th>
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Total Amount</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.totalAmount}</span>
                 </div>
               </th>
               <th className="px-[18px] py-6 text-left pl-[100px] h-[64px]">
-                <span className="text-sm font-semibold text-[var(--text-primary)]">Actions</span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">{t.actions}</span>
               </th>
             </tr>
           </thead>
@@ -422,7 +439,7 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
             {purchases.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-[18px] py-12 text-center text-[var(--text-secondary)] text-sm">
-                  No purchases found. Click Add Purchase to create one.
+                  {t.noPurchasesFound}
                 </td>
               </tr>
             ) : (

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Card, Descriptions, Tag, Space } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
+import { useProductTranslation } from '../../../hooks/useProductTranslation';
 
 interface ViewData {
   id?: string;
@@ -26,6 +27,7 @@ interface ViewData {
 const View = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useProductTranslation();
   const data = location.state as ViewData | null;
 
   useEffect(() => {
@@ -54,11 +56,11 @@ const View = () => {
           onClick={() => navigate('/product')}
           className="mb-6"
         >
-          Back to Products List
+          {t.backToProductsList}
         </Button>
 
         <Card
-          title={<h2 className="text-2xl m-7 font-bold m-0" style={{ color: 'var(--text-primary)' }}>Product Details</h2>}
+          title={<h2 className="text-2xl m-7 font-bold m-0" style={{ color: 'var(--text-primary)' }}>{t.productDetails}</h2>}
           headStyle={{ 
             backgroundColor: 'var(--surface-1)', 
             color: 'var(--text-primary)',
@@ -76,7 +78,7 @@ const View = () => {
           {data.imageUrl && (
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-                Product Image
+                {t.productImage}
               </h3>
               <img 
                 src={data.imageUrl} 
@@ -109,48 +111,48 @@ const View = () => {
               <span style={{ fontWeight: 'bold', fontSize: '16px' }}>{data.id || '-'}</span>
             </Descriptions.Item> */}
             
-            <Descriptions.Item label="Product Name">
+            <Descriptions.Item label={t.productName}>
               <span style={{ fontWeight: 'bold', fontSize: '16px' }}>{data.name || '-'}</span>
             </Descriptions.Item>
             
-            <Descriptions.Item label="SKU">
+            <Descriptions.Item label={t.sku}>
               <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
                 {data.sku || '-'}
               </Tag>
             </Descriptions.Item>
             
             {data.categoryName && (
-              <Descriptions.Item label="Category">
+              <Descriptions.Item label={t.category}>
                 {data.categoryName}
               </Descriptions.Item>
             )}
             
             {data.brand && (
-              <Descriptions.Item label="Brand">
+              <Descriptions.Item label={t.brand}>
                 {data.brand}
               </Descriptions.Item>
             )}
             
-            <Descriptions.Item label="Unit">
+            <Descriptions.Item label={t.unit}>
               <Tag color="green" style={{ fontSize: '14px', padding: '4px 12px' }}>
                 {data.unit || '-'}
               </Tag>
             </Descriptions.Item>
             
             {data.hsnCode && (
-              <Descriptions.Item label="HSN Code">
+              <Descriptions.Item label={t.hsnCode}>
                 {data.hsnCode}
               </Descriptions.Item>
             )}
             
             {data.barcode && (
-              <Descriptions.Item label="Barcode">
+              <Descriptions.Item label={t.barcode}>
                 {data.barcode}
               </Descriptions.Item>
             )}
             
             {data.expiryDate && (
-              <Descriptions.Item label="Expiry Date">
+              <Descriptions.Item label={t.expiryDate}>
                 {new Date(data.expiryDate).toLocaleDateString('en-IN', {
                   year: 'numeric',
                   month: 'long',
@@ -160,7 +162,7 @@ const View = () => {
             )}
             
             {data.createdAt && (
-              <Descriptions.Item label="Created At">
+              <Descriptions.Item label={t.createdAt}>
                 {new Date(data.createdAt).toLocaleString('en-IN', {
                   year: 'numeric',
                   month: 'long',
@@ -172,7 +174,7 @@ const View = () => {
             )}
             
             {data.updatedAt && (
-              <Descriptions.Item label="Last Updated">
+              <Descriptions.Item label={t.updatedAt}>
                 {new Date(data.updatedAt).toLocaleString('en-IN', {
                   year: 'numeric',
                   month: 'long',
@@ -187,36 +189,36 @@ const View = () => {
           {/* Product Summary */}
           <div className="mt-6 p-4 bg-[var(--surface-2)] rounded-lg border border-[var(--glass-border)]">
             <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-              Product Summary
+              {t.productSummary}
             </h3>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-sm text-[var(--text-secondary)]">Stock Available:</span>
+                <span className="text-sm text-[var(--text-secondary)]">{t.stockAvailable}:</span>
                 <span className="text-sm font-semibold text-[var(--text-primary)]">
                   {data.stock} {data.unit}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-[var(--text-secondary)]">Cost Price:</span>
+                <span className="text-sm text-[var(--text-secondary)]">{t.costPrice}:</span>
                 <span className="text-sm font-semibold text-[var(--text-primary)]">
                   ₹ {formatCurrency(data.costPrice)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-[var(--text-secondary)]">Selling Price:</span>
+                <span className="text-sm text-[var(--text-secondary)]">{t.sellingPrice}:</span>
                 <span className="text-sm font-semibold text-[var(--text-primary)]">
                   ₹ {formatCurrency(data.sellingPrice)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-[var(--text-secondary)]">GST Percentage:</span>
+                <span className="text-sm text-[var(--text-secondary)]">{t.gstPercentage}:</span>
                 <span className="text-sm font-semibold text-[var(--text-primary)]">
                   {data.gstPercentage}%
                 </span>
               </div>
               <div className="border-t border-[var(--glass-border)] pt-2 mt-2">
                 <div className="flex justify-between">
-                  <span className="text-lg font-semibold text-[var(--text-primary)]">Profit Margin:</span>
+                  <span className="text-lg font-semibold text-[var(--text-primary)]">{t.profitMargin}:</span>
                   <span className="text-2xl font-bold" style={{ color: 'var(--brand)' }}>
                     ₹ {formatCurrency(profitMargin)}
                   </span>
@@ -234,10 +236,10 @@ const View = () => {
                 borderColor: 'var(--brand)',
               }}
             >
-              Edit Product
+              {t.editProductButton}
             </Button>
             <Button onClick={() => navigate('/product')}>
-              Back to List
+              {t.backToList}
             </Button>
           </Space>
         </Card>

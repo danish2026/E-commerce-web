@@ -6,6 +6,8 @@ import { Input } from '../../../components/ui/Input';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import Table from './table';
+import LanguageSelector from '../../../components/purchase/LanguageSelector';
+import { usePurchaseTranslation } from '../../../hooks/usePurchaseTranslation';
 import {
   fetchPurchases,
   mapPaymentStatusFromEnum,
@@ -29,6 +31,7 @@ interface PurchaseDisplay {
 
 const Purchase = () => {
   const navigate = useNavigate();
+  const { t, translate } = usePurchaseTranslation();
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | undefined>(undefined);
@@ -84,11 +87,11 @@ const Purchase = () => {
       setTotal(response.total);
     } catch (error) {
       console.error('Error fetching purchases:', error);
-      message.error(getApiErrorMessage(error, 'Failed to fetch purchases'));
+      message.error(getApiErrorMessage(error, t.failedToFetch));
     } finally {
       setLoading(false);
     }
-  }, [searchText, dateRange, paymentStatus, currentPage, pageSize]);
+  }, [searchText, dateRange, paymentStatus, currentPage, pageSize, t]);
 
   useEffect(() => {
     loadPurchases();
@@ -130,12 +133,13 @@ const Purchase = () => {
         <div className="bg-surface-1 rounded-2xl shadow-card p-8 mb-6 border border-[var(--glass-border)]">
           <Space size="middle" className="w-full" direction="vertical">
             <Space size="middle" className="w-full" wrap>
+              {/* <LanguageSelector /> */}
               <Input
-                placeholder="Search by supplier, buyer, amount, or quantity"
+                placeholder={t.searchPlaceholder}
                 icon={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                style={{ width: 490, height: '40px' }}
+                style={{ width: 400, height: '40px' }}
                 allowClear
                 onPressEnter={() => {
                   setCurrentPage(1);
@@ -146,20 +150,20 @@ const Purchase = () => {
                 value={dateRange}
                 onChange={(dates) => setDateRange(dates as [Dayjs | null, Dayjs | null] | null)}
                 format="YYYY-MM-DD"
-                placeholder={['Start Date', 'End Date']}
+                placeholder={[t.startDate, t.endDate]}
                 style={{ width: 200 ,height: '40px'}}
               />
               <Select
-                placeholder="Payment Status"
+                placeholder={t.paymentStatus}
                 value={paymentStatus}
                 onChange={(value) => setPaymentStatus(value || undefined)}
                 allowClear
-                style={{ width: 100, height: '40px' }}
+                style={{ width: 150, height: '40px' }}
                 options={[
-                  { label: 'Paid', value: PaymentStatus.PAID },
-                  { label: 'Pending', value: PaymentStatus.PENDING },
-                  { label: 'Partial', value: PaymentStatus.PARTIAL },
-                  { label: 'Overdue', value: PaymentStatus.OVERDUE },
+                  { label: t.paid, value: PaymentStatus.PAID },
+                  { label: t.pending, value: PaymentStatus.PENDING },
+                  { label: t.partial, value: PaymentStatus.PARTIAL },
+                  { label: t.overdue, value: PaymentStatus.OVERDUE },
                 ]}
               />
               <Button
@@ -174,7 +178,7 @@ const Purchase = () => {
                   borderColor: 'var(--brand)',
                 }}
               >
-                Add Purchase
+                {t.addPurchase}
               </Button>
             </Space>
           </Space>
@@ -196,7 +200,7 @@ const Purchase = () => {
               onChange: handlePageChange,
               onShowSizeChange: handlePageSizeChange,
               showSizeChanger: true,
-              showTotal: (total) => `Total ${total} purchases`,
+              showTotal: (total) => translate('totalPurchases', { count: total }),
             }}
           />
         )}

@@ -8,6 +8,8 @@ import dayjs, { Dayjs } from 'dayjs';
 import { DataTable, TableColumn } from '../../../components/common/DataTable';
 import { FormModal, FormField } from '../../../components/common/FormModal';
 import { ViewModal, ViewField, createDateField, createTextField } from '../../../components/common/ViewModal';
+import LanguageSelector from '../../../components/purchase/LanguageSelector';
+import { useCategoryTranslation } from '../../../hooks/useCategoryTranslation';
 import {
   fetchCategories,
   createCategory,
@@ -29,6 +31,7 @@ interface CategoryDisplay {
 }
 
 const Categories = () => {
+  const { t, translate } = useCategoryTranslation();
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
   const [categories, setCategories] = useState<CategoryDisplay[]>([]);
@@ -78,11 +81,11 @@ const Categories = () => {
       setTotal(transformedCategories.length);
     } catch (error) {
       console.error('Error fetching categories:', error);
-      message.error(getApiErrorMessage(error, 'Failed to fetch categories'));
+      message.error(getApiErrorMessage(error, t.failedToFetch));
     } finally {
       setLoading(false);
     }
-  }, [searchText, dateRange]);
+  }, [searchText, dateRange, t]);
 
   useEffect(() => {
     loadCategories();
@@ -127,16 +130,16 @@ const Categories = () => {
       setFormLoading(true);
       if (editingCategory) {
         await updateCategory(editingCategory.id, values as { name?: string; description?: string | null });
-        message.success('Category updated successfully!');
+        message.success(t.categoryUpdated);
       } else {
         await createCategory(values as { name: string; description?: string | null });
-        message.success('Category created successfully!');
+        message.success(t.categoryCreated);
       }
       handleCloseFormModal();
       loadCategories();
     } catch (error) {
       console.error('Error saving category:', error);
-      message.error(getApiErrorMessage(error, 'Failed to save category'));
+      message.error(getApiErrorMessage(error, t.failedToSave));
       throw error; // Re-throw to prevent modal from closing
     } finally {
       setFormLoading(false);
@@ -158,7 +161,7 @@ const Categories = () => {
       setViewModalOpen(true);
     } catch (error) {
       console.error('Error fetching category details:', error);
-      message.error(getApiErrorMessage(error, 'Failed to fetch category details'));
+      message.error(getApiErrorMessage(error, t.failedToFetchDetails));
     }
   };
 
@@ -176,19 +179,19 @@ const Categories = () => {
   const columns: TableColumn<CategoryDisplay>[] = [
     {
       key: 'name',
-      title: 'Category Name',
+      title: t.categoryName,
       dataIndex: 'name',
     },
     {
       key: 'description',
-      title: 'Description',
+      title: t.description,
       dataIndex: 'description',
       render: (value) => value || '-',
       hideOnTablet: true,
     },
     {
       key: 'createdAt',
-      title: 'Created At',
+      title: t.createdAt,
       dataIndex: 'createdAt',
       render: (value) => {
         if (!value) return '-';
@@ -207,17 +210,17 @@ const Categories = () => {
   const formFields: FormField[] = [
     {
       name: 'name',
-      label: 'Category Name',
+      label: t.categoryNameLabel,
       type: 'text',
       required: true,
-      placeholder: 'Enter category name',
+      placeholder: t.categoryNamePlaceholder,
     },
     {
       name: 'description',
-      label: 'Description',
+      label: t.descriptionLabel,
       type: 'textarea',
       required: false,
-      placeholder: 'Enter category description (optional)',
+      placeholder: t.descriptionPlaceholder,
     },
   ];
 
@@ -226,10 +229,10 @@ const Categories = () => {
     if (!category) return [];
     
     return [
-      createTextField('Category Name', category.name),
-      createTextField('Description', category.description || '-'),
-      createDateField('Created At', category.createdAt),
-      createDateField('Updated At', category.updatedAt),
+      createTextField(t.categoryName, category.name),
+      createTextField(t.description, category.description || '-'),
+      createDateField(t.createdAt, category.createdAt),
+      createDateField(t.updatedAt, category.updatedAt),
     ];
   };
 
@@ -239,27 +242,24 @@ const Categories = () => {
         <div className="bg-surface-1 rounded-2xl shadow-card p-8 mb-6 border border-[var(--glass-border)]">
           <Space size="middle" className="w-full" direction="vertical">
             <Space size="middle" className="w-full" wrap>
+              {/* <LanguageSelector /> */}
               <Input
-                placeholder="Search by category name or description"
+                placeholder={t.searchPlaceholder}
                 icon={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{ width: 500, height: '40px' }}
-                // allowClear
-                // className="category-search-input"
               />
               <RangePicker
                 value={dateRange}
                 onChange={(dates) => setDateRange(dates as [Dayjs | null, Dayjs | null] | null)}
                 format="YYYY-MM-DD"
-                placeholder={['Start Date', 'End Date']}
+                placeholder={[t.startDate, t.endDate]}
                 style={{ width: 300, height: '40px' }}
               />
               <Button
-                // type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => handleOpenFormModal()}
-                // size="large"
                 style={{
                   height: '40px',
                   width: '200px',
@@ -267,7 +267,7 @@ const Categories = () => {
                   borderColor: 'var(--brand)',
                 }}
               >
-                Add Category
+                {t.addCategory}
               </Button>
             </Space>
           </Space>
@@ -292,31 +292,31 @@ const Categories = () => {
               onChange: handlePageChange,
               onShowSizeChange: handlePageSizeChange,
               showSizeChanger: true,
-              showTotal: (total) => `Total ${total} categories`,
+              showTotal: (total) => translate('totalCategories', { count: total }),
             }}
-            emptyMessage="No categories found. Click Add Category to create one."
+            emptyMessage={t.noCategoriesFound}
             getRowId={(record) => record.id}
-            deleteConfirmMessage={(record) => `Are you sure you want to delete the category "${record.name}"?`}
-            deleteTitle="Delete Category"
+            deleteConfirmMessage={(record) => translate('deleteCategoryConfirm', { name: record.name })}
+            deleteTitle={t.deleteCategoryTitle}
           />
         )}
 
         {/* Form Modal */}
         <FormModal
           open={formModalOpen}
-          title={editingCategory ? 'Edit Category' : 'Add New Category'}
+          title={editingCategory ? t.editCategory : t.addNewCategory}
           fields={formFields}
           initialValues={editingCategory || undefined}
           onSubmit={handleFormSubmit}
           onCancel={handleCloseFormModal}
-          submitButtonText={editingCategory ? 'Update Category' : 'Create Category'}
+          submitButtonText={editingCategory ? t.updateCategory : t.createCategory}
           loading={formLoading}
         />
 
         {/* View Modal */}
         <ViewModal
           open={viewModalOpen}
-          title="Category Details"
+          title={t.categoryDetails}
           fields={getViewFields(viewingCategory)}
           onClose={handleCloseViewModal}
         />

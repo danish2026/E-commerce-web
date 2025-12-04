@@ -5,6 +5,7 @@ import type { TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import { deletePurchaseItem, getApiErrorMessage } from './PurchaseItemService';
+import { usePurchaseTranslation } from '../../../hooks/usePurchaseTranslation';
 
 dayjs.extend(advancedFormat);
 
@@ -45,6 +46,7 @@ const formatCurrency = (value: string | number | undefined | null): string => {
   return numValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) => {
+  const { t } = usePurchaseTranslation();
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 640 : false);
   const [isTablet, setIsTablet] = useState(typeof window !== 'undefined' ? window.innerWidth <= 1024 : false);
@@ -63,7 +65,7 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
 
   const handleDelete = (record: PurchaseItem) => {
     if (!record.id) {
-      message.error('Invalid purchase item ID');
+      message.error(t.failedToDeletePurchaseItem);
       return;
     }
     setItemToDelete(record);
@@ -72,7 +74,7 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
 
   const handleConfirmDelete = async () => {
     if (!itemToDelete || !itemToDelete.id) {
-      message.error('Invalid purchase item ID');
+      message.error(t.failedToDeletePurchaseItem);
       return;
     }
 
@@ -80,7 +82,7 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
     try {
       console.log('Deleting purchase item with ID:', itemToDelete.id);
       await deletePurchaseItem(itemToDelete.id);
-      message.success('Purchase item deleted successfully!');
+      message.success(t.purchaseItemDeleted);
       setDeleteModalVisible(false);
       setItemToDelete(null);
       if (onDelete) {
@@ -88,7 +90,7 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
       }
     } catch (error) {
       console.error('Error deleting purchase item:', error);
-      const errorMessage = getApiErrorMessage(error, 'Failed to delete purchase item');
+      const errorMessage = getApiErrorMessage(error, t.failedToDeletePurchaseItem);
       message.error(errorMessage);
     } finally {
       setIsDeleting(false);
@@ -231,10 +233,10 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-                  Delete Purchase Item
+                  {t.deletePurchaseItemTitle}
                 </h3>
                 <p className="text-sm text-[var(--text-secondary)] mt-1">
-                  Are you sure you want to delete this purchase item?
+                  {t.deletePurchaseItemConfirm}
                 </p>
               </div>
             </div>
@@ -249,7 +251,7 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
               )}
             </div>
             <p className="text-sm text-[var(--text-secondary)] mb-6">
-              This action cannot be undone. The purchase item will be permanently deleted.
+              {t.deletePurchaseItemWarning}
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -257,14 +259,14 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
                 disabled={isDeleting}
                 className="px-4 py-2 rounded-lg border border-[var(--glass-border)] text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--surface-2)] focus:outline-none focus:ring-2 focus:ring-[var(--glass-border)] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Cancel
+                {t.cancel}
               </button>
               <button
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
                 className="px-4 py-2 rounded-lg bg-red-600 dark:bg-red-700 text-sm font-medium text-white hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isDeleting ? 'Deleting...' : 'Delete'}
+                {isDeleting ? t.deleting : t.delete}
               </button>
             </div>
           </div>
@@ -281,7 +283,7 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
         <div className="space-y-0">
           {purchaseItems.length === 0 ? (
             <div className="text-center py-12 text-[var(--text-secondary)] text-sm">
-              No purchase items found. Click Add Purchase Item to create one.
+              {t.noPurchaseItemsFound}
             </div>
           ) : (
             purchaseItems?.map((item) => {
@@ -326,17 +328,17 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
                       <div>{formatDate(item.createdAt)}</div>
                     )}
                     {item.supplier && (
-                      <div>Supplier: <span className="text-[var(--text-primary)]">{item.supplier}</span></div>
+                      <div>{t.supplier}: <span className="text-[var(--text-primary)]">{item.supplier}</span></div>
                     )}
                     {item.buyer && (
-                      <div>Buyer: <span className="text-[var(--text-primary)]">{item.buyer}</span></div>
+                      <div>{t.buyer}: <span className="text-[var(--text-primary)]">{item.buyer}</span></div>
                     )}
                     <div className="flex items-center gap-4 flex-wrap">
-                      <span>Qty: {item.quantity}</span>
-                      <span>Price: ₹{formatCurrency(item.price)}</span>
+                      <span>{t.quantity}: {item.quantity}</span>
+                      <span>{t.price}: ₹{formatCurrency(item.price)}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[var(--text-primary)]">Total: ₹{formatCurrency(item.total)}</span>
+                      <span className="font-semibold text-[var(--text-primary)]">{t.total}: ₹{formatCurrency(item.total)}</span>
                     </div>
                     {item.description && (
                       <div className="text-xs text-[var(--text-secondary)] truncate">{item.description}</div>
@@ -363,43 +365,43 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
             <tr>
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Item Name</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.itemName}</span>
                 </div>
               </th>
               {!isTablet && (
                 <>
                   <th className="px-[18px] py-6 text-left h-[64px]">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-[var(--text-primary)]">Supplier</span>
+                      <span className="text-sm font-semibold text-[var(--text-primary)]">{t.supplier}</span>
                     </div>
                   </th>
                   <th className="px-[18px] py-6 text-left h-[64px]">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-[var(--text-primary)]">Buyer</span>
+                      <span className="text-sm font-semibold text-[var(--text-primary)]">{t.buyer}</span>
                     </div>
                   </th>
                   <th className="px-[18px] py-6 text-left h-[64px]">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-[var(--text-primary)]">Date Created</span>
+                      <span className="text-sm font-semibold text-[var(--text-primary)]">{t.dateCreated}</span>
                     </div>
                   </th>
                 </>
               )}
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Quantity</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.quantity}</span>
                 </div>
               </th>
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Price</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.price}</span>
                 </div>
               </th>
               <th className="px-[18px] py-6 text-left h-[64px]">
-                <span className="text-sm font-semibold text-[var(--text-primary)]">Total</span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">{t.total}</span>
               </th>
               <th className="px-[18px] py-6 text-left pl-[100px] h-[64px]">
-                <span className="text-sm font-semibold text-[var(--text-primary)]">Actions</span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">{t.actions}</span>
               </th>
             </tr>
           </thead>
@@ -407,7 +409,7 @@ const Table = ({ onNavigate, purchaseItems, onDelete, pagination }: TableProps) 
             {purchaseItems.length === 0 ? (
               <tr>
                 <td colSpan={isTablet ? 6 : 8} className="px-[18px] py-12 text-center text-[var(--text-secondary)] text-sm">
-                  No purchase items found. Click Add Purchase Item to create one.
+                  {t.noPurchaseItemsFound}
                 </td>
               </tr>
             ) : (

@@ -7,6 +7,7 @@ import { Button } from '../../../components/ui/Button';
 import { Space, message } from 'antd';
 import { SettingOutlined, SaveOutlined, ReloadOutlined, MoonOutlined, SunOutlined, BellOutlined, GlobalOutlined, EyeOutlined, DatabaseOutlined } from '@ant-design/icons';
 import { useThemeMode } from '../../../context/ThemeContext';
+import { useLanguage } from '../../../context/LanguageContext';
 
 interface AppSettings {
   // Theme
@@ -57,6 +58,7 @@ const SETTINGS_STORAGE_KEY = 'app-settings';
 
 const Setting = () => {
   const { mode, setMode, toggleMode } = useThemeMode();
+  const { language, setLanguage } = useLanguage();
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -72,13 +74,17 @@ const Setting = () => {
         if (parsed.theme && parsed.theme !== mode) {
           setMode(parsed.theme);
         }
+        // Sync language with context
+        if (parsed.language && ['en', 'hi', 'ar'].includes(parsed.language) && parsed.language !== language) {
+          setLanguage(parsed.language as 'en' | 'hi' | 'ar');
+        }
       } catch (error) {
         console.error('Error loading settings:', error);
         message.error('Failed to load saved settings');
       }
     } else {
-      // Initialize with current theme
-      setSettings({ ...DEFAULT_SETTINGS, theme: mode });
+      // Initialize with current theme and language
+      setSettings({ ...DEFAULT_SETTINGS, theme: mode, language: language });
     }
   }, []);
 
@@ -86,6 +92,11 @@ const Setting = () => {
   useEffect(() => {
     setSettings(prev => ({ ...prev, theme: mode }));
   }, [mode]);
+
+  // Sync language changes
+  useEffect(() => {
+    setSettings(prev => ({ ...prev, language: language }));
+  }, [language]);
 
   // Track changes
   useEffect(() => {
@@ -111,6 +122,11 @@ const Setting = () => {
     // Special handling for theme
     if (key === 'theme' && value !== mode) {
       setMode(value as 'light' | 'dark');
+    }
+    
+    // Special handling for language - change immediately when selected
+    if (key === 'language' && ['en', 'hi', 'ar'].includes(value as string) && value !== language) {
+      setLanguage(value as 'en' | 'hi' | 'ar');
     }
   };
 
@@ -265,8 +281,7 @@ const Setting = () => {
             >
               <option value="en">English</option>
               <option value="hi">Hindi</option>
-              <option value="es">Spanish</option>
-              <option value="fr">French</option>
+              <option value="ar">Arabic</option>
             </Select>
           </SettingRow>
 

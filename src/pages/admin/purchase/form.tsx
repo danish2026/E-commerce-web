@@ -4,6 +4,7 @@ import { Form, Input, InputNumber, Select, DatePicker, Button, Card, Space, mess
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { createPurchase, getApiErrorMessage, mapPaymentStatusToEnum, updatePurchase } from './PurcherseService';
+import { usePurchaseTranslation } from '../../../hooks/usePurchaseTranslation';
 
 
 const { Option } = Select;
@@ -23,6 +24,7 @@ interface PurchaseFormData {
 const FormComponent = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = usePurchaseTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [totalAmount, setTotalAmount] = useState<number | null>(null);
@@ -100,17 +102,17 @@ const FormComponent = () => {
       if (isEditMode && formData?.id) {
         // Update existing purchase
         await updatePurchase(formData.id, apiData);
-        message.success('Purchase updated successfully!');
+        message.success(t.purchaseUpdated);
       } else {
         // Create new purchase
         await createPurchase(apiData);
-        message.success('Purchase created successfully!');
+        message.success(t.purchaseCreated);
       }
       
       navigate('/purchase');
     } catch (error) {
       console.error('Error saving purchase:', error);
-      message.error(getApiErrorMessage(error, 'Failed to save purchase'));
+      message.error(getApiErrorMessage(error, t.failedToSave));
     } finally {
       setLoading(false);
     }
@@ -118,7 +120,7 @@ const FormComponent = () => {
 
   const onFinishFailed = (errorInfo: any) => {
     console.log('Failed:', errorInfo);
-    message.error('Please fill in all required fields');
+    message.error(t.fillRequiredFields);
   };
 
   return (
@@ -129,11 +131,11 @@ const FormComponent = () => {
           onClick={() => navigate('/purchase')}
           className="mb-6"
         >
-          Back to Purchase List
+          {t.backToPurchaseList}
         </Button>
 
         <Card
-          title={<h2 className="text-2xl font-bold p-4 mt-[20px] m-0" style={{ color: 'var(--text-primary)' }}>{isEditMode ? 'Edit Purchase' : 'Add New Purchase'}</h2>}
+          title={<h2 className="text-2xl font-bold p-4 mt-[20px] m-0" style={{ color: 'var(--text-primary)' }}>{isEditMode ? t.editPurchase : t.addNewPurchase}</h2>}
           headStyle={{ 
             backgroundColor: 'var(--surface-1)', 
             color: 'var(--text-primary)',
@@ -156,32 +158,32 @@ const FormComponent = () => {
             className="purchase-form"
           >
             <Form.Item
-              label="Supplier"
+              label={t.supplierLabel}
               name="supplier"
-              rules={[{ required: true, message: 'Please enter supplier name' }]}
+              rules={[{ required: true, message: t.supplierRequired }]}
             >
-              <Input placeholder="Enter supplier name" size="large" />
+              <Input placeholder={t.supplierPlaceholder} size="large" />
             </Form.Item>
 
             <Form.Item
-              label="Buyer"
+              label={t.buyerLabel}
               name="buyer"
-              rules={[{ required: true, message: 'Please enter buyer name' }]}
+              rules={[{ required: true, message: t.buyerRequired }]}
             >
-              <Input placeholder="Enter buyer name" size="large" />
+              <Input placeholder={t.buyerPlaceholder} size="large" />
             </Form.Item>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Form.Item
-                label="Quantity"
+                label={t.quantityLabel}
                 name="quantity"
                 rules={[
-                  { required: true, message: 'Please enter quantity' },
-                  { type: 'number', min: 1, message: 'Quantity must be at least 1' },
+                  { required: true, message: t.quantityRequired },
+                  { type: 'number', min: 1, message: t.quantityMin },
                 ]}
               >
                 <InputNumber
-                  placeholder="Enter quantity"
+                  placeholder={t.quantityPlaceholder}
                   style={{ width: '100%' }}
                   size="large"
                   min={1}
@@ -190,42 +192,42 @@ const FormComponent = () => {
               </Form.Item>
 
               <Form.Item
-                label="Payment Status"
+                label={t.paymentStatusLabel}
                 name="payment"
-                rules={[{ required: true, message: 'Please select payment status' }]}
+                rules={[{ required: true, message: t.paymentStatusRequired }]}
               >
-                <Select placeholder="Select payment status" size="large">
-                  <Option value="Paid">Paid</Option>
-                  <Option value="Pending">Pending</Option>
-                  <Option value="Partial">Partial</Option>
+                <Select placeholder={t.paymentStatusPlaceholder} size="large">
+                  <Option value="Paid">{t.paid}</Option>
+                  <Option value="Pending">{t.pending}</Option>
+                  <Option value="Partial">{t.partial}</Option>
                 </Select>
               </Form.Item>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Form.Item
-              label="Due Date"
+              label={t.dueDateLabel}
               name="dueDate"
-              rules={[{ required: true, message: 'Please select due date' }]}
+              rules={[{ required: true, message: t.dueDateRequired }]}
             >
               <DatePicker
                 style={{ width: '100%' }}
                 size="large"
                 format="YYYY-MM-DD"
-                placeholder="Select due date"
+                placeholder={t.dueDatePlaceholder}
               />
             </Form.Item>
 
             <Form.Item
-                label="GST (%)"
+                label={t.gstLabel}
                 name="gst"
                 rules={[
-                  { required: true, message: 'Please enter GST percentage' },
-                  { type: 'number', min: 0, max: 100, message: 'GST must be between 0 and 100' },
+                  { required: true, message: t.gstRequired },
+                  { type: 'number', min: 0, max: 100, message: t.gstRange },
                 ]}
               >
                 <InputNumber
-                  placeholder="Enter GST percentage"
+                  placeholder={t.gstPlaceholder}
                   style={{ width: '100%' }}
                   size="large"
                   min={0}
@@ -242,15 +244,15 @@ const FormComponent = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Form.Item
-                label="Amount"
+                label={t.amountLabel}
                 name="amount"
                 rules={[
-                  { required: true, message: 'Please enter amount' },
-                  { type: 'number', min: 0, message: 'Amount must be greater than 0' },
+                  { required: true, message: t.amountRequired },
+                  { type: 'number', min: 0, message: t.amountMin },
                 ]}
               >
                 <InputNumber
-                  placeholder="Enter amount"
+                  placeholder={t.amountPlaceholder}
                   style={{ width: '100%' }}
                   size="large"
                   min={0}
@@ -265,11 +267,11 @@ const FormComponent = () => {
               </Form.Item>
 
               <Form.Item
-                label="Total Amount"
+                label={t.totalAmountLabel}
                 name="totalAmount"
               >
                 <InputNumber
-                  placeholder="Auto-calculated"
+                  placeholder={t.totalAmountPlaceholder}
                   style={{ width: '100%' }}
                   size="large"
                   min={0}
@@ -306,13 +308,13 @@ const FormComponent = () => {
                     e.currentTarget.style.opacity = '1';
                   }}
                 >
-                  {isEditMode ? 'Update Purchase' : 'Create Purchase'}
+                  {isEditMode ? t.updatePurchase : t.createPurchase}
                 </Button>
                 <Button
                   onClick={() => navigate('/purchase')}
                   size="large"
                 >
-                  Cancel
+                  {t.cancel}
                 </Button>
               </Space>
             </Form.Item>

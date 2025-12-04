@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Card, Descriptions, Tag, Space } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
+import { usePurchaseTranslation } from '../../../hooks/usePurchaseTranslation';
 
 interface ViewData {
   id?: string;
@@ -19,6 +20,7 @@ interface ViewData {
 const View = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = usePurchaseTranslation();
   const data = location.state as ViewData | null;
 
   useEffect(() => {
@@ -37,11 +39,21 @@ const View = () => {
     return numValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  const translatePaymentStatus = (payment: string): string => {
+    const paymentLower = payment.toLowerCase();
+    if (paymentLower === 'paid' || payment === t.paid) return t.paid;
+    if (paymentLower === 'pending' || payment === t.pending) return t.pending;
+    if (paymentLower === 'partial' || payment === t.partial) return t.partial;
+    if (paymentLower === 'overdue' || payment === t.overdue) return t.overdue;
+    return payment;
+  };
+
   const getPaymentStatusColor = (payment: string) => {
     const paymentLower = payment.toLowerCase();
-    if (paymentLower === 'paid') return 'green';
-    if (paymentLower === 'pending') return 'orange';
-    if (paymentLower === 'partial') return 'blue';
+    if (paymentLower === 'paid' || payment === t.paid) return 'green';
+    if (paymentLower === 'pending' || payment === t.pending) return 'orange';
+    if (paymentLower === 'partial' || payment === t.partial) return 'blue';
+    if (paymentLower === 'overdue' || payment === t.overdue) return 'red';
     return 'default';
   };
 
@@ -56,11 +68,11 @@ const View = () => {
           onClick={() => navigate('/purchase')}
           className="mb-6"
         >
-          Back to Purchase Orders List
+          {t.backToPurchaseOrdersList}
         </Button>
 
         <Card
-          title={<h2 className="text-2xl m-7 font-bold m-0" style={{ color: 'var(--text-primary)' }}>Purchase Order Details</h2>}
+          title={<h2 className="text-2xl m-7 font-bold m-0" style={{ color: 'var(--text-primary)' }}>{t.purchaseOrderDetails}</h2>}
           headStyle={{ 
             backgroundColor: 'var(--surface-1)', 
             color: 'var(--text-primary)',
@@ -89,21 +101,21 @@ const View = () => {
             }}
           >
             
-            <Descriptions.Item label="Supplier">
+            <Descriptions.Item label={t.supplier}>
               {data.supplier || '-'}
             </Descriptions.Item>
             
-            <Descriptions.Item label="Buyer">
+            <Descriptions.Item label={t.buyer}>
               {data.buyer || '-'}
             </Descriptions.Item>
             
-            <Descriptions.Item label="Quantity">
+            <Descriptions.Item label={t.quantity}>
               <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
-                {data.quantity || '0'} units
+                {data.quantity || '0'} {t.units}
               </Tag>
             </Descriptions.Item>
             
-            <Descriptions.Item label="Due Date">
+            <Descriptions.Item label={t.dueDate}>
               {data.dueDate ? new Date(data.dueDate).toLocaleDateString('en-IN', {
                 year: 'numeric',
                 month: 'long',
@@ -111,14 +123,14 @@ const View = () => {
               }) : '-'}
             </Descriptions.Item>
             
-            <Descriptions.Item label="Payment Status">
+            <Descriptions.Item label={t.paymentStatus}>
               <Tag color={getPaymentStatusColor(data.payment)} style={{ fontSize: '14px', padding: '4px 12px' }}>
-                {data.payment || '-'}
+                {translatePaymentStatus(data.payment) || '-'}
               </Tag>
             </Descriptions.Item>
             
             {data.createdAt && (
-              <Descriptions.Item label="Created At">
+              <Descriptions.Item label={t.createdAt}>
                 {new Date(data.createdAt).toLocaleString('en-IN', {
                   year: 'numeric',
                   month: 'long',
@@ -130,7 +142,7 @@ const View = () => {
             )}
             
             {data.updatedAt && (
-              <Descriptions.Item label="Last Updated">
+              <Descriptions.Item label={t.lastUpdated}>
                 {new Date(data.updatedAt).toLocaleString('en-IN', {
                   year: 'numeric',
                   month: 'long',
@@ -144,11 +156,11 @@ const View = () => {
 
           <div className="mt-6 p-4 bg-[var(--surface-2)] rounded-lg border border-[var(--glass-border)]">
             <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-              Financial Summary
+              {t.financialSummary}
             </h3>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-sm text-[var(--text-secondary)]">Base Amount:</span>
+                <span className="text-sm text-[var(--text-secondary)]">{t.baseAmount}:</span>
                 <span className="text-sm font-semibold text-[var(--text-primary)]">
                   ₹ {formatCurrency(data.amount)}
                 </span>
@@ -161,7 +173,7 @@ const View = () => {
               </div>
               <div className="border-t border-[var(--glass-border)] pt-2 mt-2">
                 <div className="flex justify-between">
-                  <span className="text-lg font-semibold text-[var(--text-primary)]">Total Amount:</span>
+                  <span className="text-lg font-semibold text-[var(--text-primary)]">{t.totalAmountWithGst}:</span>
                   <span className="text-2xl font-bold" style={{ color: 'var(--brand)' }}>
                     ₹ {formatCurrency(totalWithGst)}
                   </span>
@@ -179,10 +191,10 @@ const View = () => {
                 borderColor: 'var(--brand)',
               }}
             >
-              Edit Purchase Order
+              {t.editPurchaseOrder}
             </Button>
             <Button onClick={() => navigate('/purchase')}>
-              Back to List
+              {t.backToList}
             </Button>
           </Space>
         </Card>

@@ -5,6 +5,7 @@ import type { TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import { deleteProduct, getApiErrorMessage } from './ProductService';
+import { useProductTranslation } from '../../../hooks/useProductTranslation';
 
 dayjs.extend(advancedFormat);
 
@@ -53,6 +54,7 @@ const formatCurrency = (value: string | number | undefined | null): string => {
 };
 
 const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
+  const { t } = useProductTranslation();
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 640 : false);
   const [isTablet, setIsTablet] = useState(typeof window !== 'undefined' ? window.innerWidth <= 1024 : false);
@@ -71,7 +73,7 @@ const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
 
   const handleDelete = (record: Product) => {
     if (!record.id) {
-      message.error('Invalid product ID');
+      message.error(t.failedToDelete);
       return;
     }
     setItemToDelete(record);
@@ -80,7 +82,7 @@ const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
 
   const handleConfirmDelete = async () => {
     if (!itemToDelete || !itemToDelete.id) {
-      message.error('Invalid product ID');
+      message.error(t.failedToDelete);
       return;
     }
 
@@ -88,7 +90,7 @@ const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
     try {
       console.log('Deleting product with ID:', itemToDelete.id);
       await deleteProduct(itemToDelete.id);
-      message.success('Product deleted successfully!');
+      message.success(t.productDeleted);
       setDeleteModalVisible(false);
       setItemToDelete(null);
       if (onDelete) {
@@ -96,7 +98,7 @@ const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
       }
     } catch (error) {
       console.error('Error deleting product:', error);
-      const errorMessage = getApiErrorMessage(error, 'Failed to delete product');
+      const errorMessage = getApiErrorMessage(error, t.failedToDelete);
       message.error(errorMessage);
     } finally {
       setIsDeleting(false);
@@ -239,10 +241,10 @@ const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-                  Delete Product
+                  {t.deleteProductTitle}
                 </h3>
                 <p className="text-sm text-[var(--text-secondary)] mt-1">
-                  Are you sure you want to delete this product?
+                  {t.deleteProductConfirm}
                 </p>
               </div>
             </div>
@@ -251,11 +253,11 @@ const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
                 {itemToDelete.name}
               </p>
               <p className="text-xs text-[var(--text-secondary)] mt-1">
-                SKU: {itemToDelete.sku}
+                {t.sku}: {itemToDelete.sku}
               </p>
             </div>
             <p className="text-sm text-[var(--text-secondary)] mb-6">
-              This action cannot be undone. The product will be permanently deleted.
+              {t.deleteProductWarning}
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -263,14 +265,14 @@ const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
                 disabled={isDeleting}
                 className="px-4 py-2 rounded-lg border border-[var(--glass-border)] text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--surface-2)] focus:outline-none focus:ring-2 focus:ring-[var(--glass-border)] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Cancel
+                {t.cancel}
               </button>
               <button
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
                 className="px-4 py-2 rounded-lg bg-red-600 dark:bg-red-700 text-sm font-medium text-white hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isDeleting ? 'Deleting...' : 'Delete'}
+                {isDeleting ? t.deleting : t.delete}
               </button>
             </div>
           </div>
@@ -287,7 +289,7 @@ const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
         <div className="space-y-0">
           {products.length === 0 ? (
             <div className="text-center py-12 text-[var(--text-secondary)] text-sm">
-              No products found. Click Add Product to create one.
+              {t.noProductsFound}
             </div>
           ) : (
             products.map((item) => {
@@ -332,19 +334,19 @@ const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
                       <div>{formatDate(item.createdAt)}</div>
                     )}
                     <div className="flex items-center gap-4 flex-wrap">
-                      <span>SKU: {item.sku}</span>
-                      <span>Stock: {item.stock} {item.unit}</span>
+                      <span>{t.sku}: {item.sku}</span>
+                      <span>{t.stock}: {item.stock} {item.unit}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span>Cost: ₹{formatCurrency(item.costPrice)}</span>
+                      <span>{t.costPrice}: ₹{formatCurrency(item.costPrice)}</span>
                       <span>|</span>
-                      <span>Selling: ₹{formatCurrency(item.sellingPrice)}</span>
+                      <span>{t.sellingPrice}: ₹{formatCurrency(item.sellingPrice)}</span>
                     </div>
                     {item.categoryName && (
-                      <div className="text-xs text-[var(--text-secondary)]">Category: {item.categoryName}</div>
+                      <div className="text-xs text-[var(--text-secondary)]">{t.category}: {item.categoryName}</div>
                     )}
                     {item.brand && (
-                      <div className="text-xs text-[var(--text-secondary)]">Brand: {item.brand}</div>
+                      <div className="text-xs text-[var(--text-secondary)]">{t.brand}: {item.brand}</div>
                     )}
                   </div>
                 </div>
@@ -368,38 +370,38 @@ const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
             <tr>
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Product Name</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.productName}</span>
                 </div>
               </th>
               {!isTablet && (
                 <th className="px-[18px] py-6 text-left h-[64px]">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">SKU</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{t.sku}</span>
                   </div>
                 </th>
               )}
               {!isTablet && (
                 <th className="px-[18px] py-6 text-left h-[64px]">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">Category</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{t.category}</span>
                   </div>
                 </th>
               )}
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Stock</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.stock}</span>
                 </div>
               </th>
               <th className="px-[18px] py-6 text-left h-[64px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Cost Price</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">{t.costPrice}</span>
                 </div>
               </th>
               <th className="px-[18px] py-6 text-left h-[64px]">
-                <span className="text-sm font-semibold text-[var(--text-primary)]">Selling Price</span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">{t.sellingPrice}</span>
               </th>
               <th className="px-[18px] py-6 text-left pl-[100px] h-[64px]">
-                <span className="text-sm font-semibold text-[var(--text-primary)]">Actions</span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">{t.actions}</span>
               </th>
             </tr>
           </thead>
@@ -407,7 +409,7 @@ const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
             {products.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-[18px] py-12 text-center text-[var(--text-secondary)] text-sm">
-                  No products found. Click Add Product to create one.
+                  {t.noProductsFound}
                 </td>
               </tr>
             ) : (

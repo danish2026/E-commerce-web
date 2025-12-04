@@ -4,6 +4,7 @@ import { Form, Input, InputNumber, Button, Card, Space, message, Select, DatePic
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { createProduct, getApiErrorMessage, updateProduct, fetchCategories, CategoryDto } from './ProductService';
+import { useProductTranslation } from '../../../hooks/useProductTranslation';
 
 const { Option } = Select;
 
@@ -28,6 +29,7 @@ interface ProductFormData {
 const FormComponent = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useProductTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<CategoryDto[]>([]);
@@ -44,7 +46,7 @@ const FormComponent = () => {
         setCategories(data);
       } catch (error) {
         console.error('Error fetching categories:', error);
-        message.error(getApiErrorMessage(error, 'Failed to load categories'));
+        message.error(getApiErrorMessage(error, t.failedToLoadCategories));
       } finally {
         setCategoriesLoading(false);
       }
@@ -96,17 +98,17 @@ const FormComponent = () => {
       if (isEditMode && formData?.id) {
         // Update existing product
         await updateProduct(formData.id, apiData);
-        message.success('Product updated successfully!');
+        message.success(t.productUpdated);
       } else {
         // Create new product
         await createProduct(apiData);
-        message.success('Product created successfully!');
+        message.success(t.productCreated);
       }
       
       navigate('/product');
     } catch (error) {
       console.error('Error saving product:', error);
-      message.error(getApiErrorMessage(error, 'Failed to save product'));
+      message.error(getApiErrorMessage(error, t.failedToSave));
     } finally {
       setLoading(false);
     }
@@ -114,7 +116,7 @@ const FormComponent = () => {
 
   const onFinishFailed = (errorInfo: any) => {
     console.log('Failed:', errorInfo);
-    message.error('Please fill in all required fields');
+    message.error(t.fillRequiredFields);
   };
 
   return (
@@ -125,11 +127,11 @@ const FormComponent = () => {
           onClick={() => navigate('/product')}
           className="mb-6"
         >
-          Back to Product List
+          {t.backToProductList}
         </Button>
 
         <Card
-          title={<h2 className="text-2xl font-bold p-4 mt-[20px] m-0" style={{ color: 'var(--text-primary)' }}>{isEditMode ? 'Edit Product' : 'Add New Product'}</h2>}
+          title={<h2 className="text-2xl font-bold p-4 mt-[20px] m-0" style={{ color: 'var(--text-primary)' }}>{isEditMode ? t.editProduct : t.addNewProduct}</h2>}
           headStyle={{ 
             backgroundColor: 'var(--surface-1)', 
             color: 'var(--text-primary)',
@@ -153,30 +155,30 @@ const FormComponent = () => {
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Form.Item
-                label="Product Name"
+                label={t.productNameLabel}
                 name="name"
-                rules={[{ required: true, message: 'Please enter product name' }]}
+                rules={[{ required: true, message: t.productNameRequired }]}
               >
-                <Input placeholder="Enter product name" size="large" />
+                <Input placeholder={t.productNamePlaceholder} size="large" />
               </Form.Item>
 
               <Form.Item
-                label="SKU"
+                label={t.skuLabel}
                 name="sku"
-                rules={[{ required: true, message: 'Please enter SKU' }]}
+                rules={[{ required: true, message: t.skuRequired }]}
               >
-                <Input placeholder="Enter SKU (unique)" size="large" />
+                <Input placeholder={t.skuPlaceholder} size="large" />
               </Form.Item>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Form.Item
-                label="Category"
+                label={t.categoryLabel}
                 name="categoryId"
-                rules={[{ required: true, message: 'Please select a category' }]}
+                rules={[{ required: true, message: t.categoryRequired }]}
               >
                 <Select
-                  placeholder="Select category"
+                  placeholder={t.categoryPlaceholder}
                   size="large"
                   loading={categoriesLoading}
                   showSearch
@@ -193,20 +195,20 @@ const FormComponent = () => {
               </Form.Item>
 
               <Form.Item
-                label="Brand"
+                label={t.brandLabel}
                 name="brand"
               >
-                <Input placeholder="Enter brand name (optional)" size="large" />
+                <Input placeholder={t.brandPlaceholder} size="large" />
               </Form.Item>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Form.Item
-                label="Unit"
+                label={t.unitLabel}
                 name="unit"
-                rules={[{ required: true, message: 'Please select unit' }]}
+                rules={[{ required: true, message: t.unitRequired }]}
               >
-                <Select placeholder="Select unit" size="large">
+                <Select placeholder={t.unitPlaceholder} size="large">
                   <Option value="PCS">PCS</Option>
                   <Option value="KG">KG</Option>
                   <Option value="BOX">BOX</Option>
@@ -216,15 +218,15 @@ const FormComponent = () => {
               </Form.Item>
 
               <Form.Item
-                label="Cost Price"
+                label={t.costPriceLabel}
                 name="costPrice"
                 rules={[
-                  { required: true, message: 'Please enter cost price' },
-                  { type: 'number', min: 0, message: 'Cost price must be greater than or equal to 0' },
+                  { required: true, message: t.costPriceRequired },
+                  { type: 'number', min: 0, message: t.costPriceMin },
                 ]}
               >
                 <InputNumber
-                  placeholder="Enter cost price"
+                  placeholder={t.costPricePlaceholder}
                   style={{ width: '100%' }}
                   size="large"
                   min={0}
@@ -238,15 +240,15 @@ const FormComponent = () => {
               </Form.Item>
 
               <Form.Item
-                label="Selling Price"
+                label={t.sellingPriceLabel}
                 name="sellingPrice"
                 rules={[
-                  { required: true, message: 'Please enter selling price' },
-                  { type: 'number', min: 0, message: 'Selling price must be greater than or equal to 0' },
+                  { required: true, message: t.sellingPriceRequired },
+                  { type: 'number', min: 0, message: t.sellingPriceMin },
                 ]}
               >
                 <InputNumber
-                  placeholder="Enter selling price"
+                  placeholder={t.sellingPricePlaceholder}
                   style={{ width: '100%' }}
                   size="large"
                   min={0}
@@ -262,15 +264,15 @@ const FormComponent = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Form.Item
-                label="Stock"
+                label={t.stockLabel}
                 name="stock"
                 rules={[
-                  { required: true, message: 'Please enter stock quantity' },
-                  { type: 'number', min: 0, message: 'Stock must be greater than or equal to 0' },
+                  { required: true, message: t.stockRequired },
+                  { type: 'number', min: 0, message: t.stockMin },
                 ]}
               >
                 <InputNumber
-                  placeholder="Enter stock quantity"
+                  placeholder={t.stockPlaceholder}
                   style={{ width: '100%' }}
                   size="large"
                   min={0}
@@ -278,15 +280,15 @@ const FormComponent = () => {
               </Form.Item>
 
               <Form.Item
-                label="GST Percentage"
+                label={t.gstPercentageLabel}
                 name="gstPercentage"
                 rules={[
-                  { required: true, message: 'Please enter GST percentage' },
-                  { type: 'number', min: 0, max: 100, message: 'GST percentage must be between 0 and 100' },
+                  { required: true, message: t.gstPercentageRequired },
+                  { type: 'number', min: 0, max: 100, message: t.gstPercentageRange },
                 ]}
               >
                 <InputNumber
-                  placeholder="Enter GST %"
+                  placeholder={t.gstPercentagePlaceholder}
                   style={{ width: '100%' }}
                   size="large"
                   min={0}
@@ -301,11 +303,11 @@ const FormComponent = () => {
               </Form.Item>
 
               <Form.Item
-                label="Expiry Date"
+                label={t.expiryDateLabel}
                 name="expiryDate"
               >
                 <DatePicker
-                  placeholder="Select expiry date (optional)"
+                  placeholder={t.expiryDatePlaceholder}
                   style={{ width: '100%' }}
                   size="large"
                   format="YYYY-MM-DD"
@@ -315,25 +317,25 @@ const FormComponent = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Form.Item
-                label="HSN Code"
+                label={t.hsnCodeLabel}
                 name="hsnCode"
               >
-                <Input placeholder="Enter HSN code (optional)" size="large" />
+                <Input placeholder={t.hsnCodePlaceholder} size="large" />
               </Form.Item>
 
               <Form.Item
-                label="Barcode"
+                label={t.barcodeLabel}
                 name="barcode"
               >
-                <Input placeholder="Enter barcode (optional)" size="large" />
+                <Input placeholder={t.barcodePlaceholder} size="large" />
               </Form.Item>
             </div>
 
             <Form.Item
-              label="Image URL"
+              label={t.imageUrlLabel}
               name="imageUrl"
             >
-              <Input placeholder="Enter image URL (optional)" size="large" />
+              <Input placeholder={t.imageUrlPlaceholder} size="large" />
             </Form.Item>
 
             <Form.Item>
@@ -357,13 +359,13 @@ const FormComponent = () => {
                     e.currentTarget.style.opacity = '1';
                   }}
                 >
-                  {isEditMode ? 'Update Product' : 'Create Product'}
+                  {isEditMode ? t.updateProduct : t.createProduct}
                 </Button>
                 <Button
                   onClick={() => navigate('/product')}
                   size="large"
                 >
-                  Cancel
+                  {t.cancel}
                 </Button>
               </Space>
             </Form.Item>

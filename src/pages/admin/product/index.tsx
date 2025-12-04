@@ -7,6 +7,8 @@ import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import RangePicker from '../../../components/ui/RangePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import Table from './table';
+import LanguageSelector from '../../../components/purchase/LanguageSelector';
+import { useProductTranslation } from '../../../hooks/useProductTranslation';
 import {
   fetchProducts,
   getApiErrorMessage,
@@ -35,6 +37,7 @@ interface ProductDisplay {
 
 const Product = () => {
   const navigate = useNavigate();
+  const { t, translate } = useProductTranslation();
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
   const [products, setProducts] = useState<ProductDisplay[]>([]);
@@ -89,11 +92,11 @@ const Product = () => {
       setTotal(response.meta.total);
     } catch (error) {
       console.error('Error fetching products:', error);
-      message.error(getApiErrorMessage(error, 'Failed to fetch products'));
+      message.error(getApiErrorMessage(error, t.failedToFetch));
     } finally {
       setLoading(false);
     }
-  }, [searchText, dateRange, currentPage, pageSize]);
+  }, [searchText, dateRange, currentPage, pageSize, t]);
 
   useEffect(() => {
     loadProducts();
@@ -136,19 +139,18 @@ const Product = () => {
           <Space size="middle" className="w-full" direction="vertical">
             <Space size="middle" className="w-full" wrap>
               <Input
-                placeholder="Search by product name, SKU, or brand"
+                placeholder={t.searchPlaceholder}
                 icon={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{ width: 600, height: '40px' }}
-                // allowClear
                 className="product-search-input"
               />
               <RangePicker
                 value={dateRange}
                 onChange={(dates) => setDateRange(dates as [Dayjs | null, Dayjs | null] | null)}
                 format="YYYY-MM-DD"
-                placeholder={['Start Date', 'End Date']}
+                placeholder={[t.startDate, t.endDate]}
                 style={{ width: 200, height: '40px' }}
               />
               <Button
@@ -161,7 +163,7 @@ const Product = () => {
                   borderColor: 'var(--brand)',
                 }}
               >
-                Add Product
+                {t.addProduct}
               </Button>
             </Space>
           </Space>
@@ -183,7 +185,7 @@ const Product = () => {
               onChange: handlePageChange,
               onShowSizeChange: handlePageSizeChange,
               showSizeChanger: true,
-              showTotal: (total) => `Total ${total} products`,
+              showTotal: (total) => translate('totalProducts', { count: total }),
             }}
           />
         )}

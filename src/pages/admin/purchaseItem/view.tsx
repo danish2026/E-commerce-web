@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Card, Descriptions, Tag, Space } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
+import { usePurchaseTranslation } from '../../../hooks/usePurchaseTranslation';
 
 interface ViewData {
   id?: string;
@@ -19,6 +20,7 @@ interface ViewData {
 const View = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = usePurchaseTranslation();
   const data = location.state as ViewData | null;
 
   useEffect(() => {
@@ -45,11 +47,11 @@ const View = () => {
           onClick={() => navigate('/purchase-item')}
           className="mb-6"
         >
-          Back to Purchase Items List
+          {t.backToPurchaseItemsList}
         </Button>
 
         <Card
-          title={<h2 className="text-2xl m-7 font-bold m-0" style={{ color: 'var(--text-primary)' }}>Purchase Item Details</h2>}
+          title={<h2 className="text-2xl m-7 font-bold m-0" style={{ color: 'var(--text-primary)' }}>{t.purchaseItemDetails}</h2>}
           headStyle={{ 
             backgroundColor: 'var(--surface-1)', 
             color: 'var(--text-primary)',
@@ -81,42 +83,42 @@ const View = () => {
               <span style={{ fontWeight: 'bold', fontSize: '16px' }}>{data.id || '-'}</span>
             </Descriptions.Item> */}
             
-            <Descriptions.Item label="Item Name">
+            <Descriptions.Item label={t.itemName}>
               <span style={{ fontWeight: 'bold', fontSize: '16px' }}>{data.item || '-'}</span>
             </Descriptions.Item>
             
             {data.description && (
-              <Descriptions.Item label="Description">
+              <Descriptions.Item label={t.description}>
                 {data.description}
               </Descriptions.Item>
             )}
             
             {data.supplier && (
-              <Descriptions.Item label="Supplier">
+              <Descriptions.Item label={t.supplier}>
                 <span style={{ color: 'var(--text-primary)' }}>{data.supplier}</span>
               </Descriptions.Item>
             )}
             
             {data.buyer && (
-              <Descriptions.Item label="Buyer">
+              <Descriptions.Item label={t.buyer}>
                 <span style={{ color: 'var(--text-primary)' }}>{data.buyer}</span>
               </Descriptions.Item>
             )}
             
-            <Descriptions.Item label="Quantity">
+            <Descriptions.Item label={t.quantity}>
               <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
-                {data.quantity || '0'} units
+                {data.quantity || '0'} {t.units}
               </Tag>
             </Descriptions.Item>
             
-            <Descriptions.Item label="Price per Unit">
+            <Descriptions.Item label={t.pricePerUnit}>
               <span style={{ color: 'var(--text-primary)' }}>
                 ₹ {formatCurrency(data.price)}
               </span>
             </Descriptions.Item>
             
             {data.createdAt && (
-              <Descriptions.Item label="Created At">
+              <Descriptions.Item label={t.createdAt}>
                 {new Date(data.createdAt).toLocaleString('en-IN', {
                   year: 'numeric',
                   month: 'long',
@@ -128,7 +130,7 @@ const View = () => {
             )}
             
             {data.updatedAt && (
-              <Descriptions.Item label="Last Updated">
+              <Descriptions.Item label={t.lastUpdated}>
                 {new Date(data.updatedAt).toLocaleString('en-IN', {
                   year: 'numeric',
                   month: 'long',
@@ -143,24 +145,24 @@ const View = () => {
           {/* Purchase Item Summary */}
           <div className="mt-6 p-4 bg-[var(--surface-2)] rounded-lg border border-[var(--glass-border)]">
             <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-              Purchase Item Summary
+              {t.purchaseItemSummary}
             </h3>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-sm text-[var(--text-secondary)]">Quantity:</span>
+                <span className="text-sm text-[var(--text-secondary)]">{t.quantity}:</span>
                 <span className="text-sm font-semibold text-[var(--text-primary)]">
-                  {data.quantity} units
+                  {data.quantity} {t.units}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-[var(--text-secondary)]">Price per Unit:</span>
+                <span className="text-sm text-[var(--text-secondary)]">{t.pricePerUnit}:</span>
                 <span className="text-sm font-semibold text-[var(--text-primary)]">
                   ₹ {formatCurrency(data.price)}
                 </span>
               </div>
               <div className="border-t border-[var(--glass-border)] pt-2 mt-2">
                 <div className="flex justify-between">
-                  <span className="text-lg font-semibold text-[var(--text-primary)]">Total Amount:</span>
+                  <span className="text-lg font-semibold text-[var(--text-primary)]">{t.totalAmountWithGst}:</span>
                   <span className="text-2xl font-bold" style={{ color: 'var(--brand)' }}>
                     ₹ {formatCurrency(data.total)}
                   </span>
@@ -178,10 +180,10 @@ const View = () => {
                 borderColor: 'var(--brand)',
               }}
             >
-              Edit Purchase Item
+              {t.editPurchaseItemButton}
             </Button>
             <Button onClick={() => navigate('/purchase-item')}>
-              Back to List
+              {t.backToList}
             </Button>
           </Space>
         </Card>

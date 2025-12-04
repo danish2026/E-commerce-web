@@ -6,12 +6,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
+// import LanguageSelector from '../../../components/purchase/LanguageSelector';
+import { useBillingTranslation } from '../../../hooks/useBillingTranslation';
 import { fetchOrders, Order } from './api';
 import Table from './table';
 
 
 const Billing = () => {
   const navigate = useNavigate();
+  const { t, translate } = useBillingTranslation();
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchText, setSearchText] = useState('');
@@ -81,7 +84,7 @@ const Billing = () => {
           <Space size="middle" className="w-full" direction="vertical">
             <Space size="middle" className="w-full" wrap>
               <Input
-                placeholder="Search by order number, customer name, or phone"
+                placeholder={t.searchPlaceholder}
                 style={{ width: 550, height: '40px' }}
                 allowClear
                 icon={<SearchOutlined />}
@@ -102,7 +105,7 @@ const Billing = () => {
                   setCurrentPage(1);
                 }}
                 format="YYYY-MM-DD"
-                placeholder={['Start Date', 'End Date']}
+                placeholder={[t.startDate, t.endDate]}
                 style={{ width: 250, height: '40px' }}
               />
               {/* <InputNumber
@@ -140,10 +143,8 @@ const Billing = () => {
                 }}
               /> */}
               <Button
-                // type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => navigate('/billing/form')}
-                // size="large"
                 style={{
                   height: '40px',
                   width: '200px',
@@ -151,7 +152,7 @@ const Billing = () => {
                   borderColor: 'var(--brand)',
                 }}
               >
-                Create Order
+                {t.createOrder}
               </Button>
             </Space>
           </Space>
@@ -174,7 +175,7 @@ const Billing = () => {
               onChange: handlePageChange,
               onShowSizeChange: handlePageSizeChange,
               showSizeChanger: true,
-              showTotal: (total: number) => `Total ${total} orders`,
+              showTotal: (total: number) => translate('totalOrders', { count: total }),
             }}
           />
         )}
