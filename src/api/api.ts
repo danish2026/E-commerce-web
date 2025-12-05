@@ -1,5 +1,5 @@
 export const API = {
-    BASEURL: process.env.REACT_APP_API_URL || "https://e-commerce-server-drab.vercel.app/",
+    BASEURL: process.env.REACT_APP_API_URL || "https://e-commerce-server-drab.vercel.app/api/",
 
     LogIn: "auth/login",
     Register: "auth/register",
