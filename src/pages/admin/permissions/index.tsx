@@ -1,5 +1,5 @@
 import {  Space, Spin, Select, Modal, Form, message, Checkbox, Button as AntButton } from 'antd';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -30,6 +30,7 @@ const Permissions = () => {
   const [createPermissionModalVisible, setCreatePermissionModalVisible] = useState(false);
   const [roles, setRoles] = useState<Role[]>([]);
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
+  const [loadingPermissions, setLoadingPermissions] = useState(false);
   
   // Form instances
   const [addRoleForm] = Form.useForm();
@@ -54,6 +55,66 @@ const Permissions = () => {
 
   // Get all unique modules
   const allModules = Array.from(new Set([...AVAILABLE_MODULES, ...modules])).sort();
+
+  // Memoize permission options for Select component
+  const permissionOptions = useMemo(() => {
+    console.log('Computing permission options from allPermissions:', allPermissions.length);
+    const options = allPermissions
+      .filter((permission) => permission && permission.id && permission.module && permission.action)
+      .map((permission) => ({
+        value: permission.id,
+        label: `${permission.module} - ${permission.action}`,
+      }));
+    console.log('Permission options computed:', options.length);
+    if (options.length > 0) {
+      console.log('First option sample:', options[0]);
+    }
+    return options;
+  }, [allPermissions]);
+
+  // Function to fetch all permissions by paginating through all pages
+  const fetchAllPermissions = async (): Promise<Permission[]> => {
+    const permissionsList: Permission[] = [];
+    let currentPage = 1;
+    const limit = 100; // API max limit
+    let hasMore = true;
+
+    while (hasMore) {
+      try {
+        const response = await fetchPermissions(currentPage, limit);
+        if (Array.isArray(response.data)) {
+          permissionsList.push(...response.data);
+          // Check if there are more pages
+          hasMore = response.meta.hasNext || (currentPage < response.meta.totalPages);
+          currentPage++;
+        } else {
+          console.error('Invalid response format:', response);
+          break;
+        }
+      } catch (error: any) {
+        console.error(`Error fetching permissions page ${currentPage}:`, error);
+        break;
+      }
+    }
+
+    return permissionsList;
+  };
+
+  // Function to reload all permissions
+  const reloadAllPermissions = async () => {
+    try {
+      setLoadingPermissions(true);
+      const allPerms = await fetchAllPermissions();
+      console.log('All permissions fetched:', allPerms.length);
+      setAllPermissions(allPerms);
+      console.log('Permissions reloaded:', allPerms.length);
+    } catch (error: any) {
+      console.error('Error reloading permissions:', error);
+      setAllPermissions([]);
+    } finally {
+      setLoadingPermissions(false);
+    }
+  };
 
   // Load permissions with server-side pagination and filtering
   const loadPermissions = async () => {
@@ -89,13 +150,31 @@ const Permissions = () => {
     
     const loadRolesAndPermissions = async () => {
       try {
+        setLoadingPermissions(true);
         const fetchedRoles = await fetchRoles();
         setRoles(fetchedRoles);
-        // Load all permissions for role permission assignment
-        const response = await fetchPermissions(1, 1000);
-        setAllPermissions(response.data);
-      } catch (error) {
+        console.log('Roles loaded:', fetchedRoles.length);
+        
+        // Load all permissions for role permission assignment using pagination
+        const allPerms = await fetchAllPermissions();
+        console.log('All permissions fetched:', allPerms.length);
+        
+        if (allPerms.length > 0) {
+          console.log('First permission sample:', allPerms[0]);
+          console.log('Permission keys:', Object.keys(allPerms[0]));
+        }
+        
+        setAllPermissions(allPerms);
+        console.log('All permissions state updated:', allPerms.length, 'permissions');
+      } catch (error: any) {
         console.error('Error loading roles/permissions:', error);
+        console.error('Error response:', error.response);
+        console.error('Error details:', error.response?.data || error.message);
+        console.error('Error stack:', error.stack);
+        message.error('Failed to load permissions. Please refresh the page.');
+        setAllPermissions([]);
+      } finally {
+        setLoadingPermissions(false);
       }
     };
     loadRolesAndPermissions();
@@ -176,8 +255,7 @@ const Permissions = () => {
       createPermissionForm.resetFields();
       loadPermissions(); // Reload permissions table
       // Reload all permissions for the dropdown
-      const response = await fetchPermissions(1, 1000);
-      setAllPermissions(response.data);
+      await reloadAllPermissions();
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || t.failedToCreatePermissions;
       message.error(errorMessage);
@@ -278,14 +356,14 @@ const Permissions = () => {
             data={permissions}
             loading={loading}
             onNavigate={handleNavigate}
-            onDelete={loadPermissions}
+            onDelete={loadPermissions}  
             pagination={{
               current: currentPage,
               pageSize: pageSize,
               total: total,
               onChange: handlePageChange,
               onShowSizeChange: handlePageSizeChange,
-              showSizeChanger: true,
+              showSizeChanger: true,  
               showTotal: (total: number) => translate('totalPermissions', { count: total }),
             }}
           />
@@ -352,6 +430,13 @@ const Permissions = () => {
           setAddRolePermissionModalVisible(false);
           addRolePermissionForm.resetFields();
         }}
+        afterOpenChange={(open) => {
+          // Reload permissions when modal opens if we don't have any
+          if (open && allPermissions.length === 0 && !loadingPermissions) {
+            console.log('Modal opened with no permissions, reloading...');
+            reloadAllPermissions();
+          }
+        }}
         footer={null}
         width={600}
       >
@@ -389,14 +474,13 @@ const Permissions = () => {
               placeholder={t.permissionsPlaceholder}
               size="large"
               showSearch
+              loading={loadingPermissions}
+              notFoundContent={loadingPermissions ? <Spin size="small" /> : 'No permissions found'}
               optionFilterProp="label"
               filterOption={(input, option) =>
                 (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
               }
-              options={allPermissions.map((permission) => ({
-                value: permission.id,
-                label: `${permission.module} - ${permission.action}`,
-              }))}
+              options={permissionOptions}
             />
           </Form.Item>
           <Form.Item>
