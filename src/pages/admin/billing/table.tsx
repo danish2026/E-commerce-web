@@ -43,13 +43,13 @@ const getPaymentBadgeClasses = (paymentType?: PaymentType) => {
       return 'bg-[rgb(3_78_30)] text-green-900 dark:bg-blue dark:text-green-300';
 
     case PaymentType.CARD:
-      return 'bg-[rgb(98 17 183)] text-blue-700 dark:bg-blue-900/20 dark:text-blue-300';
+      return 'bg-[rgb(98 17 183)] text-blue-700 dark:bg-blue-900/20 dark:text-blue-1000';
     case PaymentType.UPI:
-      return 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300';
+      return 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-1000';
     case PaymentType.CREDIT:
-      return 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300';
+      return 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-1000';
     default:
-      return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+      return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-1000';
   }
 };
 

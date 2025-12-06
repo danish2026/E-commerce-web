@@ -30,7 +30,7 @@ const formatDate = (value?: string) => {
 
 const getStatusBadgeClasses = (isActive: boolean) => {
   return isActive
-    ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
+    ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-1000 '
     : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300';
 };
 
@@ -39,12 +39,12 @@ const getRoleBadgeClasses = (role?: string) => {
   
   const normalizedRole = role.toUpperCase();
   if (normalizedRole.includes('ADMIN') || normalizedRole.includes('SUPER')) {
-    return 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300';
+    return 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-300';
   }
   if (normalizedRole.includes('MANAGER')) {
-    return 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300';
+    return 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-300';
   }
-  return 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300';
+  return 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text--300';
 };
 
 const EmployeeTable: React.FC<TableProps> = ({

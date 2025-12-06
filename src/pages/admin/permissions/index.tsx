@@ -1,6 +1,6 @@
 import {  Space, Spin, Select, Modal, Form, message, Checkbox, Button as AntButton } from 'antd';
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate ,useLocation} from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { PlusOutlined, UserAddOutlined, SafetyOutlined } from '@ant-design/icons';
@@ -13,6 +13,7 @@ const { Option } = Select;
 
 const Permissions = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, translate } = usePermissionTranslation();
   const [loading, setLoading] = useState(false);
   const [permissions, setPermissions] = useState<Permission[]>([]);

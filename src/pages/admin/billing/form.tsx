@@ -318,13 +318,13 @@ const BillingForm = () => {
 
       if (isEditMode && existingOrder?.id) {
         await updateOrder(existingOrder.id, apiData);
-        message.success(t.orderUpdated);
+        // Navigate to main page with success message
+        navigate('/billing', { state: { successMessage: t.orderUpdated } });
       } else {
         await createOrder(apiData);
-        message.success(t.orderCreated);
+        // Navigate to main page with success message
+        navigate('/billing', { state: { successMessage: t.orderCreated } });
       }
-      
-      navigate('/billing');
     } catch (error: any) {
       console.error('Error saving order:', error);
       
@@ -413,6 +413,7 @@ const BillingForm = () => {
                 <Form.Item label={t.customerPhoneLabel}>
                   <Input
                     placeholder={t.customerPhonePlaceholder}
+                    type="number"
                     size="large"
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}

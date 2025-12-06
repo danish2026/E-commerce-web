@@ -74,7 +74,6 @@ const PermissionTable: React.FC<TableProps> = ({
     try {
       setIsDeleting(true);
       await deletePermission(permissionToDelete.id);
-      message.success(t.permissionDeleted);
       setDeleteModalVisible(false);
       setPermissionToDelete(null);
       onDelete?.();

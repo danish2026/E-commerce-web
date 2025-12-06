@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {  Space, message, Spin } from 'antd';
 import RangePicker from '../../../components/ui/RangePicker';
 import { Button } from '../../../components/ui/Button';
@@ -30,6 +30,7 @@ interface PurchaseItemDisplay {
 
 const PurchaseItem = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, translate } = usePurchaseTranslation();
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
@@ -115,6 +116,12 @@ const PurchaseItem = () => {
     }
   };
 
+  const handleDeleteSuccess = () => {
+    loadPurchaseItems();
+    // Success message will be handled by MainLayout via navigation state
+    navigate(location.pathname, { state: { successMessage: t.purchaseItemDeleted } });
+  };
+
   // All filtering is handled by API (search and date range)
   const filteredPurchaseItems = purchaseItems;
 
@@ -167,7 +174,7 @@ const PurchaseItem = () => {
           <Table 
             onNavigate={handleNavigate} 
             purchaseItems={filteredPurchaseItems} 
-            onDelete={loadPurchaseItems}
+            onDelete={handleDeleteSuccess}
             pagination={{
               current: currentPage,
               pageSize: pageSize,

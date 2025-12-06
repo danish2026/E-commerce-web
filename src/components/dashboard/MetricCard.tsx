@@ -14,7 +14,7 @@ export interface MetricCardProps {
 }
 
 export const MetricCard = ({ title, value, currencySymbol, trend }: MetricCardProps) => (
-  <Card className="p-6">
+  <Card className="p-6 border border-transparent hover:border-[rgb(31,154,138)]">
     <div className="text-sm text-muted">{title}</div>
     <div className="mt-2 text-3xl font-semibold text-text-primary">
       {currencySymbol}

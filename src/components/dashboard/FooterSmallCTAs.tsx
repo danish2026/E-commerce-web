@@ -1,7 +1,7 @@
 import { Button, Card } from '../ui';
 
 export const FooterSmallCTAs = () => (
-  <Card className="flex flex-col gap-4 bg-surface-2">
+  <Card className="flex flex-col gap-4 bg-surface-2 border border-transparent hover:border-[rgb(31,154,138)]">
     <div>
       <p className="text-sm text-muted">Need more power?</p>
       <h4 className="text-lg font-semibold text-text-primary">Upgrade to Pro</h4>

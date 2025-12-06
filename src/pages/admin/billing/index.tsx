@@ -3,7 +3,7 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import RangePicker from '../../../components/ui/RangePicker';
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 // import LanguageSelector from '../../../components/purchase/LanguageSelector';
@@ -14,6 +14,7 @@ import Table from './table';
 
 const Billing = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, translate } = useBillingTranslation();
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -75,6 +76,12 @@ const Billing = () => {
   const handlePageSizeChange = (current: number, size: number) => {
     setPageSize(size);
     setCurrentPage(1);
+  };
+
+  const handleDeleteSuccess = () => {
+    loadOrders();
+    // Success message will be handled by MainLayout via navigation state
+    navigate(location.pathname, { state: { successMessage: t.orderDeleted } });
   };
 
   return (
@@ -167,7 +174,7 @@ const Billing = () => {
             data={orders}
             loading={loading}
             onNavigate={handleNavigate}
-            onDelete={loadOrders}
+            onDelete={handleDeleteSuccess}
             pagination={{
               current: currentPage,
               pageSize: pageSize,

@@ -257,7 +257,6 @@ const Setting = () => {
                 onClick={() => {
                   const newTheme = settings.theme === 'light' ? 'dark' : 'light';
                   handleSettingChange('theme', newTheme);
-                  toggleMode();
                 }}
               />
               <MoonOutlined style={{ color: mode === 'dark' ? 'var(--brand)' : 'var(--text-secondary)' }} />

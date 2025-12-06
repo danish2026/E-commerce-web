@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Button, Space, message, Spin, Select, Alert } from 'antd';
+import { Button, Space, message, Spin, Select } from 'antd';
 import RangePicker from '../../../components/ui/RangePicker';
 import { Input } from '../../../components/ui/Input';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
@@ -41,7 +41,7 @@ const Purchase = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isSelectHovered, setIsSelectHovered] = useState(false);
 
   // Fetch purchases from API
   const loadPurchases = useCallback(async () => {
@@ -99,19 +99,6 @@ const Purchase = () => {
     loadPurchases();
   }, [loadPurchases]);
 
-  // Check for success message from navigation state
-  useEffect(() => {
-    if (location.state?.successMessage) {
-      setSuccessMessage(location.state.successMessage);
-      // Clear the state to prevent showing message on refresh
-      window.history.replaceState({}, document.title);
-      // Auto-hide message after 3 seconds
-      const timer = setTimeout(() => {
-        setSuccessMessage(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [location.state]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -141,34 +128,15 @@ const Purchase = () => {
   };
 
   const handleDeleteSuccess = () => {
-    setSuccessMessage(t.purchaseDeleted);
     loadPurchases();
-    // Auto-hide message after 3 seconds
-    setTimeout(() => {
-      setSuccessMessage(null);
-    }, 3000);
+    // Success message will be handled by MainLayout via navigation state
+    navigate(location.pathname, { state: { successMessage: t.purchaseDeleted } });
   };
 
   // All filtering is handled by API (search and date range)
   const filteredPurchases = purchases;
 
   return (
-    <>
-            {successMessage && (
-          <div className="mb-6 flex justify-center">
-            <Alert
-              message={successMessage}
-              type="success"
-              showIcon
-              closable
-              onClose={() => setSuccessMessage(null)}
-              style={{
-                maxWidth: '600px',
-                width: '100%',
-              }}
-            />
-          </div>
-        )}
     <div className="min-h-screen bg-bg-secondary p-7">
       <div className="max-w-7xl mx-auto">
 
@@ -195,19 +163,33 @@ const Purchase = () => {
                 placeholder={[t.startDate, t.endDate]}
                 style={{ width: 200 ,height: '40px'}}
               />
-              <Select
-                placeholder={t.paymentStatus}
-                value={paymentStatus}
-                onChange={(value) => setPaymentStatus(value || undefined)}
-                allowClear
-                style={{ width: 150, height: '40px' }}
-                options={[
-                  { label: t.paid, value: PaymentStatus.PAID },
-                  { label: t.pending, value: PaymentStatus.PENDING },
-                  { label: t.partial, value: PaymentStatus.PARTIAL },
-                  { label: t.overdue, value: PaymentStatus.OVERDUE },
-                ]}
-              />
+              <div
+                onMouseEnter={() => setIsSelectHovered(true)}
+                onMouseLeave={() => setIsSelectHovered(false)}
+                style={{
+                  display: 'inline-block',
+                  border: isSelectHovered ? '1px solid rgb(31, 154, 138)' : '1px solid transparent',
+                  borderRadius: '6px',
+                  transition: 'border-color 0.2s'
+                }}
+              >
+                <Select
+                  placeholder={t.paymentStatus}
+                  value={paymentStatus}
+                  onChange={(value) => setPaymentStatus(value || undefined)}
+                  allowClear
+                  style={{ 
+                    width: 150, 
+                    height: '40px'
+                  }}
+                  options={[
+                    { label: t.paid, value: PaymentStatus.PAID },
+                    { label: t.pending, value: PaymentStatus.PENDING },
+                    { label: t.partial, value: PaymentStatus.PARTIAL },
+                    { label: t.overdue, value: PaymentStatus.OVERDUE },
+                  ]}
+                />
+              </div>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -248,7 +230,6 @@ const Purchase = () => {
         )}
       </div>
     </div>
-    </>
   );
 };
 

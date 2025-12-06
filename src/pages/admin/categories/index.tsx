@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Space, message, Spin } from 'antd';
 import RangePicker from '../../../components/ui/RangePicker';
 import { Button } from '../../../components/ui/Button';
@@ -31,6 +32,8 @@ interface CategoryDisplay {
 }
 
 const Categories = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { t, translate } = useCategoryTranslation();
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
@@ -130,13 +133,17 @@ const Categories = () => {
       setFormLoading(true);
       if (editingCategory) {
         await updateCategory(editingCategory.id, values as { name?: string; description?: string | null });
-        message.success(t.categoryUpdated);
+        handleCloseFormModal();
+        loadCategories();
+        // Navigate to current page with success message
+        navigate(location.pathname, { state: { successMessage: t.categoryUpdated } });
       } else {
         await createCategory(values as { name: string; description?: string | null });
-        message.success(t.categoryCreated);
+        handleCloseFormModal();
+        loadCategories();
+        // Navigate to current page with success message
+        navigate(location.pathname, { state: { successMessage: t.categoryCreated } });
       }
-      handleCloseFormModal();
-      loadCategories();
     } catch (error) {
       console.error('Error saving category:', error);
       message.error(getApiErrorMessage(error, t.failedToSave));
@@ -173,6 +180,12 @@ const Categories = () => {
   // Delete Handler
   const handleDelete = async (category: CategoryDisplay): Promise<void> => {
     await deleteCategory(category.id);
+  };
+
+  const handleDeleteSuccess = () => {
+    loadCategories();
+    // Success message will be handled by MainLayout via navigation state
+    navigate(location.pathname, { state: { successMessage: t.categoryDeleted } });
   };
 
   // Table Columns
@@ -284,7 +297,7 @@ const Categories = () => {
             onView={handleOpenViewModal}
             onEdit={handleOpenFormModal}
             onDelete={handleDelete}
-            onDeleteSuccess={loadCategories}
+            onDeleteSuccess={handleDeleteSuccess}
             pagination={{
               current: currentPage,
               pageSize: pageSize,

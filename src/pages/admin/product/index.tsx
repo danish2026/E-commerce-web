@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Space, message, Spin } from 'antd';
@@ -37,6 +37,7 @@ interface ProductDisplay {
 
 const Product = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, translate } = useProductTranslation();
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
@@ -129,6 +130,15 @@ const Product = () => {
     }
   };
 
+  const handleDeleteSuccess = () => {
+    loadProducts();
+    // Success message will be handled by MainLayout via navigation state
+    navigate(location.pathname, { 
+      state: { successMessage: t.productDeleted },
+      replace: false
+    });
+  };
+
   // All filtering is handled by API (search and date range)
   const filteredProducts = products;
 
@@ -177,7 +187,7 @@ const Product = () => {
           <Table 
             onNavigate={handleNavigate} 
             products={filteredProducts} 
-            onDelete={loadProducts}
+            onDelete={handleDeleteSuccess}
             pagination={{
               current: currentPage,
               pageSize: pageSize,

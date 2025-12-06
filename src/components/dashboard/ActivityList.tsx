@@ -14,10 +14,11 @@ export interface ActivityItem {
 interface ActivityListProps {
   items: ActivityItem[];
   filterRange?: string;
+  className?: string;
 }
 
-export const ActivityList = ({ items, filterRange }: ActivityListProps) => (
-  <Card className="space-y-4">
+export const ActivityList = ({ items, filterRange, className }: ActivityListProps) => (
+  <Card className={clsx("space-y-4", className)}>
     <div className="flex items-center justify-between">
       <div>
         <p className="text-sm text-muted">Recent activity</p>

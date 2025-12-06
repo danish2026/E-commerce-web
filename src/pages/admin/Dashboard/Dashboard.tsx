@@ -122,14 +122,14 @@ const Dashboard = () => {
   ] : [];
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="space-y-6 ">
+      <section className="grid  gap-4 md:grid-cols-2 lg:grid-cols-3">
         {metrics.map((metric) => (
-          <MetricCard key={metric.title} {...metric} currencySymbol={metric.currencySymbol} />
+          <MetricCard  key={metric.title} {...metric} currencySymbol={metric.currencySymbol} />
         ))}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[2fr,1fr]">
+      <section className="w-full border border-transparent hover:border-[rgb(31,154,138)]">
         <ChartCard
           title={t.revenueTrend}
           subtitle={t.last12Months}
@@ -137,7 +137,7 @@ const Dashboard = () => {
           trend={trend.dir}
           data={cashflowData}
         />
-        <div className="space-y-4">
+        {/* <div className="space-y-4">
           <BalancePanel
             balance={stats ? formatCurrency(stats.revenue.total) : '0.00'}
             currency={currency}
@@ -145,22 +145,22 @@ const Dashboard = () => {
             onCurrencyChange={setCurrency}
           />
           <CardPreview holderName="Super Admin" maskedNumber="5321 •••• •••• 3019" expiry="08 / 28" brand="SS" />
-        </div>
+        </div> */}
       </section>
 
       <section className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2 space-y-6">
-          <div>
+        <Card className="lg:col-span-2 space-y-6 border border-transparent hover:border-[rgb(31,154,138)]">
+          <div className=''>
             <p className="text-sm text-muted">{t.quickActions}</p>
             <h3 className="text-xl font-semibold text-text-primary">{t.moneyOps}</h3>
           </div>
           <ActionGrid items={quickActions} />
         </Card>
-        <ActivityList items={activityItems} filterRange={t.recentOrders} />
+        <ActivityList className="border border-transparent hover:border-[rgb(31,154,138)]" items={activityItems} filterRange={t.recentOrders} />
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <section className="grid gap-4 lg:grid-cols-3 ">
+        <div className="lg:col-span-2 border rounded-3xl border-transparent hover:border-[rgb(31,154,138)]">
           <DataTable
             caption={t.orderStatistics}
             columns={[
