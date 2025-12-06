@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button, Space, message, Spin, Select } from 'antd';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Button, Space, message, Spin, Select, Alert } from 'antd';
 import RangePicker from '../../../components/ui/RangePicker';
 import { Input } from '../../../components/ui/Input';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
@@ -31,6 +31,7 @@ interface PurchaseDisplay {
 
 const Purchase = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, translate } = usePurchaseTranslation();
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
@@ -40,6 +41,7 @@ const Purchase = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Fetch purchases from API
   const loadPurchases = useCallback(async () => {
@@ -97,6 +99,20 @@ const Purchase = () => {
     loadPurchases();
   }, [loadPurchases]);
 
+  // Check for success message from navigation state
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      setSuccessMessage(location.state.successMessage);
+      // Clear the state to prevent showing message on refresh
+      window.history.replaceState({}, document.title);
+      // Auto-hide message after 3 seconds
+      const timer = setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);
+
   // Reset to page 1 when filters change
   useEffect(() => {
     if (currentPage !== 1) {
@@ -124,12 +140,38 @@ const Purchase = () => {
     }
   };
 
+  const handleDeleteSuccess = () => {
+    setSuccessMessage(t.purchaseDeleted);
+    loadPurchases();
+    // Auto-hide message after 3 seconds
+    setTimeout(() => {
+      setSuccessMessage(null);
+    }, 3000);
+  };
+
   // All filtering is handled by API (search and date range)
   const filteredPurchases = purchases;
 
   return (
+    <>
+            {successMessage && (
+          <div className="mb-6 flex justify-center">
+            <Alert
+              message={successMessage}
+              type="success"
+              showIcon
+              closable
+              onClose={() => setSuccessMessage(null)}
+              style={{
+                maxWidth: '600px',
+                width: '100%',
+              }}
+            />
+          </div>
+        )}
     <div className="min-h-screen bg-bg-secondary p-7">
       <div className="max-w-7xl mx-auto">
+
         <div className="bg-surface-1 rounded-2xl shadow-card p-8 mb-6 border border-[var(--glass-border)]">
           <Space size="middle" className="w-full" direction="vertical">
             <Space size="middle" className="w-full" wrap>
@@ -192,7 +234,7 @@ const Purchase = () => {
           <Table 
             onNavigate={handleNavigate} 
             purchases={filteredPurchases} 
-            onDelete={loadPurchases}
+            onDelete={handleDeleteSuccess}
             pagination={{
               current: currentPage,
               pageSize: pageSize,
@@ -206,6 +248,7 @@ const Purchase = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

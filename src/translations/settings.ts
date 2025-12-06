@@ -241,3 +241,4 @@ export const settingsTranslations = {
 export type SettingsTranslationKey = keyof typeof settingsTranslations.en;
 
 
+

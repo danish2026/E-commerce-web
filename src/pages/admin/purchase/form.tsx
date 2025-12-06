@@ -102,14 +102,14 @@ const FormComponent = () => {
       if (isEditMode && formData?.id) {
         // Update existing purchase
         await updatePurchase(formData.id, apiData);
-        message.success(t.purchaseUpdated);
+        // Navigate to main page with success message
+        navigate('/purchase', { state: { successMessage: t.purchaseUpdated } });
       } else {
         // Create new purchase
         await createPurchase(apiData);
-        message.success(t.purchaseCreated);
+        // Navigate to main page with success message
+        navigate('/purchase', { state: { successMessage: t.purchaseCreated } });
       }
-      
-      navigate('/purchase');
     } catch (error) {
       console.error('Error saving purchase:', error);
       message.error(getApiErrorMessage(error, t.failedToSave));

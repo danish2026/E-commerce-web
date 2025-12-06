@@ -102,9 +102,9 @@ const Table = ({ onNavigate, purchases, onDelete, pagination }: TableProps) => {
     try {
       console.log('Deleting purchase with ID:', itemToDelete.id);
       await deletePurchase(itemToDelete.id);
-      message.success(t.purchaseDeleted);
       setDeleteModalVisible(false);
       setItemToDelete(null);
+      // Trigger success callback (will show message at top center on main page)
       if (onDelete) {
         onDelete();
       }
