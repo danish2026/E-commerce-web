@@ -97,12 +97,68 @@ const BillingForm = () => {
     });
   };
 
+  // Calculate allocated quantity for each product (excluding current item being edited)
+  const calculateAllocatedQuantity = (productId: string, excludeIndex?: number): number => {
+    return items.reduce((total, item, index) => {
+      if (excludeIndex !== undefined && index === excludeIndex) {
+        return total; // Exclude current item from calculation
+      }
+      if (item.productId === productId && item.quantity) {
+        return total + (Number(item.quantity) || 0);
+      }
+      return total;
+    }, 0);
+  };
+
+  // Get remaining quantity for a product
+  const getRemainingQuantity = (product: ProductDto, excludeIndex?: number): number => {
+    const stock = Number(product.stock) || 0;
+    const allocated = calculateAllocatedQuantity(product.id, excludeIndex);
+    return Math.max(0, stock - allocated);
+  };
+
+  // Revalidate all items to ensure quantities don't exceed remaining stock
+  const revalidateAllItems = (itemsToValidate?: OrderItemFormData[]) => {
+    setItems(prevItems => {
+      const itemsToCheck = itemsToValidate || prevItems;
+      return itemsToCheck.map((item, index) => {
+        if (!item.productId || !item.product) {
+          return item;
+        }
+
+        // Calculate allocated quantity excluding current item
+        const allocated = itemsToCheck.reduce((total, itm, idx) => {
+          if (idx === index) return total;
+          if (itm.productId === item.productId && itm.quantity) {
+            return total + (Number(itm.quantity) || 0);
+          }
+          return total;
+        }, 0);
+
+        const stock = Number(item.product.stock) || 0;
+        const remainingQuantity = Math.max(0, stock - allocated);
+        const currentQuantity = Number(item.quantity) || 0;
+
+        let quantityError = '';
+        if (currentQuantity > remainingQuantity) {
+          quantityError = `Insufficient stock. Only ${remainingQuantity} item(s) remaining (${stock} total - ${allocated} already allocated).`;
+        }
+
+        return {
+          ...item,
+          quantityError,
+        };
+      });
+    });
+  };
+
   // Handle product selection for an item
   const handleProductSelect = (index: number, productId: string) => {
     const product = products.find(p => p.id === productId);
     const currentItem = items[index];
     let productError = '';
     let quantityError = '';
+    let newQuantity = currentItem.quantity || 1;
     
     if (product) {
       // Check if product is expired
@@ -117,15 +173,37 @@ const BillingForm = () => {
         }
       }
       
-      // Check quantity against stock
-      const stock = Number(product.stock) || 0;
-      const requestedQuantity = currentItem.quantity || 0;
-      if (requestedQuantity > stock) {
-        quantityError = `Insufficient stock. Only ${stock} item(s) available.`;
+      // Check quantity against remaining stock (excluding current item)
+      const remainingQuantity = getRemainingQuantity(product, index);
+      
+      // Auto-adjust quantity if it exceeds remaining stock
+      if (newQuantity > remainingQuantity) {
+        if (remainingQuantity > 0) {
+          newQuantity = remainingQuantity;
+          quantityError = `Quantity adjusted to ${remainingQuantity} (available stock).`;
+        } else {
+          newQuantity = 1;
+          quantityError = `Insufficient stock. Only ${remainingQuantity} item(s) remaining (${Number(product.stock)} total - ${calculateAllocatedQuantity(product.id, index)} already allocated).`;
+        }
       }
     }
     
-    updateItem(index, { productId, product, productError, quantityError });
+    // Update the item
+    const updatedItems = [...items];
+    updatedItems[index] = { 
+      ...updatedItems[index], 
+      productId, 
+      product, 
+      quantity: newQuantity, 
+      productError, 
+      quantityError 
+    };
+    setItems(updatedItems);
+    
+    // Revalidate all items with the updated items array
+    setTimeout(() => {
+      revalidateAllItems(updatedItems);
+    }, 0);
   };
 
   // Handle quantity change
@@ -134,20 +212,29 @@ const BillingForm = () => {
     const newQuantity = quantity || 1;
     let quantityError = '';
     
-    // Check if product is selected and validate stock
+    // Check if product is selected and validate against remaining stock
     if (currentItem.product) {
-      const stock = Number(currentItem.product.stock) || 0;
-      if (newQuantity > stock) {
-        quantityError = `Insufficient stock. Only ${stock} item(s) available.`;
+      const remainingQuantity = getRemainingQuantity(currentItem.product, index);
+      if (newQuantity > remainingQuantity) {
+        const allocated = calculateAllocatedQuantity(currentItem.product.id, index);
+        quantityError = `Insufficient stock. Only ${remainingQuantity} item(s) remaining (${Number(currentItem.product.stock)} total - ${allocated} already allocated).`;
       }
     }
     
-    // Preserve existing productError if any
-    updateItem(index, { 
+    // Update the item
+    const updatedItems = [...items];
+    updatedItems[index] = { 
+      ...updatedItems[index], 
       quantity: newQuantity, 
       quantityError,
       productError: currentItem.productError || ''
-    });
+    };
+    setItems(updatedItems);
+    
+    // Revalidate all items with the updated items array
+    setTimeout(() => {
+      revalidateAllItems(updatedItems);
+    }, 0);
   };
 
   // Add a new item
@@ -160,6 +247,10 @@ const BillingForm = () => {
     if (items.length > 1) {
       const updatedItems = items.filter((_, i) => i !== index);
       setItems(updatedItems);
+      // Revalidate all items after removal
+      setTimeout(() => {
+        revalidateAllItems(updatedItems);
+      }, 0);
     } else {
       message.warning(t.atLeastOneItem);
     }
@@ -250,13 +341,14 @@ const BillingForm = () => {
           }
         }
 
-        // Check if quantity exceeds available stock
-        const stock = Number(product.stock) || 0;
+        // Check if quantity exceeds remaining stock (accounting for other items in the form)
+        const remainingQuantity = getRemainingQuantity(product, i);
         const requestedQuantity = Number(item.quantity) || 0;
-        if (requestedQuantity > stock) {
+        if (requestedQuantity > remainingQuantity) {
           hasInsufficientStock = true;
-          quantityError = `Insufficient stock. Only ${stock} item(s) available.`;
-          errorMessages.push(`Item ${i + 1}: Insufficient stock for "${product.name}". Only ${stock} item(s) available, but ${requestedQuantity} requested.`);
+          const allocated = calculateAllocatedQuantity(product.id, i);
+          quantityError = `Insufficient stock. Only ${remainingQuantity} item(s) remaining (${Number(product.stock)} total - ${allocated} already allocated).`;
+          errorMessages.push(`Item ${i + 1}: Insufficient stock for "${product.name}". Only ${remainingQuantity} item(s) remaining (${Number(product.stock)} total - ${allocated} already allocated), but ${requestedQuantity} requested.`);
         }
 
         // Update item with errors if any
@@ -429,105 +521,130 @@ const BillingForm = () => {
               <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
                 {t.orderItems}
               </h3>
-              {items.map((item, index) => (
-                <div key={index} className="mb-4 p-4 border border-[var(--glass-border)] rounded-lg">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-md font-semibold" style={{ color: 'var(--text-primary)' }}>
-                      {t.item} {index + 1}
-                    </h4>
-                    {items.length > 1 && (
-                      <Button
-                        type="text"
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={() => handleRemoveItem(index)}
-                        size="small"
-                      >
-                        {t.remove}
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Form.Item
-                      label={t.productLabel}
-                      required
-                      validateStatus={!item.productId || item.productError ? 'error' : ''}
-                      help={item.productError || (!item.productId ? t.productRequired : '')}
-                    >
-                      <Select
-                        showSearch
-                        size="large"
-                        placeholder={products.length === 0 ? t.loadingProducts : t.selectProduct}
-                        value={item.productId || undefined}
-                        onChange={(value) => handleProductSelect(index, value)}
-                        optionFilterProp="label"
-                        filterOption={(input, option) =>
-                          (option?.label as string)
-                            ?.toLowerCase()
-                            .includes(input.toLowerCase())
-                        }
-                        notFoundContent={products.length === 0 ? t.noProductsAvailable : t.noProductsFound}
-                        options={products
-                          .filter(product => product && product.id && product.name)
-                          .map(product => ({
-                            value: product.id,
-                            label: `${product.name}${product.sku ? ` (${product.sku})` : ''}`,
-                          }))}
-                      />
-                    </Form.Item>
-
-                    <Form.Item
-                      label={t.quantityLabel}
-                      required
-                      validateStatus={!item.quantity || item.quantity <= 0 || item.quantityError ? 'error' : ''}
-                      help={item.quantityError || (!item.quantity || item.quantity <= 0 ? t.quantityRequired : '')}
-                    >
-                      <InputNumber
-                        placeholder={t.quantityPlaceholder}
-                        style={{ width: '100%' }}
-                        size="large"
-                        min={1}
-                        value={item.quantity}
-                        onChange={(value) => handleQuantityChange(index, value)}
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {item.product && (
-                    <div className="mt-4 p-3 bg-[var(--surface-2)] rounded">
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div>
-                          <span className="text-[var(--text-secondary)]">{t.unitPrice}:</span>
-                          <span className="ml-2 font-semibold text-[var(--text-primary)]">
-                            ₹{Number(item.product.sellingPrice).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-[var(--text-secondary)]">{t.gstPercentage}:</span>
-                          <span className="ml-2 font-semibold text-[var(--text-primary)]">
-                            {Number(item.product.gstPercentage)}%
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-[var(--text-secondary)]">{t.itemSubtotal}:</span>
-                          <span className="ml-2 font-semibold text-[var(--text-primary)]">
-                            ₹{(Number(item.product.sellingPrice) * Number(item.quantity)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-[var(--text-secondary)]">{t.gstAmount}:</span>
-                          <span className="ml-2 font-semibold text-[var(--text-primary)]">
-                            ₹{((Number(item.product.sellingPrice) * Number(item.quantity) * Number(item.product.gstPercentage)) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {index < items.length - 1 && <Divider className="my-4" />}
-                </div>
-              ))}
+              <div className="overflow-x-auto border border-[var(--glass-border)] rounded-lg">
+                <table className="w-full">
+                  <thead className="bg-[var(--surface-2)]">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)]">
+                        {t.productLabel}
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)]">
+                        {t.quantityLabel}
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)]">
+                        {t.unitPrice}
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)]">
+                        {t.gstPercentage}
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)]">
+                        {t.itemSubtotal}
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)]">
+                        {t.actions}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item, index) => (
+                      <tr key={index} className="border-t border-[var(--glass-border)]">
+                        <td className="px-4 py-3 align-top">
+                          <Form.Item
+                            required
+                            style={{ marginBottom: 0 }}
+                            validateStatus={!item.productId || item.productError ? 'error' : ''}
+                            help={item.productError || (!item.productId ? t.productRequired : '')}
+                          >
+                            <Select
+                              showSearch
+                              size="large"
+                              placeholder={products.length === 0 ? t.loadingProducts : t.selectProduct}
+                              value={item.productId || undefined}
+                              onChange={(value) => handleProductSelect(index, value)}
+                              optionFilterProp="label"
+                              filterOption={(input, option) =>
+                                (option?.label as string)
+                                  ?.toLowerCase()
+                                  .includes(input.toLowerCase())
+                              }
+                              notFoundContent={products.length === 0 ? t.noProductsAvailable : t.noProductsFound}
+                              options={products
+                                .filter(product => product && product.id && product.name)
+                                .map(product => ({
+                                  value: product.id,
+                                  label: `${product.name}${product.sku ? ` (${product.sku})` : ''}`,
+                                }))}
+                            />
+                          </Form.Item>
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          <Form.Item
+                            required
+                            style={{ marginBottom: 0 }}
+                            validateStatus={!item.quantity || item.quantity <= 0 || item.quantityError ? 'error' : ''}
+                            help={item.quantityError || (!item.quantity || item.quantity <= 0 ? t.quantityRequired : '')}
+                          >
+                            <InputNumber
+                              placeholder={t.quantityPlaceholder}
+                              style={{ width: '100%' }}
+                              size="large"
+                              min={1}
+                              max={item.product ? getRemainingQuantity(item.product, index) : undefined}
+                              value={item.quantity}
+                              onChange={(value) => handleQuantityChange(index, value)}
+                              onBlur={() => {
+                                revalidateAllItems();
+                              }}
+                            />
+                          </Form.Item>
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          {item.product ? (
+                            <span className="text-sm font-semibold text-[var(--text-primary)]">
+                              ₹{Number(item.product.sellingPrice).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-[var(--text-secondary)]">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          {item.product ? (
+                            <span className="text-sm font-semibold text-[var(--text-primary)]">
+                              {Number(item.product.gstPercentage)}%
+                            </span>
+                          ) : (
+                            <span className="text-sm text-[var(--text-secondary)]">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          {item.product ? (
+                            <span className="text-sm font-semibold text-[var(--text-primary)]">
+                              ₹{(Number(item.product.sellingPrice) * Number(item.quantity)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-[var(--text-secondary)]">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          <Space>
+                            {items.length > 1 && (
+                              <Button
+                                type="text"
+                                danger
+                                icon={<DeleteOutlined />}
+                                onClick={() => handleRemoveItem(index)}
+                                size="small"
+                              >
+                                {t.remove}
+                              </Button>
+                            )}
+                          </Space>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
               <div className="mt-4">
                 <Button

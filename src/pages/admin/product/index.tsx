@@ -152,8 +152,9 @@ const Product = () => {
                 placeholder={t.searchPlaceholder}
                 icon={<SearchOutlined />}
                 value={searchText}
+                allowClear
                 onChange={(e) => setSearchText(e.target.value)}
-                style={{ width: 600, height: '40px' }}
+                style={{ width: 500, height: '40px' }}
                 className="product-search-input"
               />
               <RangePicker
@@ -161,7 +162,7 @@ const Product = () => {
                 onChange={(dates) => setDateRange(dates as [Dayjs | null, Dayjs | null] | null)}
                 format="YYYY-MM-DD"
                 placeholder={[t.startDate, t.endDate]}
-                style={{ width: 200, height: '40px' }}
+                style={{ width: 300, height: '40px' }}
               />
               <Button
                 icon={<PlusOutlined />}

@@ -262,6 +262,11 @@ const Categories = () => {
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{ width: 500, height: '40px' }}
+                allowClear
+                // onPressEnter={() => {
+                //   setCurrentPage(1);
+                //   loadPurchases();
+                // }}
               />
               <RangePicker
                 value={dateRange}

@@ -149,7 +149,7 @@ const Purchase = () => {
                 icon={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                style={{ width: 400, height: '40px' }}
+                style={{ width: 380, height: '40px' }}
                 allowClear
                 onPressEnter={() => {
                   setCurrentPage(1);
@@ -161,7 +161,7 @@ const Purchase = () => {
                 onChange={(dates) => setDateRange(dates as [Dayjs | null, Dayjs | null] | null)}
                 format="YYYY-MM-DD"
                 placeholder={[t.startDate, t.endDate]}
-                style={{ width: 200 ,height: '40px'}}
+                style={{ width: 250 ,height: '40px'}}
               />
               <div
                 onMouseEnter={() => setIsSelectHovered(true)}

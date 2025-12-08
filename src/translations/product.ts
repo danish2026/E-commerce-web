@@ -16,7 +16,7 @@ export const productTranslations = {
     // Product List
     productList: 'Product List',
     addProduct: 'Add Product',
-    searchPlaceholder: 'Search by product name, SKU, or brand',
+    searchPlaceholder: 'Search by product name, SKU',
     startDate: 'Start Date',
     endDate: 'End Date',
     totalProducts: 'Total {count} products',
@@ -131,7 +131,7 @@ export const productTranslations = {
     // Product List
     productList: 'उत्पाद सूची',
     addProduct: 'उत्पाद जोड़ें',
-    searchPlaceholder: 'उत्पाद नाम, SKU, या ब्रांड से खोजें',
+    searchPlaceholder: 'उत्पाद नाम, SKU',
     startDate: 'प्रारंभ तिथि',
     endDate: 'समाप्ति तिथि',
     totalProducts: 'कुल {count} उत्पाद',
@@ -246,7 +246,7 @@ export const productTranslations = {
     // Product List
     productList: 'قائمة المنتجات',
     addProduct: 'إضافة منتج',
-    searchPlaceholder: 'البحث حسب اسم المنتج أو SKU أو العلامة التجارية',
+    searchPlaceholder: 'البحث حسب اسم المنتج أو SKU',
     startDate: 'تاريخ البدء',
     endDate: 'تاريخ الانتهاء',
     totalProducts: 'إجمالي {count} منتجات',
