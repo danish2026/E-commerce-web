@@ -32,6 +32,7 @@ const Permissions = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
   const [loadingPermissions, setLoadingPermissions] = useState(false);
+  const [loadingRoles, setLoadingRoles] = useState(false);
   
   // Form instances
   const [addRoleForm] = Form.useForm();
@@ -117,6 +118,21 @@ const Permissions = () => {
     }
   };
 
+  // Function to reload roles
+  const reloadRoles = async () => {
+    try {
+      setLoadingRoles(true);
+      const fetchedRoles = await fetchRoles();
+      setRoles(fetchedRoles);
+      console.log('Roles reloaded:', fetchedRoles.length);
+    } catch (error: any) {
+      console.error('Error reloading roles:', error);
+      setRoles([]);
+    } finally {
+      setLoadingRoles(false);
+    }
+  };
+
   // Load permissions with server-side pagination and filtering
   const loadPermissions = async () => {
     try {
@@ -152,6 +168,7 @@ const Permissions = () => {
     const loadRolesAndPermissions = async () => {
       try {
         setLoadingPermissions(true);
+        setLoadingRoles(true);
         const fetchedRoles = await fetchRoles();
         setRoles(fetchedRoles);
         console.log('Roles loaded:', fetchedRoles.length);
@@ -174,8 +191,10 @@ const Permissions = () => {
         console.error('Error stack:', error.stack);
         message.error('Failed to load permissions. Please refresh the page.');
         setAllPermissions([]);
+        setRoles([]);
       } finally {
         setLoadingPermissions(false);
+        setLoadingRoles(false);
       }
     };
     loadRolesAndPermissions();
@@ -213,8 +232,7 @@ const Permissions = () => {
       setAddRoleModalVisible(false);
       addRoleForm.resetFields();
       // Reload roles
-      const fetchedRoles = await fetchRoles();
-      setRoles(fetchedRoles);
+      await reloadRoles();
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || t.failedToCreateRole;
       message.error(errorMessage);
@@ -378,6 +396,7 @@ const Permissions = () => {
         onCancel={() => {
           setAddRoleModalVisible(false);
           addRoleForm.resetFields();
+          
         }}
         footer={null}
         width={600}
@@ -432,6 +451,11 @@ const Permissions = () => {
           addRolePermissionForm.resetFields();
         }}
         afterOpenChange={(open) => {
+          // Reload roles when modal opens if we don't have any
+          if (open && roles.length === 0 && !loadingRoles) {
+            console.log('Modal opened with no roles, reloading...');
+            reloadRoles();
+          }
           // Reload permissions when modal opens if we don't have any
           if (open && allPermissions.length === 0 && !loadingPermissions) {
             console.log('Modal opened with no permissions, reloading...');
@@ -455,6 +479,8 @@ const Permissions = () => {
               placeholder={t.rolePlaceholder}
               size="large"
               showSearch
+              loading={loadingRoles}
+              notFoundContent={loadingRoles ? <Spin size="small" /> : 'No roles found'}
               optionFilterProp="label"
               filterOption={(input, option) =>
                 (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
@@ -515,6 +541,13 @@ const Permissions = () => {
           setCreatePermissionModalVisible(false);
           createPermissionForm.resetFields();
         }}
+        afterOpenChange={(open) => {
+          // Reload roles when modal opens if we don't have any
+          if (open && roles.length === 0 && !loadingRoles) {
+            console.log('Modal opened with no roles, reloading...');
+            reloadRoles();
+          }
+        }}
         footer={null}
         width={600}
       >
@@ -532,6 +565,8 @@ const Permissions = () => {
               placeholder={t.rolePlaceholder}
               size="large"
               showSearch
+              loading={loadingRoles}
+              notFoundContent={loadingRoles ? <Spin size="small" /> : 'No roles found'}
               optionFilterProp="label"
               filterOption={(input, option) =>
                 (option?.label as string)?.toLowerCase().includes(input.toLowerCase())

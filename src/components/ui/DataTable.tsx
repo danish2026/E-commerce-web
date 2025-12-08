@@ -15,7 +15,7 @@ interface DataTableProps<T extends { id: string | number }> {
 }
 
 export const DataTable = <T extends { id: string | number }>({ columns, data, caption }: DataTableProps<T>) => (
-  <div className="overflow-hidden rounded-3xl bg-surface-1 shadow-card">
+  <div className="overflow-hidden rounded-3xl bg-surface-1 shadow-card border border-transparent hover:border-[rgb(31,154,138)] transition-colors">
     <table className="w-full border-collapse text-sm">
       {caption && (
         <caption className="px-6 py-4 text-left text-base font-semibold text-text-primary">{caption}</caption>

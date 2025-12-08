@@ -159,10 +159,10 @@ const Dashboard = () => {
         <ActivityList className="border border-transparent hover:border-[rgb(31,154,138)]" items={activityItems} filterRange={t.recentOrders} />
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-3 ">
+      <section className="grid  ">
         <div className="lg:col-span-2 border rounded-3xl border-transparent hover:border-[rgb(31,154,138)]">
           <DataTable
-            caption={t.orderStatistics}
+            // caption={t.orderStatistics}
             columns={[
               { key: 'provider', header: t.metric, align: 'left' },
               { key: 'status', header: t.value, align: 'left' },
@@ -176,7 +176,7 @@ const Dashboard = () => {
             ]}
           />
         </div>
-        <FooterSmallCTAs />
+        {/* <FooterSmallCTAs /> */}
       </section>
     </div>
   );

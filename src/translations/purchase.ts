@@ -16,7 +16,7 @@ export const purchaseTranslations = {
     // Purchase List
     purchaseList: 'Purchase List',
     addPurchase: 'Add Purchase',
-    searchPlaceholder: 'Search by supplier, buyer, amount, or quantity',
+    searchPlaceholder: 'Search by supplier, buyer, amount',
     paymentStatus: 'Payment Status',
     startDate: 'Start Date',
     endDate: 'End Date',
@@ -172,7 +172,7 @@ export const purchaseTranslations = {
     // Purchase List
     purchaseList: 'खरीद सूची',
     addPurchase: 'खरीद जोड़ें',
-    searchPlaceholder: 'आपूर्तिकर्ता, खरीदार, राशि, या मात्रा से खोजें',
+    searchPlaceholder: 'आपूर्तिकर्ता, खरीदार, राशि से खोजें',
     paymentStatus: 'भुगतान स्थिति',
     startDate: 'प्रारंभ तिथि',
     endDate: 'समाप्ति तिथि',
@@ -328,7 +328,7 @@ export const purchaseTranslations = {
     // Purchase List
     purchaseList: 'قائمة المشتريات',
     addPurchase: 'إضافة شراء',
-    searchPlaceholder: 'البحث حسب المورد أو المشتري أو المبلغ أو الكمية',
+    searchPlaceholder:' البحث حسب المورد أو المشتري',
     paymentStatus: 'حالة الدفع',
     startDate: 'تاريخ البدء',
     endDate: 'تاريخ الانتهاء',
