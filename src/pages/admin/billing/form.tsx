@@ -514,6 +514,9 @@ const BillingForm = () => {
                       <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)]">
                         {t.gstPercentage}
                       </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)]">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -638,6 +641,19 @@ const BillingForm = () => {
                             <span className="text-sm text-[var(--text-secondary)]">-</span>
                           )}
                         </td>
+                        <td className="px-4 py-3 align-top">
+                          <Button
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => handleRemoveItem(index)}
+                            disabled={items.length === 1}
+                            size="large"
+                            title={items.length === 1 ? t.atLeastOneItem : 'Remove item'}
+                          >
+                            {t.remove || 'Remove'}
+                          </Button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -664,11 +680,11 @@ const BillingForm = () => {
             <Divider className="my-6" />
 
             {/* Payment and Discount */}
-            <div className="mb-6">
+            <div className="mb-6 mt-[10px]">
               <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
                 {t.paymentAndDiscount}
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
                 <Form.Item
                   label={t.paymentTypeLabel}
                   required
@@ -687,58 +703,30 @@ const BillingForm = () => {
                     ]}
                   />
                 </Form.Item>
-              </div>
 
-              {/* Discounts Section */}
-              <div className="mb-4">
-                <h4 className="text-md font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
-                  {t.discountLabel || 'Order Discounts'}
-                </h4>
-                <div className="space-y-3">
-                  {discounts.map((discount, index) => (
-                    <div key={index} className="flex gap-2 items-start">
-                      <Form.Item style={{ flex: 1, marginBottom: 0 }}>
-                        <InputNumber
-                          placeholder={t.discountPlaceholder || 'Discount Amount'}
-                          style={{ width: '100%' }}
-                          size="large"
-                          min={0}
-                          formatter={(value) => value !== undefined && value !== null ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-                          parser={(value) => {
-                            const cleaned = value?.replace(/₹\s?|(,*)/g, '') || '';
-                            return cleaned ? parseFloat(cleaned) : 0;
-                          }}
-                          value={discount}
-                          onChange={(value) => handleOrderDiscountChange(index, value)}
-                        />
-                      </Form.Item>
-                      {discounts.length > 1 && (
-                        <Button
-                          type="text"
-                          danger
-                          icon={<DeleteOutlined />}
-                          onClick={() => handleRemoveDiscount(index)}
-                          size="large"
-                        >
-                          {t.remove}
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                  <Button
-                    type="dashed"
-                    icon={<PlusOutlined />}
-                    onClick={handleAddDiscount}
-                    block
-                    size="large"
-                    style={{ 
-                      borderColor: 'var(--brand)',
-                      color: 'var(--brand)',
-                    }}
-                  >
-                    {t.addMoreItems || 'Add Discount'}
-                  </Button>
-                </div>
+                {/* Discounts Section */}
+                <Form.Item
+  label={t.discountLabel || 'Order Discounts'}
+  style={{ marginBottom: 0, height: '100%' }}
+  colon={false}
+>
+  <div className="space-y-3 h-full">
+    {discounts.map((discount, index) => (
+      <div className="flex gap-2 items-start" key={index}>
+        <Form.Item style={{ flex: 1, marginBottom: 0 }}>
+          <Input
+            placeholder={t.discountPlaceholder || 'Discount Amount'}
+            style={{ width: '100%' }}
+            size="large"
+            value={discount}
+            onChange={(e) => handleOrderDiscountChange(index, parseFloat(e.target.value) || 0)}
+          />
+        </Form.Item>
+      </div>
+    ))}
+  </div>
+</Form.Item>
+
               </div>
             </div>
 
@@ -769,7 +757,7 @@ const BillingForm = () => {
                     </div>
                   )}
                   {orderDiscountAmount > 0 && (
-                    <div className="flex justify-between gap-8">
+                    <div className="flex justify-between gap-8 mt-[10px]">
                       <span className="text-sm text-[var(--text-secondary)]">{t.discount || 'Order Discount'}:</span>
                       <span className="text-sm font-semibold text-red-500">
                         - ₹ {orderDiscountAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
