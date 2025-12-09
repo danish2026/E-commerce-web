@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Button, Card, Descriptions, Tag, Space, Table } from 'antd';
+import { Button, Card, Descriptions, Tag, Space, Table, Spin } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useBillingTranslation } from '../../../hooks/useBillingTranslation';
-import { Order, PaymentType } from './api';
+import { Order, PaymentType, fetchOrderItems, OrderItem, fetchOrderById } from './api';
 import type { ColumnsType } from 'antd/es/table';
 
 const View = () => {
@@ -11,11 +11,100 @@ const View = () => {
   const location = useLocation();
   const { t } = useBillingTranslation();
   const order = location.state as Order | null;
+  const [orderItems, setOrderItems] = useState<OrderItem[]>(order?.orderItems || []);
+  const [loadingItems, setLoadingItems] = useState(false);
 
   useEffect(() => {
     if (!order) {
       navigate('/billing');
+      return;
     }
+    
+    // Always fetch order items to ensure we have the latest data
+    const fetchItems = async () => {
+      setLoadingItems(true);
+      try {
+        // First, try to fetch using grouped endpoint if we have createdAt
+        if (order.createdAt) {
+          // Normalize customer data - "Walk-in" should be treated as null
+          const normalizedCustomerName = order.customerName && 
+            order.customerName.toLowerCase() !== 'walk-in' && 
+            order.customerName.trim() !== '' 
+            ? order.customerName 
+            : null;
+          
+          const normalizedCustomerPhone = order.customerPhone && 
+            order.customerPhone.trim() !== '' 
+            ? order.customerPhone 
+            : null;
+
+          console.log('Fetching order items with params:', {
+            customerName: normalizedCustomerName,
+            customerPhone: normalizedCustomerPhone,
+            paymentType: order.paymentType || null,
+            createdAt: order.createdAt
+          });
+
+          try {
+            const items = await fetchOrderItems(
+              normalizedCustomerName,
+              normalizedCustomerPhone,
+              order.paymentType || null,
+              order.createdAt
+            );
+            
+            console.log('Fetched order items from grouped endpoint:', items);
+            
+            if (items && items.length > 0) {
+              setOrderItems(items);
+              setLoadingItems(false);
+              return;
+            }
+          } catch (groupedError) {
+            console.warn('Failed to fetch from grouped endpoint, trying fallback:', groupedError);
+          }
+        }
+
+        // Fallback: Try to fetch by order ID if available
+        if (order.id) {
+          try {
+            console.log('Trying to fetch order by ID:', order.id);
+            const orderData = await fetchOrderById(order.id);
+            console.log('Fetched order by ID:', orderData);
+            
+            if (orderData.orderItems && orderData.orderItems.length > 0) {
+              setOrderItems(orderData.orderItems);
+              setLoadingItems(false);
+              return;
+            }
+          } catch (idError) {
+            console.warn('Failed to fetch by ID:', idError);
+          }
+        }
+
+        // Last resort: Use existing orderItems if available
+        if (order.orderItems && order.orderItems.length > 0) {
+          console.log('Using existing orderItems from order object');
+          setOrderItems(order.orderItems);
+        } else {
+          console.warn('No order items found from any source');
+          setOrderItems([]);
+        }
+      } catch (error: any) {
+        console.error('Error fetching order items:', error);
+        console.error('Error details:', error?.response?.data);
+        // If all fails, try to use existing orderItems if available
+        if (order.orderItems && order.orderItems.length > 0) {
+          setOrderItems(order.orderItems);
+        } else {
+          setOrderItems([]);
+        }
+      } finally {
+        setLoadingItems(false);
+      }
+    };
+
+    fetchItems();
   }, [order, navigate]);
 
   if (!order) {
@@ -114,13 +203,24 @@ const View = () => {
       ),
     },
     {
-      title: t.totalPrice,
-      dataIndex: 'totalPrice',
-      key: 'totalPrice',
+      title: t.discount,
+      dataIndex: 'discount',
+      key: 'discount',
       align: 'right',
-      render: (totalPrice: number | string) => (
+      render: (discount: number | string) => (
+        <span style={{ color: 'red' }}>
+          {Number(discount) > 0 ? `- ₹ ${(Number(discount) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'}
+        </span>
+      ),
+    },
+    {
+      title: t.totalPrice,
+      dataIndex: 'totalAmount',
+      key: 'totalAmount',
+      align: 'right',
+      render: (totalAmount: number | string) => (
         <span style={{ fontWeight: 'bold', color: 'var(--brand)' }}>
-          ₹ {(Number(totalPrice) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          ₹ {(Number(totalAmount) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </span>
       ),
     },
@@ -212,19 +312,28 @@ const View = () => {
           </Descriptions>
 
           {/* Order Items Table */}
-          {order.orderItems && order.orderItems.length > 0 && (
+          {loadingItems ? (
+            <div className="mt-6 text-center py-8">
+              <Spin size="large" />
+              <p className="mt-4 text-[var(--text-secondary)]">Loading order items...</p>
+            </div>
+          ) : orderItems && orderItems.length > 0 ? (
             <div className="mt-6">
               <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-                {t.orderItemsTable}
+                {t.orderItemsTable} ({orderItems.length})
               </h3>
               <Table
                 columns={orderItemsColumns}
-                dataSource={order.orderItems}
+                dataSource={orderItems}
                 rowKey="id"
                 pagination={false}
                 className="bg-surface-1"
                 style={{ backgroundColor: 'var(--surface-1)' }}
               />
+            </div>
+          ) : (
+            <div className="mt-6 text-center py-8 text-[var(--text-secondary)]">
+              No order items found
             </div>
           )}
 

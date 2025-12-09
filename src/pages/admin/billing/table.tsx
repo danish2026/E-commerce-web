@@ -3,9 +3,9 @@ import { message } from 'antd';
 import type { TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
-import { EyeOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { EyeOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import { useBillingTranslation } from '../../../hooks/useBillingTranslation';
-import { Order, deleteOrder, PaymentType } from './api';
+import { Order, deleteOrder, PaymentType, fetchOrderItems, OrderItem } from './api';
 
 dayjs.extend(advancedFormat);
 
@@ -64,6 +64,9 @@ const OrderTable: React.FC<TableProps> = ({
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [orderItemsMap, setOrderItemsMap] = useState<Map<string, OrderItem[]>>(new Map());
+  const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(
     typeof window !== 'undefined' ? window.innerWidth <= 640 : false,
   );
@@ -114,7 +117,13 @@ const OrderTable: React.FC<TableProps> = ({
 
     try {
       setIsDeleting(true);
-      await deleteOrder(orderToDelete.id);
+      await deleteOrder(
+        orderToDelete.id,
+        orderToDelete.customerName || null,
+        orderToDelete.customerPhone || null,
+        orderToDelete.paymentType || null,
+        orderToDelete.createdAt
+      );
       message.success(t.orderDeleted);
       setDeleteModalVisible(false);
       setOrderToDelete(null);
@@ -131,6 +140,61 @@ const OrderTable: React.FC<TableProps> = ({
   const cancelDelete = () => {
     setDeleteModalVisible(false);
     setOrderToDelete(null);
+  };
+
+  const toggleExpand = async (order: Order) => {
+    const orderKey = `${order.customerName || 'null'}_${order.customerPhone || 'null'}_${order.paymentType || 'null'}_${order.createdAt}`;
+    
+    if (expandedOrders.has(orderKey)) {
+      // Collapse
+      const newExpanded = new Set(Array.from(expandedOrders));
+      newExpanded.delete(orderKey);
+      setExpandedOrders(newExpanded);
+    } else {
+      // Expand - fetch items if not already loaded
+      const newExpandedSet = new Set(Array.from(expandedOrders));
+      newExpandedSet.add(orderKey);
+      setExpandedOrders(newExpandedSet);
+      
+      if (!orderItemsMap.has(orderKey) && order.createdAt) {
+        const newLoadingSet = new Set(Array.from(loadingItems));
+        newLoadingSet.add(orderKey);
+        setLoadingItems(newLoadingSet);
+        try {
+          const items = await fetchOrderItems(
+            order.customerName || null,
+            order.customerPhone || null,
+            order.paymentType || null,
+            order.createdAt
+          );
+          const newItemsMap = new Map(Array.from(orderItemsMap.entries()));
+          newItemsMap.set(orderKey, items);
+          setOrderItemsMap(newItemsMap);
+        } catch (error: any) {
+          console.error('Error fetching order items:', error);
+          message.error('Failed to load order items');
+        } finally {
+          const newLoading = new Set(Array.from(loadingItems));
+          newLoading.delete(orderKey);
+          setLoadingItems(newLoading);
+        }
+      }
+    }
+  };
+
+  const isExpanded = (order: Order): boolean => {
+    const orderKey = `${order.customerName || 'null'}_${order.customerPhone || 'null'}_${order.paymentType || 'null'}_${order.createdAt}`;
+    return expandedOrders.has(orderKey);
+  };
+
+  const getOrderItems = (order: Order): OrderItem[] => {
+    const orderKey = `${order.customerName || 'null'}_${order.customerPhone || 'null'}_${order.paymentType || 'null'}_${order.createdAt}`;
+    return orderItemsMap.get(orderKey) || order.orderItems || [];
+  };
+
+  const isLoadingItems = (order: Order): boolean => {
+    const orderKey = `${order.customerName || 'null'}_${order.customerPhone || 'null'}_${order.paymentType || 'null'}_${order.createdAt}`;
+    return loadingItems.has(orderKey);
   };
 
   const total = pagination?.total ?? 0;
@@ -316,13 +380,30 @@ const OrderTable: React.FC<TableProps> = ({
                   className="px-4 py-4 border-b border-[var(--glass-border)] last:border-b-0 hover:bg-[var(--surface-2)] transition-colors"
                 >
                   <div className="flex items-start justify-between mb-3 gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[15px] font-semibold text-[var(--text-primary)]">
-                        Order #{order.orderNumber || order.id?.substring(0, 8).toUpperCase().replace(/-/g, '') || 'N/A'}
-                      </p>
-                      <p className="text-xs text-[var(--text-secondary)] mt-1">
-                        {formatDate(order.createdAt)}
-                      </p>
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <button
+                        onClick={() => toggleExpand(order)}
+                        className="p-1 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
+                        title={isExpanded(order) ? "Collapse" : "Expand"}
+                        aria-label={isExpanded(order) ? "Collapse" : "Expand"}
+                      >
+                        {isExpanded(order) ? (
+                          <UpOutlined className="w-3 h-3 text-[var(--text-secondary)]" />
+                        ) : (
+                          <DownOutlined className="w-3 h-3 text-[var(--text-secondary)]" />
+                        )}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[15px] font-semibold text-[var(--text-primary)]">
+                          Order #{order.orderNumber || order.id?.substring(0, 8).toUpperCase().replace(/-/g, '') || 'N/A'}
+                        </p>
+                        <p className="text-xs text-[var(--text-secondary)] mt-1">
+                          {formatDate(order.createdAt)}
+                          {order.itemCount && order.itemCount > 1 && (
+                            <span className="ml-2">({order.itemCount} items)</span>
+                          )}
+                        </p>
+                      </div>
                     </div>
                     <span
                       className={`px-2 py-1 text-xs rounded-full font-medium ${getPaymentBadgeClasses(
@@ -381,6 +462,44 @@ const OrderTable: React.FC<TableProps> = ({
                       <DeleteOutlined className="w-4 h-4 text-red-500 dark:text-red-400" />
                     </button>
                   </div>
+                  {isExpanded(order) && (
+                    <div className="mt-3 pt-3 border-t border-[var(--glass-border)]">
+                      {isLoadingItems(order) ? (
+                        <div className="text-center py-4 text-[var(--text-secondary)] text-sm">
+                          Loading items...
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="text-xs font-semibold text-[var(--text-primary)] mb-2">
+                            Order Items ({getOrderItems(order).length})
+                          </div>
+                          {getOrderItems(order).map((item) => (
+                            <div key={item.id} className="bg-[var(--surface-2)] p-2 rounded text-xs">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <p className="font-medium text-[var(--text-primary)]">
+                                    {item.product?.name || 'N/A'}
+                                  </p>
+                                  <p className="text-[var(--text-secondary)] mt-1">
+                                    Qty: {item.quantity} × ₹{formatCurrency(item.unitPrice)}
+                                    {item.gstPercentage && ` (GST: ${item.gstPercentage}%)`}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  {Number(item.discount) > 0 && (
+                                    <p className="text-red-500 text-xs">- ₹{formatCurrency(item.discount)}</p>
+                                  )}
+                                  <p className="font-semibold text-[var(--text-primary)]">
+                                    ₹{formatCurrency(item.totalAmount)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -452,86 +571,155 @@ const OrderTable: React.FC<TableProps> = ({
                 </tr>
               ) : (
                 data.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="hover:-translate-y-0.5 transition-all duration-200 bg-[var(--surface-1)] border-b border-[var(--glass-border)] hover:bg-[var(--surface-2)] group"
-                  >
-                    <td className="px-[18px] py-4 h-[56px]">
-                      <div className="flex flex-col">
-                        <span className="text-[15px] font-semibold text-[var(--text-primary)]">
-                          #{order.orderNumber || order.id?.substring(0, 8).toUpperCase().replace(/-/g, '') || 'N/A'}
-                        </span>
-                        <span className="text-xs text-[var(--text-secondary)] mt-1">
-                          {formatDate(order.createdAt)}
-                        </span>
-                      </div>
-                    </td>
-                    {!isTablet && (
+                  <React.Fragment key={order.id}>
+                    <tr
+                      className="hover:-translate-y-0.5 transition-all duration-200 bg-[var(--surface-1)] border-b border-[var(--glass-border)] hover:bg-[var(--surface-2)] group"
+                    >
                       <td className="px-[18px] py-4 h-[56px]">
-                        <div className="text-sm text-[var(--text-primary)]">
-                          {order.customerName || t.walkInCustomer}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => toggleExpand(order)}
+                            className="p-1 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
+                            title={isExpanded(order) ? "Collapse" : "Expand"}
+                            aria-label={isExpanded(order) ? "Collapse" : "Expand"}
+                          >
+                            {isExpanded(order) ? (
+                              <UpOutlined className="w-3 h-3 text-[var(--text-secondary)]" />
+                            ) : (
+                              <DownOutlined className="w-3 h-3 text-[var(--text-secondary)]" />
+                            )}
+                          </button>
+                          <div className="flex flex-col">
+                            <span className="text-[15px] font-semibold text-[var(--text-primary)]">
+                              #{order.orderNumber || order.id?.substring(0, 8).toUpperCase().replace(/-/g, '') || 'N/A'}
+                            </span>
+                            <span className="text-xs text-[var(--text-secondary)] mt-1">
+                              {formatDate(order.createdAt)}
+                              {order.itemCount && order.itemCount > 1 && (
+                                <span className="ml-2">({order.itemCount} items)</span>
+                              )}
+                            </span>
+                          </div>
                         </div>
-                        {order.customerPhone && (
-                          <div className="text-xs text-[var(--text-secondary)] mt-1">{order.customerPhone}</div>
-                        )}
                       </td>
-                    )}
-                    <td className="px-[18px] py-4 h-[56px]">
-                      <div className="text-sm text-[var(--text-primary)]">₹{formatCurrency(order.subtotal)}</div>
-                    </td>
-                    <td className="px-[18px] py-4 h-[56px]">
-                      <div className="text-sm text-[var(--text-primary)]">₹{formatCurrency(order.gstTotal)}</div>
-                    </td>
-                    <td className="px-[18px] py-4 h-[56px]">
-                      <div className="text-sm text-red-500">
-                        {Number(order.discount) > 0 ? `- ₹${formatCurrency(order.discount)}` : '-'}
-                      </div>
-                    </td>
-                    <td className="px-[18px] py-4 h-[56px]">
-                      <div className="text-sm font-semibold text-[var(--text-primary)]">
-                        ₹{formatCurrency(order.grandTotal)}
-                      </div>
-                    </td>
-                    {!isTablet && (
+                      {!isTablet && (
+                        <td className="px-[18px] py-4 h-[56px]">
+                          <div className="text-sm text-[var(--text-primary)]">
+                            {order.customerName || t.walkInCustomer}
+                          </div>
+                          {order.customerPhone && (
+                            <div className="text-xs text-[var(--text-secondary)] mt-1">{order.customerPhone}</div>
+                          )}
+                        </td>
+                      )}
                       <td className="px-[18px] py-4 h-[56px]">
-                        <span
-                          className={`px-3 py-1 text-xs rounded-full font-medium ${getPaymentBadgeClasses(
-                            order.paymentType,
-                          )}`}
-                        >
-                          {translatePaymentType(order.paymentType)}
-                        </span>
+                        <div className="text-sm text-[var(--text-primary)]">₹{formatCurrency(order.subtotal)}</div>
                       </td>
+                      <td className="px-[18px] py-4 h-[56px]">
+                        <div className="text-sm text-[var(--text-primary)]">₹{formatCurrency(order.gstTotal)}</div>
+                      </td>
+                      <td className="px-[18px] py-4 h-[56px]">
+                        <div className="text-sm text-red-500">
+                          {Number(order.discount) > 0 ? `- ₹${formatCurrency(order.discount)}` : '-'}
+                        </div>
+                      </td>
+                      <td className="px-[18px] py-4 h-[56px]">
+                        <div className="text-sm font-semibold text-[var(--text-primary)]">
+                          ₹{formatCurrency(order.grandTotal)}
+                        </div>
+                      </td>
+                      {!isTablet && (
+                        <td className="px-[18px] py-4 h-[56px]">
+                          <span
+                            className={`px-3 py-1 text-xs rounded-full font-medium ${getPaymentBadgeClasses(
+                              order.paymentType,
+                            )}`}
+                          >
+                            {translatePaymentType(order.paymentType)}
+                          </span>
+                        </td>
+                      )}
+                      <td className="px-[18px] py-4 h-[56px] text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => onNavigate?.('view', order)}
+                            className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
+                            title="View"
+                            aria-label="View"
+                          >
+                            <EyeOutlined className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
+                          </button>
+                          <button
+                            onClick={() => onNavigate?.('form', { ...order, mode: 'edit' })}
+                            className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
+                            title="Edit"
+                            aria-label="Edit"
+                          >
+                            <EditOutlined className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(order)}
+                            className="p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                            title="Delete"
+                            aria-label="Delete"
+                          >
+                            <DeleteOutlined className="w-4 h-4 text-red-500 dark:text-red-400" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {isExpanded(order) && (
+                      <tr className="bg-[var(--surface-2)]">
+                        <td colSpan={isTablet ? 7 : 8} className="px-[18px] py-4">
+                          {isLoadingItems(order) ? (
+                            <div className="text-center py-4 text-[var(--text-secondary)] text-sm">
+                              Loading items...
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="text-sm font-semibold text-[var(--text-primary)] mb-3">
+                                Order Items ({getOrderItems(order).length})
+                              </div>
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                  <thead className="bg-[var(--surface-1)] border-b border-[var(--glass-border)]">
+                                    <tr>
+                                      <th className="px-3 py-2 text-left text-xs font-semibold text-[var(--text-primary)]">Product</th>
+                                      <th className="px-3 py-2 text-left text-xs font-semibold text-[var(--text-primary)]">Quantity</th>
+                                      <th className="px-3 py-2 text-left text-xs font-semibold text-[var(--text-primary)]">Unit Price</th>
+                                      <th className="px-3 py-2 text-left text-xs font-semibold text-[var(--text-primary)]">GST %</th>
+                                      <th className="px-3 py-2 text-left text-xs font-semibold text-[var(--text-primary)]">GST Amount</th>
+                                      <th className="px-3 py-2 text-left text-xs font-semibold text-[var(--text-primary)]">Discount</th>
+                                      <th className="px-3 py-2 text-left text-xs font-semibold text-[var(--text-primary)]">Total</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {getOrderItems(order).map((item) => (
+                                      <tr key={item.id} className="border-b border-[var(--glass-border)]">
+                                        <td className="px-3 py-2 text-[var(--text-primary)]">
+                                          {item.product?.name || 'N/A'}
+                                        </td>
+                                        <td className="px-3 py-2 text-[var(--text-primary)]">{item.quantity}</td>
+                                        <td className="px-3 py-2 text-[var(--text-primary)]">₹{formatCurrency(item.unitPrice)}</td>
+                                        <td className="px-3 py-2 text-[var(--text-primary)]">{item.gstPercentage}%</td>
+                                        <td className="px-3 py-2 text-[var(--text-primary)]">₹{formatCurrency(item.gstAmount)}</td>
+                                        <td className="px-3 py-2 text-red-500">
+                                          {Number(item.discount) > 0 ? `- ₹${formatCurrency(item.discount)}` : '-'}
+                                        </td>
+                                        <td className="px-3 py-2 text-[var(--text-primary)] font-semibold">
+                                          ₹{formatCurrency(item.totalAmount)}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
                     )}
-                    <td className="px-[18px] py-4 h-[56px] text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => onNavigate?.('view', order)}
-                          className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
-                          title="View"
-                          aria-label="View"
-                        >
-                          <EyeOutlined className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
-                        </button>
-                        <button
-                          onClick={() => onNavigate?.('form', { ...order, mode: 'edit' })}
-                          className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
-                          title="Edit"
-                          aria-label="Edit"
-                        >
-                          <EditOutlined className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(order)}
-                          className="p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
-                          title="Delete"
-                          aria-label="Delete"
-                        >
-                          <DeleteOutlined className="w-4 h-4 text-red-500 dark:text-red-400" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                  </React.Fragment>
                 ))
               )}
             </tbody>

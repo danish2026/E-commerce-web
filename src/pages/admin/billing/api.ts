@@ -40,6 +40,7 @@ export interface OrderItem {
   productId: string;
   product?: Product;
   quantity: number | string;
+  discount?: number | string;
   unitPrice?: number | string;
   gstPercentage?: number | string;
   gstAmount?: number | string;
@@ -60,6 +61,7 @@ export interface Order {
   grandTotal?: number | string;
   paymentType: PaymentType;
   orderItems?: OrderItem[];
+  itemCount?: number; // Number of items in the order
   createdAt?: string;
   updatedAt?: string;
 }
@@ -67,22 +69,28 @@ export interface Order {
 export interface CreateOrderDto {
   customerName?: string | null;
   customerPhone?: string | null;
-  discount?: number;
+  discounts?: {
+    amount: number;
+  }[];
   paymentType: PaymentType;
   items: {
     productId: string;
     quantity: number;
+    discount?: number;
   }[];
 }
 
 export interface UpdateOrderDto {
   customerName?: string | null;
   customerPhone?: string | null;
-  discount?: number;
+  discounts?: {
+    amount: number;
+  }[];
   paymentType?: PaymentType;
   items?: {
     productId: string;
     quantity: number;
+    discount?: number;
   }[];
 }
 
@@ -103,7 +111,7 @@ export interface PaginatedOrderResponse {
   };
 }
 
-// Get all orders with pagination
+// Get all orders with pagination (grouped by order)
 export const fetchOrders = async (
   page: number = 1,
   limit: number = 10,
@@ -143,39 +151,28 @@ export const fetchOrders = async (
     params.maxSubtotal = maxSubtotal;
   }
 
-  const response = await apiClient.get(API.ORDERS, { params });
+  // Use the grouped endpoint
+  const baseUrl = API.ORDERS.includes('order-item') ? API.ORDERS : 'order-item';
+  const response = await apiClient.get(`${baseUrl}/grouped`, { params });
 
-  // Helper function to map OrderItem to Order
-  const mapOrderItemToOrder = (item: OrderItem): Order => {
-    const anyItem: any = item;
-    // Generate orderNumber from id - use first 8 chars or fallback to full id or 'N/A'
-    let orderNumber = 'N/A';
-    if (item.id) {
-      orderNumber = item.id.length >= 8 
-        ? item.id.substring(0, 8).toUpperCase().replace(/-/g, '')
-        : item.id.toUpperCase().replace(/-/g, '');
-    }
-    
-    return {
-      id: item.id || '',
-      orderNumber: orderNumber,
-      customerName: typeof anyItem.customerName !== 'undefined' && anyItem.customerName !== null ? anyItem.customerName : 'Walk-in',
-      customerPhone: typeof anyItem.customerPhone !== 'undefined' && anyItem.customerPhone !== null ? anyItem.customerPhone : '',
-      subtotal: Number(item.totalAmount || 0) - (Number(item.gstAmount) || 0),
-      gstTotal: item.gstAmount || 0,
-      discount: typeof anyItem.discount !== 'undefined' && anyItem.discount !== null ? anyItem.discount : 0,
-      grandTotal: item.totalAmount || 0,
-      paymentType: typeof anyItem.paymentType !== 'undefined' && anyItem.paymentType !== null ? anyItem.paymentType : PaymentType.CASH,
-      orderItems: [item], // Wrap the single item
-      createdAt: item.createdAt,
-      updatedAt: item.updatedAt
-    } as Order;
-  };
-
-  // Handle paginated response (new format)
+  // Map grouped orders to Order format
   if (response.data && response.data.data && Array.isArray(response.data.data) && response.data.meta) {
-    const items = response.data.data as OrderItem[];
-    const mappedOrders: Order[] = items.map(mapOrderItemToOrder);
+    const groupedOrders = response.data.data;
+    const mappedOrders: Order[] = groupedOrders.map((grouped: any) => ({
+      id: grouped.id || '',
+      orderNumber: grouped.orderNumber || 'N/A',
+      customerName: grouped.customerName || 'Walk-in',
+      customerPhone: grouped.customerPhone || '',
+      subtotal: grouped.subtotal || 0,
+      gstTotal: grouped.gstTotal || 0,
+      discount: grouped.discount || 0,
+      grandTotal: grouped.grandTotal || 0,
+      paymentType: grouped.paymentType || PaymentType.CASH,
+      orderItems: grouped.items || [],
+      itemCount: grouped.itemCount || 0,
+      createdAt: grouped.createdAt,
+      updatedAt: grouped.createdAt,
+    } as Order));
     
     return {
       data: mappedOrders,
@@ -183,26 +180,53 @@ export const fetchOrders = async (
     };
   }
 
-  // Handle if response is just an array (legacy format)
-  if (Array.isArray(response.data)) {
-    const items = response.data as OrderItem[];
-    const mappedOrders: Order[] = items.map(mapOrderItemToOrder);
+  // Fallback to old format if needed
+  return {
+    data: [],
+    meta: {
+      page: 1,
+      limit: 10,
+      total: 0,
+      totalPages: 0,
+      hasNext: false,
+      hasPrev: false
+    }
+  };
+};
 
-    return {
-      data: mappedOrders,
-      meta: {
-        page: 1,
-        limit: items.length,
-        total: items.length,
-        totalPages: 1,
-        hasNext: false,
-        hasPrev: false
-      }
-    };
+// Get all items for a specific order group
+export const fetchOrderItems = async (
+  customerName: string | null,
+  customerPhone: string | null,
+  paymentType: PaymentType | null,
+  createdAt: string
+): Promise<OrderItem[]> => {
+  const baseUrl = API.ORDERS.includes('order-item') ? API.ORDERS : 'order-item';
+  const params: Record<string, string> = {
+    createdAt: encodeURIComponent(createdAt),
+  };
+  
+  if (customerName === null) {
+    params.customerName = 'null';
+  } else {
+    params.customerName = encodeURIComponent(customerName);
   }
-
-  // Handle if response.data is already in Order format (shouldn't happen with order-item API)
-  return response.data;
+  
+  if (customerPhone === null) {
+    params.customerPhone = 'null';
+  } else {
+    params.customerPhone = encodeURIComponent(customerPhone);
+  }
+  
+  if (paymentType === null) {
+    params.paymentType = 'null';
+  } else {
+    params.paymentType = encodeURIComponent(paymentType);
+  }
+  
+  const response = await apiClient.get(`${baseUrl}/grouped/items`, { params });
+  
+  return response.data || [];
 };
 
 // Get single order by ID
@@ -254,8 +278,11 @@ export const updateOrder = async (id: string, order: UpdateOrderDto): Promise<Or
     if (typeof (order as any).customerPhone !== 'undefined') {
       updateDto.customerPhone = (order as any).customerPhone;
     }
-    if (typeof (order as any).discount !== 'undefined') {
-      updateDto.discount = (order as any).discount;
+    if (typeof (order as any).discounts !== 'undefined') {
+      updateDto.discounts = (order as any).discounts;
+    } else if (typeof (order as any).discount !== 'undefined') {
+      // Backward compatibility: convert single discount to array
+      updateDto.discounts = (order as any).discount > 0 ? [{ amount: (order as any).discount }] : [];
     }
     if (typeof (order as any).paymentType !== 'undefined') {
       updateDto.paymentType = (order as any).paymentType;
@@ -270,9 +297,44 @@ export const updateOrder = async (id: string, order: UpdateOrderDto): Promise<Or
   return response.data;
 };
 
-// Delete an order
-export const deleteOrder = async (id: string): Promise<void> => {
-  await apiClient.delete(`${API.ORDERS}/${id}`);
+// Delete an order (deletes all items in the order group)
+export const deleteOrder = async (
+  id: string,
+  customerName?: string | null,
+  customerPhone?: string | null,
+  paymentType?: PaymentType | null,
+  createdAt?: string
+): Promise<void> => {
+  // If we have order group info, delete the entire group
+  if (customerName !== undefined && customerPhone !== undefined && paymentType !== undefined && createdAt) {
+    const baseUrl = API.ORDERS.includes('order-item') ? API.ORDERS : 'order-item';
+    const params: Record<string, string> = {
+      createdAt: encodeURIComponent(createdAt),
+    };
+    
+    if (customerName === null) {
+      params.customerName = 'null';
+    } else {
+      params.customerName = encodeURIComponent(customerName);
+    }
+    
+    if (customerPhone === null) {
+      params.customerPhone = 'null';
+    } else {
+      params.customerPhone = encodeURIComponent(customerPhone);
+    }
+    
+    if (paymentType === null) {
+      params.paymentType = 'null';
+    } else {
+      params.paymentType = encodeURIComponent(paymentType);
+    }
+    
+    await apiClient.delete(`${baseUrl}/grouped/order`, { params });
+  } else {
+    // Fallback to single item delete
+    await apiClient.delete(`${API.ORDERS}/${id}`);
+  }
 };
 
 // Update an order item

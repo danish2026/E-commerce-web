@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Form, Input, InputNumber, Button, Card, Space, message, Divider, Select, notification, Modal } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, PlusOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, SaveOutlined, PlusOutlined, DeleteOutlined, ExclamationCircleOutlined, ReloadOutlined } from '@ant-design/icons';
 import { createOrder, updateOrder, Order, PaymentType, OrderItem } from './api';
 import { fetchProducts, ProductDto } from '../product/ProductService';
 import { useBillingTranslation } from '../../../hooks/useBillingTranslation';
@@ -10,6 +10,7 @@ interface OrderItemFormData {
   productId: string;
   product?: ProductDto;
   quantity: number;
+  discount?: number;
   productError?: string;
   quantityError?: string;
 }
@@ -25,55 +26,110 @@ const BillingForm = () => {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<ProductDto[]>([]);
   const [items, setItems] = useState<OrderItemFormData[]>([
-    { productId: '', quantity: 1, productError: '', quantityError: '' } 
+    { productId: '', quantity: 1, discount: 0, productError: '', quantityError: '' } 
   ]);
   const [customerName, setCustomerName] = useState<string>('');
   const [customerPhone, setCustomerPhone] = useState<string>('');
-  const [discount, setDiscount] = useState<number>(0);
+  const [discounts, setDiscounts] = useState<number[]>([0]);
   const [paymentType, setPaymentType] = useState<PaymentType>(PaymentType.CASH);
+  const [productsLoading, setProductsLoading] = useState(false);
 
-  // Load products
-  useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        // Fetch all products with pagination (API limit is 100 per page, using 99 to stay within limit)
-        let allProducts: ProductDto[] = [];
-        let currentPage = 1;
-        const pageSize = 99;
-        let hasMore = true;
+  // Load products function - can be called manually or on mount
+  const loadProducts = useCallback(async (showMessage = false) => {
+    try {
+      setProductsLoading(true);
+      // Fetch all products with pagination (API limit is 100 per page, using 99 to stay within limit)
+      let allProducts: ProductDto[] = [];
+      let currentPage = 1;
+      const pageSize = 99;
+      let hasMore = true;
 
-        while (hasMore) {
-          const response = await fetchProducts(undefined, undefined, undefined, currentPage, pageSize);
+      while (hasMore) {
+        const response = await fetchProducts(undefined, undefined, undefined, currentPage, pageSize);
+        
+        if (response && response.data && Array.isArray(response.data)) {
+          allProducts = [...allProducts, ...response.data];
           
-          if (response && response.data && Array.isArray(response.data)) {
-            allProducts = [...allProducts, ...response.data];
-            
-            // Check if there are more pages
-            hasMore = response.meta?.hasNext || false;
-            currentPage++;
-          } else {
-            console.error('Invalid response structure:', response);
-            hasMore = false;
-          }
+          // Check if there are more pages
+          hasMore = response.meta?.hasNext || false;
+          currentPage++;
+        } else {
+          console.error('Invalid response structure:', response);
+          hasMore = false;
         }
+      }
 
-        console.log('Loaded products:', allProducts.length, 'products');
-        setProducts(allProducts);
-      } catch (error) {
-        console.error('Error loading products:', error);
-        message.error(t.failedToLoadProducts);
-        setProducts([]);
+      console.log('Loaded products:', allProducts.length, 'products');
+      
+      // Update products state
+      setProducts(allProducts);
+      
+      // Update product references in items to reflect new stock values
+      setItems(prevItems => {
+        return prevItems.map(item => {
+          if (item.productId) {
+            const updatedProduct = allProducts.find(p => p.id === item.productId);
+            if (updatedProduct) {
+              return {
+                ...item,
+                product: updatedProduct,
+                // Clear quantity error if stock is now sufficient
+                quantityError: item.quantityError && Number(item.quantity) <= Number(updatedProduct.stock) ? '' : item.quantityError
+              };
+            }
+          }
+          return item;
+        });
+      });
+
+      if (showMessage) {
+        message.success('Products refreshed successfully');
+      }
+    } catch (error) {
+      console.error('Error loading products:', error);
+      message.error(t.failedToLoadProducts);
+      setProducts([]);
+    } finally {
+      setProductsLoading(false);
+    }
+  }, [t]);
+
+  // Load products on mount
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
+  // Refresh products when window regains focus (user might have updated stock in another tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Refresh products when tab becomes visible
+        loadProducts(false);
       }
     };
-    loadProducts();
-  }, [t]);
+
+    const handleFocus = () => {
+      // Also refresh on window focus
+      loadProducts(false);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [loadProducts]);
 
   // Load existing order data if in edit mode
   useEffect(() => {
     if (existingOrder) {
       setCustomerName(existingOrder.customerName || '');
       setCustomerPhone(existingOrder.customerPhone || '');
-      setDiscount(Number(existingOrder.discount) || 0);
+      // For edit mode, initialize with a single discount entry (backward compatibility)
+      const existingDiscount = Number(existingOrder.discount) || 0;
+      setDiscounts(existingDiscount > 0 ? [existingDiscount] : [0]);
       setPaymentType(existingOrder.paymentType);
       
       if (existingOrder.orderItems && existingOrder.orderItems.length > 0) {
@@ -81,6 +137,7 @@ const BillingForm = () => {
           productId: item.productId,
           product: item.product as ProductDto,
           quantity: Number(item.quantity) || 1,
+          discount: (item as any).discount ? Number((item as any).discount) : 0,
           productError: '',
           quantityError: '',
         }));
@@ -110,11 +167,19 @@ const BillingForm = () => {
     }, 0);
   };
 
-  // Get remaining quantity for a product
+  // Get remaining quantity for a product (after excluding allocated quantities in current order)
   const getRemainingQuantity = (product: ProductDto, excludeIndex?: number): number => {
     const stock = Number(product.stock) || 0;
     const allocated = calculateAllocatedQuantity(product.id, excludeIndex);
     return Math.max(0, stock - allocated);
+  };
+
+  // Get remaining quantity after current item's quantity is also deducted
+  const getRemainingAfterCurrentItem = (product: ProductDto, currentQuantity: number, excludeIndex?: number): number => {
+    const stock = Number(product.stock) || 0;
+    const allocated = calculateAllocatedQuantity(product.id, excludeIndex);
+    const totalAllocated = allocated + (Number(currentQuantity) || 0);
+    return Math.max(0, stock - totalAllocated);
   };
 
   // Revalidate all items to ensure quantities don't exceed remaining stock
@@ -141,7 +206,7 @@ const BillingForm = () => {
 
         let quantityError = '';
         if (currentQuantity > remainingQuantity) {
-          quantityError = `Insufficient stock. Only ${remainingQuantity} item(s) remaining (${stock} total - ${allocated} already allocated).`;
+          quantityError = `Insufficient stock! Available: ${remainingQuantity} item(s) (Total stock: ${stock} - Already allocated: ${allocated})`;
         }
 
         return {
@@ -178,12 +243,14 @@ const BillingForm = () => {
       
       // Auto-adjust quantity if it exceeds remaining stock
       if (newQuantity > remainingQuantity) {
+        const allocated = calculateAllocatedQuantity(product.id, index);
+        const stock = Number(product.stock) || 0;
         if (remainingQuantity > 0) {
           newQuantity = remainingQuantity;
           quantityError = `Quantity adjusted to ${remainingQuantity} (available stock).`;
         } else {
           newQuantity = 1;
-          quantityError = `Insufficient stock. Only ${remainingQuantity} item(s) remaining (${Number(product.stock)} total - ${calculateAllocatedQuantity(product.id, index)} already allocated).`;
+          quantityError = `Insufficient stock! Available: ${remainingQuantity} item(s) (Total stock: ${stock} - Already allocated: ${allocated})`;
         }
       }
     }
@@ -206,40 +273,124 @@ const BillingForm = () => {
     }, 0);
   };
 
-  // Handle quantity change
+  // Handle quantity change - validates on every onChange event
   const handleQuantityChange = (index: number, quantity: number | null) => {
-    const currentItem = items[index];
-    const newQuantity = quantity || 1;
-    let quantityError = '';
+    // Preserve the actual entered value (null becomes 0 for validation but we keep null for display)
+    const newQuantity = quantity === null ? null : (quantity || 0);
     
-    // Check if product is selected and validate against remaining stock
-    if (currentItem.product) {
-      const remainingQuantity = getRemainingQuantity(currentItem.product, index);
-      if (newQuantity > remainingQuantity) {
-        const allocated = calculateAllocatedQuantity(currentItem.product.id, index);
-        quantityError = `Insufficient stock. Only ${remainingQuantity} item(s) remaining (${Number(currentItem.product.stock)} total - ${allocated} already allocated).`;
+    setItems(prevItems => {
+      const currentItem = prevItems[index];
+      let quantityError = '';
+      
+      // Check if product is selected and validate against remaining stock
+      if (currentItem?.product) {
+        // Calculate remaining quantity excluding current item
+        const allocated = prevItems.reduce((total, itm, idx) => {
+          if (idx === index) return total; // Exclude current item
+          if (itm.productId === currentItem.productId && itm.quantity) {
+            return total + (Number(itm.quantity) || 0);
+          }
+          return total;
+        }, 0);
+        
+        const stock = Number(currentItem.product.stock) || 0;
+        const remainingQuantity = Math.max(0, stock - allocated);
+        
+        // Validate quantity on every change - show error immediately if exceeds stock
+        if (newQuantity === null || newQuantity === undefined) {
+          // User is typing, no error yet
+          quantityError = '';
+        } else if (newQuantity <= 0) {
+          quantityError = 'Quantity must be greater than 0';
+        } else if (newQuantity > remainingQuantity) {
+          // Show clear error with stock count immediately
+          quantityError = `Insufficient stock! Available: ${remainingQuantity} item(s) (Total stock: ${stock} - Already allocated: ${allocated})`;
+        } else {
+          // Clear error if quantity is valid
+          quantityError = '';
+        }
+      } else if (newQuantity !== null && newQuantity !== undefined && newQuantity <= 0) {
+        quantityError = 'Quantity must be greater than 0';
       }
-    }
-    
-    // Update the item
+      
+      // Update the current item - preserve the actual entered value
+      const updatedItems = [...prevItems];
+      updatedItems[index] = { 
+        ...updatedItems[index], 
+        quantity: newQuantity !== null && newQuantity !== undefined ? newQuantity : (currentItem?.quantity || 1), 
+        quantityError,
+        productError: currentItem?.productError || ''
+      };
+      
+      // Revalidate all other items to ensure they don't conflict
+      const finalItems = updatedItems.map((item, idx) => {
+        if (idx === index || !item.productId || !item.product) {
+          return item; // Skip current item or items without product
+        }
+        
+        // Calculate allocated quantity excluding the item being validated
+        const itemAllocated = updatedItems.reduce((total, itm, itmIdx) => {
+          if (itmIdx === idx) return total; // Exclude current item
+          if (itm.productId === item.productId && itm.quantity) {
+            return total + (Number(itm.quantity) || 0);
+          }
+          return total;
+        }, 0);
+        
+        const itemStock = Number(item.product.stock) || 0;
+        const itemRemainingQuantity = Math.max(0, itemStock - itemAllocated);
+        const itemCurrentQuantity = Number(item.quantity) || 0;
+        
+        let itemQuantityError = '';
+        if (itemCurrentQuantity > itemRemainingQuantity) {
+          itemQuantityError = `Insufficient stock! Available: ${itemRemainingQuantity} item(s) (Total stock: ${itemStock} - Already allocated: ${itemAllocated})`;
+        }
+        
+        return {
+          ...item,
+          quantityError: itemQuantityError,
+        };
+      });
+      
+      return finalItems;
+    });
+  };
+
+  // Handle discount change for items
+  const handleDiscountChange = (index: number, discount: number | null) => {
     const updatedItems = [...items];
     updatedItems[index] = { 
       ...updatedItems[index], 
-      quantity: newQuantity, 
-      quantityError,
-      productError: currentItem.productError || ''
+      discount: discount || 0
     };
     setItems(updatedItems);
-    
-    // Revalidate all items with the updated items array
-    setTimeout(() => {
-      revalidateAllItems(updatedItems);
-    }, 0);
+  };
+
+  // Handle order-level discount change
+  const handleOrderDiscountChange = (index: number, amount: number | null) => {
+    const updatedDiscounts = [...discounts];
+    updatedDiscounts[index] = amount || 0;
+    setDiscounts(updatedDiscounts);
+  };
+
+  // Add a new discount entry
+  const handleAddDiscount = () => {
+    setDiscounts([...discounts, 0]);
+  };
+
+  // Remove a discount entry
+  const handleRemoveDiscount = (index: number) => {
+    if (discounts.length > 1) {
+      const updatedDiscounts = discounts.filter((_, i) => i !== index);
+      setDiscounts(updatedDiscounts);
+    } else {
+      message.warning('At least one discount entry is required. Set it to 0 if no discount.');
+    }
   };
 
   // Add a new item
   const handleAddItem = () => {
-    setItems([...items, { productId: '', quantity: 1, productError: '', quantityError: '' }]);
+    setItems([...items, { productId: '', quantity: 1, discount: 0, productError: '', quantityError: '' }]);
   };
 
   // Remove an item
@@ -260,27 +411,31 @@ const BillingForm = () => {
   const calculateTotals = () => {
     let subtotal = 0;
     let gstTotal = 0;
+    let itemDiscountsTotal = 0;
 
     items.forEach(item => {
       if (item.product && item.quantity) {
         const unitPrice = Number(item.product.sellingPrice) || 0;
         const quantity = Number(item.quantity) || 0;
         const itemSubtotal = unitPrice * quantity;
-        subtotal += itemSubtotal;
+        const itemDiscount = Number(item.discount) || 0;
+        const itemSubtotalAfterDiscount = Math.max(0, itemSubtotal - itemDiscount);
+        subtotal += itemSubtotalAfterDiscount;
+        itemDiscountsTotal += itemDiscount;
 
         const gstPercent = Number(item.product.gstPercentage) || 0;
-        const itemGst = (itemSubtotal * gstPercent) / 100;
+        const itemGst = (itemSubtotalAfterDiscount * gstPercent) / 100;
         gstTotal += itemGst;
       }
     });
 
-    const discountAmount = discount || 0;
-    const grandTotal = subtotal + gstTotal - discountAmount;
+    const orderDiscountAmount = discounts.reduce((sum, disc) => sum + (Number(disc) || 0), 0);
+    const grandTotal = subtotal + gstTotal - orderDiscountAmount;
 
-    return { subtotal, gstTotal, grandTotal };
+    return { subtotal, gstTotal, itemDiscountsTotal, grandTotal, orderDiscountAmount };
   };
 
-  const { subtotal, gstTotal, grandTotal } = calculateTotals();
+  const { subtotal, gstTotal, itemDiscountsTotal, grandTotal, orderDiscountAmount } = calculateTotals();
 
   const onFinish = async () => {
     try {
@@ -347,8 +502,9 @@ const BillingForm = () => {
         if (requestedQuantity > remainingQuantity) {
           hasInsufficientStock = true;
           const allocated = calculateAllocatedQuantity(product.id, i);
-          quantityError = `Insufficient stock. Only ${remainingQuantity} item(s) remaining (${Number(product.stock)} total - ${allocated} already allocated).`;
-          errorMessages.push(`Item ${i + 1}: Insufficient stock for "${product.name}". Only ${remainingQuantity} item(s) remaining (${Number(product.stock)} total - ${allocated} already allocated), but ${requestedQuantity} requested.`);
+          const stock = Number(product.stock) || 0;
+          quantityError = `Insufficient stock! Available: ${remainingQuantity} item(s) (Total stock: ${stock} - Already allocated: ${allocated})`;
+          errorMessages.push(`Item ${i + 1}: Insufficient stock for "${product.name}". Available: ${remainingQuantity} item(s) (Total stock: ${stock} - Already allocated: ${allocated}), but ${requestedQuantity} requested.`);
         }
 
         // Update item with errors if any
@@ -380,14 +536,20 @@ const BillingForm = () => {
 
       // Format data for API
       // For updates, only include customer fields if they were changed
+      const discountEntries = discounts.filter(d => d > 0).map(d => ({ amount: d }));
       const baseData: any = {
-        discount: discount || 0,
         paymentType: paymentType,
         items: validItems.map(item => ({
           productId: item.productId,
-          quantity: item.quantity
+          quantity: item.quantity,
+          discount: item.discount || 0
         }))
       };
+
+      // Only include discounts if there are any non-zero entries
+      if (discountEntries.length > 0) {
+        baseData.discounts = discountEntries;
+      }
 
       const apiData: any = { ...baseData };
 
@@ -455,13 +617,22 @@ const BillingForm = () => {
   return (
     <div className="min-h-screen bg-bg-secondary p-8">
       <div className="max-w-6xl mx-auto">
-        <Button
-          icon={<ArrowLeftOutlined />}
-          onClick={() => navigate('/billing')}
-          className="mb-6"
-        >
-          {t.backToOrdersList}
-        </Button>
+        <div className="flex justify-between items-center mb-6">
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate('/billing')}
+          >
+            {t.backToOrdersList}
+          </Button>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => loadProducts(true)}
+            loading={productsLoading}
+            type="default"
+          >
+            Refresh Products
+          </Button>
+        </div>
 
         <Card
           title={<h2 className="text-2xl font-bold p-4 mt-[20px] m-0" style={{ color: 'var(--text-primary)' }}>
@@ -538,6 +709,9 @@ const BillingForm = () => {
                         {t.gstPercentage}
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)]">
+                        {t.discountLabel || 'Discount'}
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)]">
                         {t.itemSubtotal}
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)]">
@@ -582,20 +756,72 @@ const BillingForm = () => {
                             required
                             style={{ marginBottom: 0 }}
                             validateStatus={!item.quantity || item.quantity <= 0 || item.quantityError ? 'error' : ''}
-                            help={item.quantityError || (!item.quantity || item.quantity <= 0 ? t.quantityRequired : '')}
+                            help={
+                              item.quantityError 
+                                ? (
+                                    <span style={{ color: '#ff4d4f', fontWeight: 500, fontSize: '13px' }}>
+                                      {item.quantityError}
+                                    </span>
+                                  )
+                                : (!item.quantity || item.quantity <= 0 ? t.quantityRequired : '')
+                            }
                           >
                             <InputNumber
                               placeholder={t.quantityPlaceholder}
-                              style={{ width: '100%' }}
+                              style={{ 
+                                width: '100%',
+                                borderColor: item.quantityError ? '#ff4d4f' : undefined
+                              }}
                               size="large"
                               min={1}
-                              max={item.product ? getRemainingQuantity(item.product, index) : undefined}
+                              // Don't set max to allow typing values above stock, but show error
                               value={item.quantity}
-                              onChange={(value) => handleQuantityChange(index, value)}
+                              onChange={(value) => {
+                                // Validate on every change immediately - show error if exceeds stock
+                                handleQuantityChange(index, value);
+                              }}
+                              onPressEnter={(e) => {
+                                // Also validate on Enter key press
+                                const target = e.target as HTMLInputElement;
+                                const value = parseFloat(target.value) || null;
+                                handleQuantityChange(index, value);
+                              }}
                               onBlur={() => {
+                                // Revalidate on blur and ensure minimum value
+                                const currentItem = items[index];
+                                const currentQuantity = Number(currentItem?.quantity) || 0;
+                                
+                                if (currentItem?.product) {
+                                  const remainingQuantity = getRemainingQuantity(currentItem.product, index);
+                                  
+                                  if (currentQuantity <= 0) {
+                                    // Set to 1 if invalid
+                                    updateItem(index, { quantity: 1, quantityError: '' });
+                                  } else if (currentQuantity > remainingQuantity) {
+                                    // Show error if exceeds stock
+                                    const allocated = calculateAllocatedQuantity(currentItem.product.id, index);
+                                    const stock = Number(currentItem.product.stock) || 0;
+                                    const quantityError = `Insufficient stock! Available: ${remainingQuantity} item(s) (Total stock: ${stock} - Already allocated: ${allocated})`;
+                                    updateItem(index, { quantityError });
+                                  } else if (currentItem.quantityError && currentQuantity <= remainingQuantity) {
+                                    // Clear error if quantity is now valid
+                                    updateItem(index, { quantityError: '' });
+                                  }
+                                } else if (currentQuantity <= 0) {
+                                  // No product selected but quantity is invalid
+                                  updateItem(index, { quantity: 1, quantityError: '' });
+                                }
                                 revalidateAllItems();
                               }}
                             />
+                            {item.product && (
+                              <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                                <div>Total stock: {Number(item.product.stock) || 0} item(s)</div>
+                                <div style={{ color: Number(item.quantity) > 0 ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                                  Remaining after order: {getRemainingAfterCurrentItem(item.product, item.quantity || 0, index)} item(s)
+                                </div>
+                              </div>
+                            )}
                           </Form.Item>
                         </td>
                         <td className="px-4 py-3 align-top">
@@ -617,9 +843,26 @@ const BillingForm = () => {
                           )}
                         </td>
                         <td className="px-4 py-3 align-top">
+                          <Form.Item style={{ marginBottom: 0 }}>
+                            <InputNumber
+                              placeholder={t.discountPlaceholder || 'Discount'}
+                              style={{ width: '100%' }}
+                              size="large"
+                              min={0}
+                              formatter={(value) => value !== undefined && value !== null ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+                              parser={(value) => {
+                                const cleaned = value?.replace(/₹\s?|(,*)/g, '') || '';
+                                return cleaned ? parseFloat(cleaned) : 0;
+                              }}
+                              value={item.discount || 0}
+                              onChange={(value) => handleDiscountChange(index, value)}
+                            />
+                          </Form.Item>
+                        </td>
+                        <td className="px-4 py-3 align-top">
                           {item.product ? (
                             <span className="text-sm font-semibold text-[var(--text-primary)]">
-                              ₹{(Number(item.product.sellingPrice) * Number(item.quantity)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              ₹{Math.max(0, (Number(item.product.sellingPrice) * Number(item.quantity)) - (Number(item.discount) || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                             </span>
                           ) : (
                             <span className="text-sm text-[var(--text-secondary)]">-</span>
@@ -670,7 +913,7 @@ const BillingForm = () => {
               <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
                 {t.paymentAndDiscount}
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <Form.Item
                   label={t.paymentTypeLabel}
                   required
@@ -689,22 +932,58 @@ const BillingForm = () => {
                     ]}
                   />
                 </Form.Item>
+              </div>
 
-                <Form.Item label={t.discountLabel}>
-                  <InputNumber
-                    placeholder={t.discountPlaceholder}
-                    style={{ width: '100%' }}
+              {/* Discounts Section */}
+              <div className="mb-4">
+                <h4 className="text-md font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
+                  {t.discountLabel || 'Order Discounts'}
+                </h4>
+                <div className="space-y-3">
+                  {discounts.map((discount, index) => (
+                    <div key={index} className="flex gap-2 items-start">
+                      <Form.Item style={{ flex: 1, marginBottom: 0 }}>
+                        <InputNumber
+                          placeholder={t.discountPlaceholder || 'Discount Amount'}
+                          style={{ width: '100%' }}
+                          size="large"
+                          min={0}
+                          formatter={(value) => value !== undefined && value !== null ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+                          parser={(value) => {
+                            const cleaned = value?.replace(/₹\s?|(,*)/g, '') || '';
+                            return cleaned ? parseFloat(cleaned) : 0;
+                          }}
+                          value={discount}
+                          onChange={(value) => handleOrderDiscountChange(index, value)}
+                        />
+                      </Form.Item>
+                      {discounts.length > 1 && (
+                        <Button
+                          type="text"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={() => handleRemoveDiscount(index)}
+                          size="large"
+                        >
+                          {t.remove}
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <Button
+                    type="dashed"
+                    icon={<PlusOutlined />}
+                    onClick={handleAddDiscount}
+                    block
                     size="large"
-                    min={0}
-                    formatter={(value) => value !== undefined && value !== null ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-                    parser={(value) => {
-                      const cleaned = value?.replace(/₹\s?|(,*)/g, '') || '';
-                      return cleaned ? parseFloat(cleaned) : 0;
+                    style={{ 
+                      borderColor: 'var(--brand)',
+                      color: 'var(--brand)',
                     }}
-                    value={discount}
-                    onChange={(value) => setDiscount(value || 0)}
-                  />
-                </Form.Item>
+                  >
+                    {t.addMoreItems || 'Add Discount'}
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -726,11 +1005,19 @@ const BillingForm = () => {
                       ₹ {gstTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
-                  {discount > 0 && (
+                  {itemDiscountsTotal > 0 && (
                     <div className="flex justify-between gap-8">
-                      <span className="text-sm text-[var(--text-secondary)]">{t.discount}:</span>
+                      <span className="text-sm text-[var(--text-secondary)]">{t.discount || 'Item Discounts'}:</span>
                       <span className="text-sm font-semibold text-red-500">
-                        - ₹ {discount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        - ₹ {itemDiscountsTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  )}
+                  {orderDiscountAmount > 0 && (
+                    <div className="flex justify-between gap-8">
+                      <span className="text-sm text-[var(--text-secondary)]">{t.discount || 'Order Discount'}:</span>
+                      <span className="text-sm font-semibold text-red-500">
+                        - ₹ {orderDiscountAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
                   )}
