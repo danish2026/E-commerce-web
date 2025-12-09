@@ -369,7 +369,10 @@ const BillingForm = () => {
         }))
       };
 
-      if (discountEntries.length > 0) apiData.discounts = discountEntries;
+      // Only add discounts when creating a new order, not when updating
+      if (!isEditMode && discountEntries.length > 0) {
+        apiData.discounts = discountEntries;
+      }
 
       if (!isEditMode) {
         apiData.customerName = customerName || null;
@@ -392,15 +395,17 @@ const BillingForm = () => {
       }
     } catch (error: any) {
       console.error('Error saving order:', error);
-      let errorMessage = t.failedToSave;
+      let errorMessage: string = t.failedToSave;
       
       if (error.response?.data) {
-        errorMessage = error.response.data.message || error.response.data.error || error.response.data || errorMessage;
+        const data = error.response.data;
+        errorMessage = String(data.message || data.error || data || errorMessage);
       } else if (error.message) {
-        errorMessage = error.message;
+        errorMessage = String(error.message);
       }
       
-      if (errorMessage.toLowerCase().includes('expired') || errorMessage.toLowerCase().includes('cannot create order')) {
+      const errorMessageLower = errorMessage.toLowerCase();
+      if (errorMessageLower.includes('expired') || errorMessageLower.includes('cannot create order')) {
         notification.error({
           message: t.orderCreationFailed,
           description: errorMessage,
@@ -508,15 +513,6 @@ const BillingForm = () => {
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)]">
                         {t.gstPercentage}
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)]">
-                        {t.discountLabel || 'Discount'}
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)]">
-                        {t.itemSubtotal}
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)]">
-                        {t.actions}
                       </th>
                     </tr>
                   </thead>
@@ -641,47 +637,6 @@ const BillingForm = () => {
                           ) : (
                             <span className="text-sm text-[var(--text-secondary)]">-</span>
                           )}
-                        </td>
-                        <td className="px-4 py-3 align-top">
-                          <Form.Item style={{ marginBottom: 0 }}>
-                            <InputNumber
-                              placeholder={t.discountPlaceholder || 'Discount'}
-                              style={{ width: '100%' }}
-                              size="large"
-                              min={0}
-                              formatter={(value) => value !== undefined && value !== null ? `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-                              parser={(value) => {
-                                const cleaned = value?.replace(/₹\s?|(,*)/g, '') || '';
-                                return cleaned ? parseFloat(cleaned) : 0;
-                              }}
-                              value={item.discount || 0}
-                              onChange={(value) => handleDiscountChange(index, value)}
-                            />
-                          </Form.Item>
-                        </td>
-                        <td className="px-4 py-3 align-top">
-                          {item.product ? (
-                            <span className="text-sm font-semibold text-[var(--text-primary)]">
-                              ₹{Math.max(0, (Number(item.product.sellingPrice) * Number(item.quantity)) - (Number(item.discount) || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                            </span>
-                          ) : (
-                            <span className="text-sm text-[var(--text-secondary)]">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 align-top">
-                          <Space>
-                            {items.length > 1 && (
-                              <Button
-                                type="text"
-                                danger
-                                icon={<DeleteOutlined />}
-                                onClick={() => handleRemoveItem(index)}
-                                size="small"
-                              >
-                                {t.remove}
-                              </Button>
-                            )}
-                          </Space>
                         </td>
                       </tr>
                     ))}
