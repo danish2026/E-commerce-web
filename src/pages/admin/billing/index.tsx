@@ -2,7 +2,7 @@ import { Space, Spin } from 'antd';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import RangePicker from '../../../components/ui/RangePicker';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
@@ -27,16 +27,17 @@ const Billing = () => {
   const [total, setTotal] = useState(0);
 
   // Load orders with server-side pagination and filtering
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     try {
       setLoading(true);
+      const searchParam = searchText.trim() || undefined;
       const fromDate = dateRange && dateRange[0] ? dateRange[0].format('YYYY-MM-DD') : undefined;
       const toDate = dateRange && dateRange[1] ? dateRange[1].format('YYYY-MM-DD') : undefined;
       
       const response = await fetchOrders(
         currentPage,
         pageSize,
-        searchText || undefined,
+        searchParam,
         fromDate,
         toDate,
         undefined,
@@ -51,11 +52,11 @@ const Billing = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, dateRange, maxSubtotal, minSubtotal, pageSize, searchText]);
 
   useEffect(() => {
     loadOrders();
-  }, [currentPage, pageSize, searchText, dateRange, minSubtotal, maxSubtotal]);
+  }, [loadOrders]);
 
   const handleNavigate = (path: string, data?: any) => {
     if (path === 'form') {
@@ -69,13 +70,12 @@ const Billing = () => {
     setCurrentPage(page);
     if (size) {
       setPageSize(size);
-      setCurrentPage(1); // Reset to first page when page size changes
     }
   };
 
   const handlePageSizeChange = (current: number, size: number) => {
+    setCurrentPage(current);
     setPageSize(size);
-    setCurrentPage(1);
   };
 
   const handleDeleteSuccess = () => {

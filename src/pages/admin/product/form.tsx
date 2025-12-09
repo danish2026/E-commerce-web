@@ -95,17 +95,19 @@ const FormComponent = () => {
         imageUrl: values.imageUrl || null,
       };
 
+      let successMessage: string;
+
       if (isEditMode && formData?.id) {
         // Update existing product
         await updateProduct(formData.id, apiData);
-        message.success(t.productUpdated);
+        successMessage = t.productUpdated;
       } else {
         // Create new product
         await createProduct(apiData);
-        message.success(t.productCreated);
+        successMessage = t.productCreated;
       }
       
-      navigate('/product');
+      navigate('/product', { state: { successMessage } });
     } catch (error) {
       console.error('Error saving product:', error);
       message.error(getApiErrorMessage(error, t.failedToSave));

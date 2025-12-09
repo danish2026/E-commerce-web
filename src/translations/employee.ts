@@ -16,7 +16,7 @@ export const employeeTranslations = {
     // Employee List
     employeeList: 'Employee List',
     addEmployee: 'Add Employee',
-    searchPlaceholder: 'Search by name, email, or phone',
+    searchPlaceholder: 'Search by name, email',
     startDate: 'Start Date',
     endDate: 'End Date',
     totalEmployees: 'Total {count} employees',
@@ -119,7 +119,7 @@ export const employeeTranslations = {
     // Employee List
     employeeList: 'कर्मचारी सूची',
     addEmployee: 'कर्मचारी जोड़ें',
-    searchPlaceholder: 'नाम, ईमेल, या फोन से खोजें',
+    searchPlaceholder: 'नाम, ईमेल, या फोन ',
     startDate: 'प्रारंभ तिथि',
     endDate: 'समाप्ति तिथि',
     totalEmployees: 'कुल {count} कर्मचारी',
@@ -222,7 +222,8 @@ export const employeeTranslations = {
     // Employee List
     employeeList: 'قائمة الموظفين',
     addEmployee: 'إضافة موظف',
-    searchPlaceholder: 'البحث بالاسم أو البريد الإلكتروني أو الهاتف',
+    searchPlaceholder: 'البحث بالاسم أو البريد الإلكتروني'                                                                                                                                                                                                                                                                                                                
+,
     startDate: 'تاريخ البدء',
     endDate: 'تاريخ الانتهاء',
     totalEmployees: 'إجمالي {count} موظف',
