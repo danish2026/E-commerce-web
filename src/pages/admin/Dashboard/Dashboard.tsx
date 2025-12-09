@@ -129,7 +129,7 @@ const Dashboard = () => {
         ))}
       </section>
 
-      <section className="w-full border border-transparent hover:border-[rgb(31,154,138)]">
+      <section className="w-full border border-transparent rounded-3xl  hover:border-[rgb(31,154,138)]">
         <ChartCard
           title={t.revenueTrend}
           subtitle={t.last12Months}
@@ -137,15 +137,6 @@ const Dashboard = () => {
           trend={trend.dir}
           data={cashflowData}
         />
-        {/* <div className="space-y-4">
-          <BalancePanel
-            balance={stats ? formatCurrency(stats.revenue.total) : '0.00'}
-            currency={currency}
-            currencies={balancePanel.currencies}
-            onCurrencyChange={setCurrency}
-          />
-          <CardPreview holderName="Super Admin" maskedNumber="5321 •••• •••• 3019" expiry="08 / 28" brand="SS" />
-        </div> */}
       </section>
 
       <section className="grid gap-4 lg:grid-cols-3">

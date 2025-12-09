@@ -30,11 +30,6 @@ const Reporting = () => {
   const [data, setData] = useState<ReportTableItem[]>([]);
   const [reportingData, setReportingData] = useState<ReportingData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [refetch, setRefetch] = useState(false);
-
-  const handleRefetch = () => {
-    setRefetch(!refetch);
-  };
 
   const loadReportingData = useCallback(async () => {
     try {
@@ -84,6 +79,10 @@ const Reporting = () => {
   useEffect(() => {
     loadReportingData();
   }, [loadReportingData]);
+
+  const handleRefetch = () => {
+    loadReportingData();
+  };
 
   const downloadPDF = () => {
     if (!reportingData) {
@@ -351,7 +350,11 @@ const Reporting = () => {
                 </label>
                 <Space size="middle" className="w-full" wrap>
                   {/* <LanguageSelector /> */}
-                  <Select value={filter} style={{ width: 150, height: '40px' }} onChange={handleFilterChange}>
+                  <Select
+                    value={filter}
+                    onChange={handleFilterChange}
+                    style={{ width: 150, height: '40px' }}
+                  >
                     <option value="Daily">{t.daily}</option>
                     <option value="Weekly">{t.weekly}</option>
                     <option value="Monthly">{t.monthly}</option>
@@ -381,6 +384,15 @@ const Reporting = () => {
                       </Button>
                     )}
                   </div>
+
+                  <Button
+                    icon={<ReloadOutlined />}
+                    onClick={handleRefetch}
+                    disabled={loading}
+                    style={{ height: '40px' }}
+                  >
+                    {t.refresh}
+                  </Button>
 
                   <Button
                     icon={<FilePdfOutlined />}

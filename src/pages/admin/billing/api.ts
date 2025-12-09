@@ -278,11 +278,17 @@ export const updateOrder = async (id: string, order: UpdateOrderDto): Promise<Or
     if (typeof (order as any).customerPhone !== 'undefined') {
       updateDto.customerPhone = (order as any).customerPhone;
     }
-    if (typeof (order as any).discounts !== 'undefined') {
-      updateDto.discounts = (order as any).discounts;
+    // Convert discounts array to single discount value for UpdateOrderItemDto
+    if (typeof (order as any).discounts !== 'undefined' && Array.isArray((order as any).discounts)) {
+      // Sum up all discount amounts
+      const totalDiscount = (order as any).discounts.reduce((sum: number, disc: any) => {
+        return sum + (Number(disc.amount) || 0);
+      }, 0);
+      if (totalDiscount > 0) {
+        updateDto.discount = totalDiscount;
+      }
     } else if (typeof (order as any).discount !== 'undefined') {
-      // Backward compatibility: convert single discount to array
-      updateDto.discounts = (order as any).discount > 0 ? [{ amount: (order as any).discount }] : [];
+      updateDto.discount = (order as any).discount;
     }
     if (typeof (order as any).paymentType !== 'undefined') {
       updateDto.paymentType = (order as any).paymentType;

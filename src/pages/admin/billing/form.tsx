@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Form, Input, InputNumber, Button, Card, Space, message, Divider, Select, notification } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, PlusOutlined, DeleteOutlined, ExclamationCircleOutlined, ReloadOutlined } from '@ant-design/icons';
-import { createOrder, updateOrder, Order, PaymentType } from './api';
+import { createOrder, updateOrder, Order, PaymentType, fetchOrderById } from './api';
 import { fetchProducts, ProductDto } from '../product/ProductService';
 import { useBillingTranslation } from '../../../hooks/useBillingTranslation';
 
@@ -93,25 +93,64 @@ const BillingForm = () => {
     };
   }, [loadProducts]);
 
+  const initializeOrderData = useCallback((order: Order) => {
+    setCustomerName(order.customerName || '');
+    setCustomerPhone(order.customerPhone || '');
+    const existingDiscount = Number(order.discount) || 0;
+    setDiscounts(existingDiscount > 0 ? [existingDiscount] : [0]);
+    if (order.paymentType) {
+      setPaymentType(order.paymentType);
+    }
+
+    const orderItems = (order.orderItems || (order as any).items || []) as Order['orderItems'];
+    if (orderItems && orderItems.length > 0) {
+      setItems(orderItems.map(item => ({
+        productId: item.productId,
+        product: item.product as ProductDto,
+        quantity: Number(item.quantity) || 1,
+        discount: (item as any).discount ? Number((item as any).discount) : 0,
+        productError: '',
+        quantityError: '',
+      })));
+    }
+  }, []);
+
   useEffect(() => {
     if (existingOrder) {
-      setCustomerName(existingOrder.customerName || '');
-      setCustomerPhone(existingOrder.customerPhone || '');
-      const existingDiscount = Number(existingOrder.discount) || 0;
-      setDiscounts(existingDiscount > 0 ? [existingDiscount] : [0]);
-      setPaymentType(existingOrder.paymentType);
-      if (existingOrder.orderItems && existingOrder.orderItems.length > 0) {
-        setItems(existingOrder.orderItems.map(item => ({
-          productId: item.productId,
-          product: item.product as ProductDto,
-          quantity: Number(item.quantity) || 1,
-          discount: (item as any).discount ? Number((item as any).discount) : 0,
-          productError: '',
-          quantityError: '',
-        })));
-      }
+      initializeOrderData(existingOrder);
     }
-  }, [existingOrder]);
+  }, [existingOrder, initializeOrderData]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const needsFetch =
+      isEditMode &&
+      existingOrder?.id &&
+      (!existingOrder.orderItems || existingOrder.orderItems.length === 0 || existingOrder.orderItems.some(item => !item.product));
+
+    if (!needsFetch) return undefined;
+
+    const fetchFullOrder = async () => {
+      try {
+        const freshOrder = await fetchOrderById(existingOrder!.id as string);
+        if (isMounted && freshOrder) {
+          // Prefer freshly fetched data but keep any state order fields as fallback
+          initializeOrderData({
+            ...existingOrder,
+            ...freshOrder,
+            orderItems: (freshOrder as any).orderItems || (freshOrder as any).items || existingOrder?.orderItems || [],
+          } as Order);
+        }
+      } catch (error) {
+        console.error('Failed to load order for editing', error);
+      }
+    };
+
+    fetchFullOrder();
+    return () => {
+      isMounted = false;
+    };
+  }, [existingOrder, isEditMode, initializeOrderData]);
 
   const getStockInfo = (productId: string, excludeIndex?: number, itemsToCheck = items) => {
     const allocated = itemsToCheck.reduce((total, item, idx) => {
@@ -271,29 +310,65 @@ const BillingForm = () => {
   };
 
   const calculateTotals = () => {
-    let subtotal = 0, gstTotal = 0, itemDiscountsTotal = 0;
+    let subtotal = 0, gstTotal = 0, itemDiscountsTotal = 0, grandTotal = 0;
 
+    // Calculate total order discount
+    const orderDiscountAmount = discounts.reduce((sum, disc) => sum + (Number(disc) || 0), 0);
+
+    // First pass: calculate base subtotals for proportional discount distribution
+    const baseSubtotals: number[] = [];
     items.forEach(item => {
       if (item.product && item.quantity) {
         const unitPrice = Number(item.product.sellingPrice) || 0;
         const quantity = Number(item.quantity) || 0;
-        const itemSubtotal = unitPrice * quantity;
-        const itemDiscount = Number(item.discount) || 0;
-        const itemSubtotalAfterDiscount = Math.max(0, itemSubtotal - itemDiscount);
-        subtotal += itemSubtotalAfterDiscount;
-        itemDiscountsTotal += itemDiscount;
-        gstTotal += (itemSubtotalAfterDiscount * (Number(item.product.gstPercentage) || 0)) / 100;
+        const baseSubtotal = unitPrice * quantity;
+        baseSubtotals.push(baseSubtotal);
+      } else {
+        baseSubtotals.push(0);
       }
     });
 
-    const orderDiscountAmount = discounts.reduce((sum, disc) => sum + (Number(disc) || 0), 0);
-    const grandTotal = subtotal + gstTotal - orderDiscountAmount;
-    return { subtotal, gstTotal, itemDiscountsTotal, grandTotal, orderDiscountAmount };
+    // Calculate total base subtotal for proportional discount distribution
+    const totalBaseSubtotal = baseSubtotals.reduce((sum, amount) => sum + amount, 0);
+
+    // Second pass: calculate with proportional order discount (matching server logic)
+    items.forEach((item, index) => {
+      if (item.product && item.quantity) {
+        const unitPrice = Number(item.product.sellingPrice) || 0;
+        const quantity = Number(item.quantity) || 0;
+        const baseSubtotal = baseSubtotals[index];
+        const itemDiscount = Number(item.discount) || 0;
+        
+        // Calculate proportional order-level discount for this item
+        const itemProportionalDiscount = totalBaseSubtotal > 0 
+          ? (baseSubtotal / totalBaseSubtotal) * orderDiscountAmount 
+          : 0;
+        
+        // Apply both item discount and proportional order discount
+        const totalDiscountForItem = itemDiscount + itemProportionalDiscount;
+        const discountedSubtotal = Math.max(0, baseSubtotal - totalDiscountForItem);
+        const gstAmount = (discountedSubtotal * (Number(item.product.gstPercentage) || 0)) / 100;
+        const itemTotal = discountedSubtotal + gstAmount;
+        
+        subtotal += discountedSubtotal;
+        itemDiscountsTotal += itemDiscount;
+        gstTotal += gstAmount;
+        grandTotal += itemTotal;
+      }
+    });
+
+    // Validate discount doesn't exceed total
+    const totalBeforeOrderDiscount = totalBaseSubtotal + gstTotal;
+    const discountError = orderDiscountAmount > totalBeforeOrderDiscount 
+      ? `Discount (₹${orderDiscountAmount.toFixed(2)}) exceeds order total (₹${totalBeforeOrderDiscount.toFixed(2)})`
+      : '';
+
+    return { subtotal, gstTotal, itemDiscountsTotal, grandTotal, orderDiscountAmount, totalBaseSubtotal, discountError };
   };
 
-  const { subtotal, gstTotal, itemDiscountsTotal, grandTotal, orderDiscountAmount } = calculateTotals();
+  const { subtotal, gstTotal, itemDiscountsTotal, grandTotal, orderDiscountAmount, totalBaseSubtotal, discountError } = calculateTotals();
 
-  const onFinish = async () => {
+  const onFinish = async ()   => {
     try {
       const validItems = items.filter(item => item.productId && item.quantity > 0);
 
@@ -307,6 +382,12 @@ const BillingForm = () => {
       }
       if (!paymentType) {
         message.error(t.selectPaymentType);
+        return;
+      }
+
+      // Validate discount
+      if (discountError) {
+        message.error(discountError);
         return;
       }
 
@@ -369,9 +450,16 @@ const BillingForm = () => {
         }))
       };
 
-      // Only add discounts when creating a new order, not when updating
-      if (!isEditMode && discountEntries.length > 0) {
-        apiData.discounts = discountEntries;
+      // Add discounts - for create use array, for update convert to single discount value
+      if (discountEntries.length > 0) {
+        if (isEditMode) {
+          // For updates, convert discounts array to single discount value (sum)
+          const totalDiscount = discountEntries.reduce((sum, disc) => sum + (Number(disc.amount) || 0), 0);
+          apiData.discount = totalDiscount;
+        } else {
+          // For creates, use discounts array
+          apiData.discounts = discountEntries;
+        }
       }
 
       if (!isEditMode) {
@@ -706,26 +794,44 @@ const BillingForm = () => {
 
                 {/* Discounts Section */}
                 <Form.Item
-  label={t.discountLabel || 'Order Discounts'}
-  style={{ marginBottom: 0, height: '100%' }}
-  colon={false}
->
-  <div className="space-y-3 h-full">
-    {discounts.map((discount, index) => (
-      <div className="flex gap-2 items-start" key={index}>
-        <Form.Item style={{ flex: 1, marginBottom: 0 }}>
-          <Input
-            placeholder={t.discountPlaceholder || 'Discount Amount'}
-            style={{ width: '100%' }}
-            size="large"
-            value={discount}
-            onChange={(e) => handleOrderDiscountChange(index, parseFloat(e.target.value) || 0)}
-          />
-        </Form.Item>
-      </div>
-    ))}
-  </div>
-</Form.Item>
+                  label={t.discountLabel || 'Order Discounts'}
+                  style={{ marginBottom: 0, height: '100%' }}
+                  colon={false}
+                  validateStatus={discountError ? 'error' : ''}
+                  help={discountError}
+                >
+                  <div className="space-y-3 h-full">
+                    {discounts.map((discount, index) => (
+                      <div className="flex gap-2 items-start" key={index}>
+                        <Form.Item style={{ flex: 1, marginBottom: 0 }}>
+                          <InputNumber
+                            placeholder={t.discountPlaceholder || 'Discount Amount'}
+                            style={{ 
+                              width: '100%',
+                              borderColor: discountError ? '#ff4d4f' : undefined
+                            }}
+                            size="large"
+                            min={0}
+                            precision={2}
+                            value={discount || undefined}
+                            onChange={(value) => handleOrderDiscountChange(index, value)}
+                            formatter={(value) => value ? `₹ ${value}` : ''}
+                            parser={(value) => {
+                              if (!value) return 0;
+                              const parsed = parseFloat(value.replace(/₹\s?|(,*)/g, ''));
+                              return isNaN(parsed) ? 0 : parsed;
+                            }}
+                          />
+                        </Form.Item>
+                      </div>
+                    ))}
+                    {discountError && (
+                      <div className="text-xs mt-1" style={{ color: '#ff4d4f' }}>
+                        Maximum discount: ₹{(totalBaseSubtotal + gstTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                    )}
+                  </div>
+                </Form.Item>
 
               </div>
             </div>
