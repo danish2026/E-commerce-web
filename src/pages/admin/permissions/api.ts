@@ -139,3 +139,34 @@ export const createRolePermission = async (data: {
   return response.data;
 };
 
+// Get role permissions by role ID
+export const fetchRolePermissionsByRole = async (roleId: string): Promise<RolePermission[]> => {
+  const response = await apiClient.get(`permissions/role-permissions/role/${roleId}`);
+  return response.data;
+};
+
+// Delete role permission
+export const deleteRolePermission = async (data: {
+  roleId: string;
+  permissionIds: string[];
+}): Promise<void> => {
+  await apiClient.request({
+    url: 'permissions/role-permissions',
+    method: 'DELETE',
+    data,
+  });
+};
+
+// Delete a single role permission using explicit route params (more reliable across proxies)
+export const deleteRolePermissionByRoleAndPermission = async (
+  roleId: string,
+  permissionId: string,
+): Promise<void> => {
+  await apiClient.delete(`permissions/role-permissions/role/${roleId}/permission/${permissionId}`);
+};
+
+// Fetch all role-permission mappings
+export const fetchRolePermissions = async (): Promise<RolePermission[]> => {
+  const response = await apiClient.get('permissions/role-permissions');
+  return response.data;
+};

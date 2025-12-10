@@ -6,7 +6,7 @@ import { Input } from '../../../components/ui/Input';
 import { PlusOutlined, UserAddOutlined, SafetyOutlined } from '@ant-design/icons';
 import LanguageSelector from '../../../components/purchase/LanguageSelector';
 import { usePermissionTranslation } from '../../../hooks/usePermissionTranslation';
-import { fetchPermissions, Permission, fetchModules, fetchRoles, createRole, createRolePermission, bulkCreatePermissions, Role } from './api';
+import { fetchPermissions, Permission, fetchModules, fetchRoles, createRole, createRolePermission, bulkCreatePermissions, Role, fetchRolePermissionsByRole, deleteRolePermission } from './api';
 import Table from './table';
 
 const { Option } = Select;
@@ -33,6 +33,9 @@ const Permissions = () => {
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
   const [loadingPermissions, setLoadingPermissions] = useState(false);
   const [loadingRoles, setLoadingRoles] = useState(false);
+  const [loadingRolePermissions, setLoadingRolePermissions] = useState(false);
+  const [selectedRolePermissions, setSelectedRolePermissions] = useState<string[]>([]);
+  const [syncingPermissions, setSyncingPermissions] = useState(false);
   
   // Form instances
   const [addRoleForm] = Form.useForm();
@@ -239,13 +242,125 @@ const Permissions = () => {
     }
   };
 
-  // Handle Add Role Permission
-  const handleAddRolePermission = async (values: { roleId: string; permissionIds: string[] }) => {
+  // Handle role selection - fetch existing permissions
+  const handleRoleSelect = async (roleId: string) => {
+    if (!roleId) {
+      setSelectedRolePermissions([]);
+      addRolePermissionForm.setFieldsValue({ permissionIds: [] });
+      return;
+    }
+
     try {
-      await createRolePermission(values);
+      setLoadingRolePermissions(true);
+      const rolePermissions = await fetchRolePermissionsByRole(roleId);
+      const permissionIds = rolePermissions.map((rp) => rp.permissionId);
+      setSelectedRolePermissions(permissionIds);
+      addRolePermissionForm.setFieldsValue({ permissionIds });
+    } catch (error: any) {
+      console.error('Error fetching role permissions:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch role permissions';
+      message.error(errorMessage);
+      setSelectedRolePermissions([]);
+      addRolePermissionForm.setFieldsValue({ permissionIds: [] });
+    } finally {
+      setLoadingRolePermissions(false);
+    }
+  };
+
+  // Handle permission changes - sync immediately with backend
+  const handlePermissionChange = async (permissionIds: string[]) => {
+    const roleId = addRolePermissionForm.getFieldValue('roleId');
+    if (!roleId) {
+      message.warning('Please select a role first');
+      // Revert to previous state
+      addRolePermissionForm.setFieldsValue({ permissionIds: selectedRolePermissions });
+      return;
+    }
+
+    // Prevent concurrent syncs
+    if (syncingPermissions) {
+      // Revert to previous state
+      addRolePermissionForm.setFieldsValue({ permissionIds: selectedRolePermissions });
+      return;
+    }
+
+    const previousPermissions = [...selectedRolePermissions];
+    const addedPermissions = permissionIds.filter((id) => !previousPermissions.includes(id));
+    const removedPermissions = previousPermissions.filter((id) => !permissionIds.includes(id));
+
+    // If nothing changed, don't sync
+    if (addedPermissions.length === 0 && removedPermissions.length === 0) {
+      return;
+    }
+
+    // Update local state and form value IMMEDIATELY for responsive UI
+    setSelectedRolePermissions(permissionIds);
+    addRolePermissionForm.setFieldsValue({ permissionIds });
+
+    try {
+      setSyncingPermissions(true);
+
+      // Add new permissions
+      if (addedPermissions.length > 0) {
+        try {
+          await createRolePermission({
+            roleId,
+            permissionIds: addedPermissions,
+          });
+          message.success(`Added ${addedPermissions.length} permission(s)`);
+        } catch (error: any) {
+          // If permission already exists, that's okay - just continue
+          if (error.response?.status !== 409) {
+            // Revert state on error
+            setSelectedRolePermissions(previousPermissions);
+            addRolePermissionForm.setFieldsValue({ permissionIds: previousPermissions });
+            throw error;
+          }
+        }
+      }
+
+      // Remove permissions
+      if (removedPermissions.length > 0) {
+        try {
+          await deleteRolePermission({
+            roleId,
+            permissionIds: removedPermissions,
+          });
+          message.success(`Removed ${removedPermissions.length} permission(s)`);
+        } catch (error: any) {
+          // If permission was already removed (404), that's okay - just continue
+          if (error.response?.status === 404) {
+            console.log('Permission(s) already removed, continuing...');
+          } else {
+            // Revert state on error
+            setSelectedRolePermissions(previousPermissions);
+            addRolePermissionForm.setFieldsValue({ permissionIds: previousPermissions });
+            throw error;
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Error syncing permissions:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to sync permissions';
+      message.error(errorMessage);
+    } finally {
+      setSyncingPermissions(false);
+    }
+  };
+
+  // Handle Add Role Permission (legacy - kept for form submission if needed)
+  const handleAddRolePermission = async (values: { roleId: string; permissionIds: string[] }) => {
+    // This is now handled by handlePermissionChange, but keeping for backward compatibility
+    try {
+      const currentPermissions = addRolePermissionForm.getFieldValue('permissionIds') || [];
+      if (currentPermissions.length === 0) {
+        message.warning('Please select at least one permission');
+        return;
+      }
       message.success(t.rolePermissionsAssigned);
       setAddRolePermissionModalVisible(false);
       addRolePermissionForm.resetFields();
+      setSelectedRolePermissions([]);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || t.failedToAssignRolePermissions;
       message.error(errorMessage);
@@ -449,6 +564,7 @@ const Permissions = () => {
         onCancel={() => {
           setAddRolePermissionModalVisible(false);
           addRolePermissionForm.resetFields();
+          setSelectedRolePermissions([]);
         }}
         afterOpenChange={(open) => {
           // Reload roles when modal opens if we don't have any
@@ -468,7 +584,6 @@ const Permissions = () => {
         <Form
           form={addRolePermissionForm}
           layout="vertical"
-          onFinish={handleAddRolePermission}
         >
           <Form.Item
             name="roleId"
@@ -485,6 +600,7 @@ const Permissions = () => {
               filterOption={(input, option) =>
                 (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
               }
+              onChange={handleRoleSelect}
               options={roles.map((role) => ({
                 value: role.id,
                 label: role.name,
@@ -494,39 +610,56 @@ const Permissions = () => {
           <Form.Item
             name="permissionIds"
             label={t.permissionsLabel}
-            rules={[{ required: true, message: t.selectAtLeastOnePermission }]}
           >
             <Select
               mode="multiple"
               placeholder={t.permissionsPlaceholder}
               size="large"
               showSearch
-              loading={loadingPermissions}
-              notFoundContent={loadingPermissions ? <Spin size="small" /> : 'No permissions found'}
+              allowClear
+              loading={loadingPermissions || loadingRolePermissions}
+              disabled={loadingRolePermissions}
+              notFoundContent={
+                loadingPermissions || loadingRolePermissions ? (
+                  <Spin size="small" />
+                ) : (
+                  'No permissions found'
+                )
+              }
               optionFilterProp="label"
               filterOption={(input, option) =>
                 (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
               }
+              onChange={handlePermissionChange}
               options={permissionOptions}
+              maxTagCount="responsive"
             />
+            {loadingRolePermissions && (
+              <div style={{ marginTop: 8, color: '#999' }}>
+                Loading existing permissions...
+              </div>
+            )}
+            {syncingPermissions && (
+              <div style={{ marginTop: 8, color: '#999' }}>
+                Syncing permissions...
+              </div>
+            )}
           </Form.Item>
           <Form.Item>
             <Space>
               <AntButton
                 type="primary"
-                htmlType="submit"
+                onClick={() => {
+                  setAddRolePermissionModalVisible(false);
+                  addRolePermissionForm.resetFields();
+                  setSelectedRolePermissions([]);
+                }}
                 style={{
                   backgroundColor: 'var(--brand)',
                   borderColor: 'var(--brand)',
                 }}
               >
-                {t.assignPermissions}
-              </AntButton>
-              <AntButton onClick={() => {
-                setAddRolePermissionModalVisible(false);
-                addRolePermissionForm.resetFields();
-              }}>
-                {t.cancel}
+                Close
               </AntButton>
             </Space>
           </Form.Item>
