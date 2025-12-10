@@ -1,13 +1,13 @@
-import {  Space, Spin, Select, Modal, Form, message, Checkbox, Button as AntButton } from 'antd';
+import {  Space, Spin, Select, Modal, Form, message, Checkbox, Button as AntButton, Tabs, Table as AntTable } from 'antd';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate ,useLocation} from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
-import { PlusOutlined, UserAddOutlined, SafetyOutlined } from '@ant-design/icons';
+import { PlusOutlined, UserAddOutlined, SafetyOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import LanguageSelector from '../../../components/purchase/LanguageSelector';
 import { usePermissionTranslation } from '../../../hooks/usePermissionTranslation';
-import { fetchPermissions, Permission, fetchModules, fetchRoles, createRole, createRolePermission, bulkCreatePermissions, Role, fetchRolePermissionsByRole, deleteRolePermission } from './api';
-import Table from './table';
+import { fetchPermissions, Permission, fetchModules, fetchRoles, createRole, createRolePermission, bulkCreatePermissions, Role, RolePermission, fetchRolePermissionsByRole, deleteRolePermission, deleteRolePermissionByRoleAndPermission, deleteRole } from './api';
+import PermissionTable from './table';
 
 const { Option } = Select;
 
@@ -34,8 +34,13 @@ const Permissions = () => {
   const [loadingPermissions, setLoadingPermissions] = useState(false);
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [loadingRolePermissions, setLoadingRolePermissions] = useState(false);
+  const [deletingRoleId, setDeletingRoleId] = useState<string | null>(null);
+  const [rolePermissionRoleId, setRolePermissionRoleId] = useState<string | undefined>();
+  const [rolePermissionsList, setRolePermissionsList] = useState<RolePermission[]>([]);
+  const [loadingRolePermissionList, setLoadingRolePermissionList] = useState(false);
   const [selectedRolePermissions, setSelectedRolePermissions] = useState<string[]>([]);
   const [syncingPermissions, setSyncingPermissions] = useState(false);
+  const [activeTab, setActiveTab] = useState('rolePermission');
   
   // Form instances
   const [addRoleForm] = Form.useForm();
@@ -207,6 +212,14 @@ const Permissions = () => {
     loadPermissions();
   }, [currentPage, pageSize, searchText, moduleFilter, actionFilter]);
 
+  useEffect(() => {
+    if (roles.length > 0 && !rolePermissionRoleId) {
+      const firstRole = roles[0];
+      setRolePermissionRoleId(firstRole.id);
+      loadRolePermissionsForRole(firstRole.id);
+    }
+  }, [roles]);
+
   const handleNavigate = (path: string, data?: any) => {
     if (path === 'form') {
       navigate('/permissions/form', { state: data });
@@ -240,6 +253,81 @@ const Permissions = () => {
       const errorMessage = error.response?.data?.message || error.message || t.failedToCreateRole;
       message.error(errorMessage);
     }
+  };
+
+  const loadRolePermissionsForRole = async (roleId: string) => {
+    if (!roleId) return;
+    try {
+      setLoadingRolePermissionList(true);
+      const data = await fetchRolePermissionsByRole(roleId);
+      setRolePermissionsList(data);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to load role permissions';
+      message.error(errorMessage);
+      setRolePermissionsList([]);
+    } finally {
+      setLoadingRolePermissionList(false);
+    }
+  };
+
+  const handleRolePermissionRoleChange = (value: string) => {
+    setRolePermissionRoleId(value);
+    loadRolePermissionsForRole(value);
+  };
+
+  const resolveRoleName = (id?: string) => roles.find((r) => r.id === id)?.name || '-';
+  const resolvePermissionLabel = (id?: string) => {
+    const permission = allPermissions.find((p) => p.id === id);
+    if (!permission) return id || '-';
+    return `${permission.module} - ${permission.action}`;
+  };
+
+  const handleDeleteRolePermissionRow = async (permissionId: string) => {
+    if (!rolePermissionRoleId || !permissionId) return;
+    try {
+      setLoadingRolePermissionList(true);
+      await deleteRolePermissionByRoleAndPermission(rolePermissionRoleId, permissionId);
+      message.success('Permission removed from role');
+      await loadRolePermissionsForRole(rolePermissionRoleId);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to delete role permission';
+      message.error(errorMessage);
+    } finally {
+      setLoadingRolePermissionList(false);
+    }
+  };
+
+  const handleDeleteRole = (role: Role) => {
+    Modal.confirm({
+      title: 'Delete role?',
+      icon: <ExclamationCircleOutlined />,
+      content: 'This will remove the role and its permission associations.',
+      okText: 'Delete',
+      cancelText: 'Cancel',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          setDeletingRoleId(role.id);
+          await deleteRole(role.id);
+          message.success('Role deleted');
+          await reloadRoles();
+          if (rolePermissionRoleId === role.id) {
+            const nextRole = roles.find((r) => r.id !== role.id);
+            setRolePermissionRoleId(nextRole?.id);
+            if (nextRole?.id) {
+              await loadRolePermissionsForRole(nextRole.id);
+            } else {
+              setRolePermissionsList([]);
+            }
+          }
+        } catch (error: any) {
+          const errorMessage = error.response?.data?.message || error.message || 'Failed to delete role';
+          message.error(errorMessage);
+        } finally {
+          setDeletingRoleId(null);
+        }
+      },
+    });
   };
 
   // Handle role selection - fetch existing permissions
@@ -396,112 +484,264 @@ const Permissions = () => {
     }
   };
 
+  const rolePermissionColumns = [
+    {
+      title: 'Role',
+      dataIndex: 'roleId',
+      key: 'role',
+      render: (value: string) => resolveRoleName(value),
+    },
+    {
+      title: 'Permission',
+      dataIndex: 'permissionId',
+      key: 'permission',
+      render: (value: string) => resolvePermissionLabel(value),
+    },
+    {
+      title: 'Action',
+      dataIndex: 'permission',
+      key: 'action',
+      render: (_: any, record: RolePermission) =>
+        record.permission?.action || resolvePermissionLabel(record.permissionId)?.split(' - ')[1] || '-',
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_: any, record: RolePermission) => (
+        <Space>
+          <AntButton
+            type="text"
+            icon={<EditOutlined />}
+            aria-label="Edit"
+            onClick={() => {
+              setAddRolePermissionModalVisible(true);
+              addRolePermissionForm.setFieldsValue({ roleId: record.roleId });
+              handleRoleSelect(record.roleId);
+            }}
+          />
+          <AntButton
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            aria-label="Delete"
+            onClick={() => handleDeleteRolePermissionRow(record.permissionId)}
+          />
+        </Space>
+      ),
+    },
+  ];
+
+  const roleColumns = [
+    {
+      title: 'Role Name',
+      dataIndex: 'name',
+      key: 'name',
+    },
+    {
+      title: 'Created Date',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (value: string) => (value ? new Date(value).toLocaleString() : '-'),
+    },
+    {
+      title: 'Updated Date',
+      dataIndex: 'updatedAt',
+      key: 'updatedAt',
+      render: (value: string) => (value ? new Date(value).toLocaleString() : '-'),
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_: any, record: Role) => (
+        <Space>
+          <AntButton
+            type="link"
+            onClick={() => {
+              setAddRoleModalVisible(true);
+              addRoleForm.setFieldsValue({ name: record.name, description: record.description });
+            }}
+          >
+            Edit
+          </AntButton>
+          <AntButton
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            aria-label="Delete Role"
+            loading={deletingRoleId === record.id}
+            onClick={() => handleDeleteRole(record)}
+          >
+          </AntButton>
+        </Space>
+      ),
+    },
+  ];
+
   return (
     <div className="min-h-screen gap-[30px] bg-bg-secondary p-7">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-surface-1 rounded-2xl shadow-card p-8 mb-6 border border-[var(--glass-border)]">
-          <Space size="middle" className="w-full" direction="vertical">
-            <Space size="middle" className="w-full" wrap>
-              {/* <LanguageSelector /> */}
-              <Input
-                placeholder={t.searchPlaceholder}
-                style={{ width: 550, height: '40px' }}
-                value={searchText}
-                onChange={(e) => {
-                  setSearchText(e.target.value);
-                  setCurrentPage(1);
-                }}
-              />
-              <Select
-                placeholder={t.filterByModule}
-                style={{ width: 230, height: '40px' }}
-                allowClear
-                value={moduleFilter || undefined}
-                onChange={(value) => {
-                  setModuleFilter(value || '');
-                  setCurrentPage(1);
-                }}
-              >
-                {allModules.map((module) => (
-                  <Option key={module} value={module}>
-                    {module.charAt(0).toUpperCase() + module.slice(1)}
-                  </Option>
-                ))}
-              </Select>
-              <Select
-                placeholder={t.filterByAction}
-                style={{ width: 230, height: '40px' }}
-                allowClear
-                value={actionFilter || undefined}
-                onChange={(value) => {
-                  setActionFilter(value || '');
-                  setCurrentPage(1);
-                }}
-              >
-                {STANDARD_ACTIONS.map((action) => (
-                  <Option key={action} value={action}>
-                    {action.charAt(0).toUpperCase() + action.slice(1)}
-                  </Option>
-                ))}
-              </Select>
-              <Button
-                icon={<UserAddOutlined />}
-                onClick={() => setAddRoleModalVisible(true)}
-                style={{
-                  height: '40px',
-                  backgroundColor: 'var(--brand)',
-                  borderColor: 'var(--brand)',
-                }}
-              >
-                {t.addRole}
-              </Button>
-              <Button
-                icon={<SafetyOutlined />}
-                onClick={() => setAddRolePermissionModalVisible(true)}
-                style={{
-                  height: '40px',
-                  backgroundColor: 'var(--brand)',
-                  borderColor: 'var(--brand)',
-                }}
-              >
-                {t.addRolePermission}
-              </Button>
-              <Button
-                icon={<PlusOutlined />}
-                onClick={() => setCreatePermissionModalVisible(true)}
-                style={{
-                  height: '40px',
-                  backgroundColor: 'var(--brand)',
-                  borderColor: 'var(--brand)',
-                }}
-              >
-                {t.createPermission}
-              </Button>
-            </Space>
-          </Space>
-        </div>
+        <Tabs activeKey={activeTab} onChange={setActiveTab} items={[
+          {
+            key: 'rolePermission',
+            label: 'Role Permission',
+            children: (
+              <div className="bg-surface-1 rounded-2xl shadow-card p-8 border border-[var(--glass-border)]">
+                <Space direction="vertical" size="middle" className="w-full">
+                  <Space wrap size="middle">
+                    <Select
+                      placeholder="Select Role"
+                      style={{ width: 260 }}
+                      value={rolePermissionRoleId}
+                      onChange={handleRolePermissionRoleChange}
+                      options={roles.map((role) => ({
+                        value: role.id,
+                        label: role.name,
+                      }))}
+                    />
+                    <Button
+                      icon={<SafetyOutlined />}
+                      onClick={() => setAddRolePermissionModalVisible(true)}
+                      style={{
+                        height: '40px',
+                        backgroundColor: 'var(--brand)',
+                        borderColor: 'var(--brand)',
+                      }}
+                    >
+                      {t.addRolePermission}
+                    </Button>
+                  </Space>
+                  <AntTable
+                    rowKey={(record) => record.id}
+                    dataSource={rolePermissionsList}
+                    columns={rolePermissionColumns}
+                    loading={loadingRolePermissionList}
+                    pagination={false}
+                    size="middle"
+                  />
+                </Space>
+              </div>
+            ),
+          },
+          {
+            key: 'role',
+            label: 'Role',
+            children: (
+              <div className="bg-surface-1 rounded-2xl shadow-card p-8 border border-[var(--glass-border)]">
+                <Space direction="vertical" size="middle" className="w-full">
+                  <Space wrap size="middle">
+                    <Button
+                      icon={<UserAddOutlined />}
+                      onClick={() => setAddRoleModalVisible(true)}
+                      style={{
+                        height: '40px',
+                        backgroundColor: 'var(--brand)',
+                        borderColor: 'var(--brand)',
+                      }}
+                    >
+                      {t.addRole}
+                    </Button>
+                  </Space>
+                  <AntTable
+                    rowKey={(record) => record.id}
+                    dataSource={roles}
+                    columns={roleColumns}
+                    loading={loadingRoles}
+                    pagination={false}
+                    size="middle"
+                  />
+                </Space>
+              </div>
+            ),
+          },
+          {
+            key: 'permission',
+            label: 'Permission',
+            children: (
+              <>
+                <div className="bg-surface-1 rounded-2xl shadow-card p-8 mb-6 border border-[var(--glass-border)]">
+                  <Space size="middle" className="w-full" direction="vertical">
+                    <Space size="middle" className="w-full" wrap>
+                      <Input
+                        placeholder={t.searchPlaceholder}
+                        style={{ width: 550, height: '40px' }}
+                        value={searchText}
+                        onChange={(e) => {
+                          setSearchText(e.target.value);
+                          setCurrentPage(1);
+                        }}
+                      />
+                      <Select
+                        placeholder={t.filterByModule}
+                        style={{ width: 230, height: '40px' }}
+                        allowClear
+                        value={moduleFilter || undefined}
+                        onChange={(value) => {
+                          setModuleFilter(value || '');
+                          setCurrentPage(1);
+                        }}
+                      >
+                        {allModules.map((module) => (
+                          <Option key={module} value={module}>
+                            {module.charAt(0).toUpperCase() + module.slice(1)}
+                          </Option>
+                        ))}
+                      </Select>
+                      <Select
+                        placeholder={t.filterByAction}
+                        style={{ width: 230, height: '40px' }}
+                        allowClear
+                        value={actionFilter || undefined}
+                        onChange={(value) => {
+                          setActionFilter(value || '');
+                          setCurrentPage(1);
+                        }}
+                      >
+                        {STANDARD_ACTIONS.map((action) => (
+                          <Option key={action} value={action}>
+                            {action.charAt(0).toUpperCase() + action.slice(1)}
+                          </Option>
+                        ))}
+                      </Select>
+                      <Button
+                        icon={<PlusOutlined />}
+                        onClick={() => setCreatePermissionModalVisible(true)}
+                        style={{
+                          height: '40px',
+                          backgroundColor: 'var(--brand)',
+                          borderColor: 'var(--brand)',
+                        }}
+                      >
+                        {t.createPermission}
+                      </Button>
+                    </Space>
+                  </Space>
+                </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <Spin size="large" />
-          </div>
-        ) : (
-          <Table
-            data={permissions}
-            loading={loading}
-            onNavigate={handleNavigate}
-            onDelete={loadPermissions}  
-            pagination={{
-              current: currentPage,
-              pageSize: pageSize,
-              total: total,
-              onChange: handlePageChange,
-              onShowSizeChange: handlePageSizeChange,
-              showSizeChanger: true,  
-              showTotal: (total: number) => translate('totalPermissions', { count: total }),
-            }}
-          />
-        )}
+                {loading ? (
+                  <div className="flex justify-center items-center py-12">
+                    <Spin size="large" />
+                  </div>
+                ) : (
+                  <PermissionTable
+                    data={permissions}
+                    loading={loading}
+                    onNavigate={handleNavigate}
+                    onDelete={loadPermissions}  
+                    pagination={{
+                      current: currentPage,
+                      pageSize: pageSize,
+                      total: total,
+                      onChange: handlePageChange,
+                      onShowSizeChange: handlePageSizeChange,
+                      showSizeChanger: true,  
+                      showTotal: (total: number) => translate('totalPermissions', { count: total }),
+                    }}
+                  />
+                )}
+              </>
+            ),
+          },
+        ]} />
       </div>
 
       {/* Add Role Modal */}

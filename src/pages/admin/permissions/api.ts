@@ -130,6 +130,11 @@ export const createRole = async (data: {
   return response.data;
 };
 
+// Delete a role
+export const deleteRole = async (id: string): Promise<void> => {
+  await apiClient.delete(`permissions/roles/${id}`);
+};
+
 // Create role permission
 export const createRolePermission = async (data: {
   roleId: string;
