@@ -28,6 +28,9 @@ interface DataTableProps<T> {
   getRowId: (record: T) => string;
   deleteConfirmMessage?: (record: T) => string;
   deleteTitle?: string;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  canView?: boolean;
 }
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
@@ -53,6 +56,9 @@ export function DataTable<T extends Record<string, any>>({
   getRowId,
   deleteConfirmMessage,
   deleteTitle = 'Delete Item',
+  canEdit = true,
+  canDelete = true,
+  canView = true,
 }: DataTableProps<T>) {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 640 : false);
@@ -322,7 +328,17 @@ export function DataTable<T extends Record<string, any>>({
                         </h3>
                       </div>
                       <div className="flex items-center gap-2 ml-2">
-                        {onEdit && (
+                        {onView && canView && (
+                          <button
+                            onClick={() => onView(item)}
+                            className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
+                            title="View"
+                            aria-label="View"
+                          >
+                            <EyeOutlined className="w-4 h-4 text-[var(--text-secondary)]" />
+                          </button>
+                        )}
+                        {onEdit && canEdit && (
                           <button
                             onClick={() => onEdit(item)}
                             className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
@@ -332,7 +348,7 @@ export function DataTable<T extends Record<string, any>>({
                             <EditOutlined className="w-4 h-4 text-[var(--text-secondary)]" />
                           </button>
                         )}
-                        {onDelete && (
+                        {onDelete && canDelete && (
                           <button
                             onClick={() => handleDelete(item)}
                             className="p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
@@ -340,6 +356,26 @@ export function DataTable<T extends Record<string, any>>({
                             aria-label="Delete"
                           >
                             <DeleteOutlined className="w-4 h-4 text-red-500 dark:text-red-400" />
+                          </button>
+                        )}
+                        {onEdit && !canEdit && (
+                          <button
+                            disabled
+                            className="p-2 rounded opacity-50 cursor-not-allowed"
+                            title="You do not have permission to edit"
+                            aria-label="Edit (disabled)"
+                          >
+                            <EditOutlined className="w-4 h-4 text-[var(--text-secondary)]" />
+                          </button>
+                        )}
+                        {onDelete && !canDelete && (
+                          <button
+                            disabled
+                            className="p-2 rounded opacity-50 cursor-not-allowed"
+                            title="You do not have permission to delete"
+                            aria-label="Delete (disabled)"
+                          >
+                            <DeleteOutlined className="w-4 h-4 text-red-300 dark:text-red-600" />
                           </button>
                         )}
                       </div>
@@ -387,7 +423,7 @@ export function DataTable<T extends Record<string, any>>({
                     </div>
                   </th>
                 ))}
-                {(onView || onEdit || onDelete) && (
+                {((onView && canView) || (onEdit && canEdit) || (onDelete && canDelete) || (onEdit && !canEdit) || (onDelete && !canDelete)) && (
                   <th className="px-[18px] py-6 text-left pl-[100px] h-[64px]">
                     <span className="text-sm font-semibold text-[var(--text-primary)]">Actions</span>
                   </th>
@@ -398,7 +434,7 @@ export function DataTable<T extends Record<string, any>>({
               {data.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={visibleColumns.length + (onView || onEdit || onDelete ? 1 : 0)}
+                    colSpan={visibleColumns.length + ((onView && canView) || (onEdit && canEdit) || (onDelete && canDelete) || (onEdit && !canEdit) || (onDelete && !canDelete) ? 1 : 0)}
                     className="px-[18px] py-12 text-center text-[var(--text-secondary)] text-sm"
                   >
                     {emptyMessage}
@@ -424,10 +460,10 @@ export function DataTable<T extends Record<string, any>>({
                           </td>
                         );
                       })}
-                      {(onView || onEdit || onDelete) && (
+                      {((onView && canView) || (onEdit && canEdit) || (onDelete && canDelete) || (onEdit && !canEdit) || (onDelete && !canDelete)) && (
                         <td className="px-[18px] py-4 h-[56px] text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {onView && (
+                            {onView && canView && (
                               <button
                                 onClick={() => onView(item)}
                                 className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
@@ -437,7 +473,7 @@ export function DataTable<T extends Record<string, any>>({
                                 <EyeOutlined className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
                               </button>
                             )}
-                            {onEdit && (
+                            {onEdit && canEdit && (
                               <button
                                 onClick={() => onEdit(item)}
                                 className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
@@ -447,7 +483,17 @@ export function DataTable<T extends Record<string, any>>({
                                 <EditOutlined className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
                               </button>
                             )}
-                            {onDelete && (
+                            {onEdit && !canEdit && (
+                              <button
+                                disabled
+                                className="p-2 rounded opacity-50 cursor-not-allowed"
+                                title="You do not have permission to edit"
+                                aria-label="Edit (disabled)"
+                              >
+                                <EditOutlined className="w-4 h-4 text-[var(--text-secondary)]" />
+                              </button>
+                            )}
+                            {onDelete && canDelete && (
                               <button
                                 onClick={() => handleDelete(item)}
                                 className="p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
@@ -455,6 +501,16 @@ export function DataTable<T extends Record<string, any>>({
                                 aria-label="Delete"
                               >
                                 <DeleteOutlined className="w-4 h-4 text-red-500 dark:text-red-400" />
+                              </button>
+                            )}
+                            {onDelete && !canDelete && (
+                              <button
+                                disabled
+                                className="p-2 rounded opacity-50 cursor-not-allowed"
+                                title="You do not have permission to delete"
+                                aria-label="Delete (disabled)"
+                              >
+                                <DeleteOutlined className="w-4 h-4 text-red-300 dark:text-red-600" />
                               </button>
                             )}
                           </div>

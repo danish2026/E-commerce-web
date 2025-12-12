@@ -9,6 +9,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import Table from './table';
 import LanguageSelector from '../../../components/purchase/LanguageSelector';
 import { useProductTranslation } from '../../../hooks/useProductTranslation';
+import { usePermissions } from '../../../hooks/usePermissions';
 import {
   fetchProducts,
   getApiErrorMessage,
@@ -39,6 +40,7 @@ const Product = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, translate } = useProductTranslation();
+  const { canCreate, canView, canEdit, canDelete } = usePermissions();
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
   const [products, setProducts] = useState<ProductDisplay[]>([]);
@@ -46,6 +48,13 @@ const Product = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+
+  // Permission checks for products module
+  const moduleName = 'products';
+  const canCreateProduct = canCreate(moduleName);
+  const canViewProduct = canView(moduleName);
+  const canEditProduct = canEdit(moduleName);
+  const canDeleteProduct = canDelete(moduleName);
 
   // Fetch products from API
   const loadProducts = useCallback(async () => {
@@ -167,6 +176,8 @@ const Product = () => {
               <Button
                 icon={<PlusOutlined />}
                 onClick={() => handleNavigate('form', { mode: 'add' })}
+                disabled={!canCreateProduct}
+                title={!canCreateProduct ? 'You do not have permission to create products' : ''}
                 style={{
                   height: '40px',
                   width: '200px',
@@ -180,7 +191,13 @@ const Product = () => {
           </Space>
         </div>
 
-        {loading ? (
+        {!canViewProduct ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-center text-[var(--text-secondary)]">
+              You do not have permission to view products.
+            </div>
+          </div>
+        ) : loading ? (
           <div className="flex justify-center items-center py-12">
             <Spin size="large" />
           </div>
@@ -189,6 +206,8 @@ const Product = () => {
             onNavigate={handleNavigate} 
             products={filteredProducts} 
             onDelete={handleDeleteSuccess}
+            canEdit={canEditProduct}
+            canDelete={canDeleteProduct}
             pagination={{
               current: currentPage,
               pageSize: pageSize,

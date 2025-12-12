@@ -9,6 +9,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import Table from './table';
 import LanguageSelector from '../../../components/purchase/LanguageSelector';
 import { usePurchaseTranslation } from '../../../hooks/usePurchaseTranslation';
+import { usePermissions } from '../../../hooks/usePermissions';
 import {
   fetchPurchaseItems,
   getApiErrorMessage,
@@ -32,6 +33,7 @@ const PurchaseItem = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, translate } = usePurchaseTranslation();
+  const { canCreate, canView, canEdit, canDelete } = usePermissions();
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
   const [purchaseItems, setPurchaseItems] = useState<PurchaseItemDisplay[]>([]);
@@ -39,6 +41,13 @@ const PurchaseItem = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+
+  // Permission checks for purchase-item module
+  const moduleName = 'purchase-item';
+  const canCreatePurchaseItem = canCreate(moduleName);
+  const canViewPurchaseItem = canView(moduleName);
+  const canEditPurchaseItem = canEdit(moduleName);
+  const canDeletePurchaseItem = canDelete(moduleName);
 
   // Fetch purchase items from API
   const loadPurchaseItems = useCallback(async () => {
@@ -153,6 +162,8 @@ const PurchaseItem = () => {
               <Button
                 icon={<PlusOutlined />}
                 onClick={() => handleNavigate('form', { mode: 'add' })}
+                disabled={!canCreatePurchaseItem}
+                title={!canCreatePurchaseItem ? 'You do not have permission to create purchase items' : ''}
                 style={{
                   height: '40px',
                   width: '200px',
@@ -166,7 +177,13 @@ const PurchaseItem = () => {
           </Space>
         </div>
 
-        {loading ? (
+        {!canViewPurchaseItem ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-center text-[var(--text-secondary)]">
+              You do not have permission to view purchase items.
+            </div>
+          </div>
+        ) : loading ? (
           <div className="flex justify-center items-center py-12">
             <Spin size="large" />
           </div>
@@ -175,6 +192,8 @@ const PurchaseItem = () => {
             onNavigate={handleNavigate} 
             purchaseItems={filteredPurchaseItems} 
             onDelete={handleDeleteSuccess}
+            canEdit={canEditPurchaseItem}
+            canDelete={canDeletePurchaseItem}
             pagination={{
               current: currentPage,
               pageSize: pageSize,

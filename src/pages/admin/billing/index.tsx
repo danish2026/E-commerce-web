@@ -8,6 +8,7 @@ import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 // import LanguageSelector from '../../../components/purchase/LanguageSelector';
 import { useBillingTranslation } from '../../../hooks/useBillingTranslation';
+import { usePermissions } from '../../../hooks/usePermissions';
 import { fetchOrders, Order } from './api';
 import Table from './table';
 
@@ -16,6 +17,7 @@ const Billing = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, translate } = useBillingTranslation();
+  const { canCreate, canView, canEdit, canDelete } = usePermissions();
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchText, setSearchText] = useState('');
@@ -25,6 +27,13 @@ const Billing = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+
+  // Permission checks for billing module
+  const moduleName = 'billing';
+  const canCreateOrder = canCreate(moduleName);
+  const canViewOrder = canView(moduleName);
+  const canEditOrder = canEdit(moduleName);
+  const canDeleteOrder = canDelete(moduleName);
 
   // Load orders with server-side pagination and filtering
   const loadOrders = useCallback(async () => {
@@ -152,6 +161,8 @@ const Billing = () => {
               <Button
                 icon={<PlusOutlined />}
                 onClick={() => navigate('/billing/form')}
+                disabled={!canCreateOrder}
+                title={!canCreateOrder ? 'You do not have permission to create orders' : ''}
                 style={{
                   height: '40px',
                   width: '200px',
@@ -165,7 +176,13 @@ const Billing = () => {
           </Space>
         </div>
 
-        {loading ? (
+        {!canViewOrder ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-center text-[var(--text-secondary)]">
+              You do not have permission to view orders.
+            </div>
+          </div>
+        ) : loading ? (
           <div className="flex justify-center items-center py-12">
             <Spin size="large" />
           </div>
@@ -175,6 +192,8 @@ const Billing = () => {
             loading={loading}
             onNavigate={handleNavigate}
             onDelete={handleDeleteSuccess}
+            canEdit={canEditOrder}
+            canDelete={canDeleteOrder}
             pagination={{
               current: currentPage,
               pageSize: pageSize,

@@ -128,7 +128,13 @@ const Employees = () => {
           </Space>
         </div>
 
-        {loading ? (
+        {!canViewEmployee ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-center text-[var(--text-secondary)]">
+              You do not have permission to view employees.
+            </div>
+          </div>
+        ) : loading ? (
           <div className="flex justify-center items-center py-12">
             <Spin size="large" />
           </div>
@@ -138,6 +144,8 @@ const Employees = () => {
             loading={loading}
             onNavigate={handleNavigate}
             onDelete={loadEmployees}
+            canEdit={canEditEmployee}
+            canDelete={canDeleteEmployee}
             pagination={{
               current: currentPage,
               pageSize: pageSize,

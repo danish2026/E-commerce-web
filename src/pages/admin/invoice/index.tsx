@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { Table } from 'lucide-react';
+import { usePermissions } from '../../../hooks/usePermissions';
 
 
 const { RangePicker } = DatePicker;
@@ -19,6 +20,7 @@ interface InvoiceDisplay {
 
 const Invoice = () => {
   const navigate = useNavigate();
+  const { canCreate, canView } = usePermissions();
   const [searchText, setSearchText] = useState('');
    const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
   // const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -26,6 +28,11 @@ const Invoice = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+
+  // Permission checks for invoice module
+  const moduleName = 'invoice';
+  const canCreateInvoice = canCreate(moduleName);
+  const canViewInvoice = canView(moduleName);
 
   const handleNavigate = (path: string, data?: any) => {
     if (path === 'form') {
@@ -47,11 +54,27 @@ const Invoice = () => {
             <Space size="middle" className="w-full" wrap>
               <Input placeholder="Search by invoice number or customer name" prefix={<SearchOutlined />} value={searchText} onChange={(e) => setSearchText(e.target.value)} style={{ width: 600, height: '40px' }} allowClear />
               <RangePicker value={dateRange} onChange={(dates) => setDateRange(dates as [Dayjs | null, Dayjs | null] | null)} format="YYYY-MM-DD" placeholder={['Start Date', 'End Date']} style={{ width: 200, height: '40px' }} />
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => handleNavigate('form', { mode: 'add' })} size="large" style={{ height: '40px', width: '200px', backgroundColor: 'var(--brand)', borderColor: 'var(--brand)' }}>Add Invoice</Button>
+              <Button 
+                type="primary" 
+                icon={<PlusOutlined />} 
+                onClick={() => handleNavigate('form', { mode: 'add' })} 
+                disabled={!canCreateInvoice}
+                title={!canCreateInvoice ? 'You do not have permission to create invoices' : ''}
+                size="large" 
+                style={{ height: '40px', width: '200px', backgroundColor: 'var(--brand)', borderColor: 'var(--brand)' }}
+              >
+                Add Invoice
+              </Button>
             </Space>
           </Space>
         </div>
-        {loading ? (
+        {!canViewInvoice ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-center text-[var(--text-secondary)]">
+              You do not have permission to view invoices.
+            </div>
+          </div>
+        ) : loading ? (
           <div className="flex justify-center items-center py-12">
             <Spin size="large" />
           </div>

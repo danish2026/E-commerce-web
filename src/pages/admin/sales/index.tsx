@@ -4,6 +4,7 @@ import { Input, DatePicker, Button, Space, message, Spin, Select } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import Table from './table';
+import { usePermissions } from '../../../hooks/usePermissions';
 import {
   fetchSales,
   mapPaymentStatusFromEnum,
@@ -27,6 +28,7 @@ interface SalesDisplay {
 
 const Sales = () => {
   const navigate = useNavigate();
+  const { canCreate, canView, canEdit, canDelete } = usePermissions();
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | undefined>(undefined);
@@ -35,6 +37,13 @@ const Sales = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+
+  // Permission checks for sales module
+  const moduleName = 'sales';
+  const canCreateSale = canCreate(moduleName);
+  const canViewSale = canView(moduleName);
+  const canEditSale = canEdit(moduleName);
+  const canDeleteSale = canDelete(moduleName);
 
   // Fetch sales from API
   const loadSales = useCallback(async () => {
@@ -157,6 +166,8 @@ const Sales = () => {
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => handleNavigate('form', { mode: 'add' })}
+                disabled={!canCreateSale}
+                title={!canCreateSale ? 'You do not have permission to create sales' : ''}
                 size="large"
                 style={{
                   height: '40px',
@@ -171,7 +182,13 @@ const Sales = () => {
           </Space>
         </div>
 
-        {loading ? (
+        {!canViewSale ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-center text-[var(--text-secondary)]">
+              You do not have permission to view sales.
+            </div>
+          </div>
+        ) : loading ? (
           <div className="flex justify-center items-center py-12">
             <Spin size="large" />
           </div>
@@ -180,6 +197,8 @@ const Sales = () => {
             onNavigate={handleNavigate} 
             sales={filteredSales} 
             onDelete={loadSales}
+            canEdit={canEditSale}
+            canDelete={canDeleteSale}
             pagination={{
               current: currentPage,
               pageSize: pageSize,

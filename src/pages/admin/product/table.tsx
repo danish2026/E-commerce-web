@@ -33,6 +33,8 @@ interface TableProps {
   products: Product[];
   onDelete?: () => void;
   pagination?: TablePaginationConfig;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
@@ -53,7 +55,7 @@ const formatCurrency = (value: string | number | undefined | null): string => {
   return numValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
-const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
+const Table = ({ onNavigate, products, onDelete, pagination, canEdit = true, canDelete = true }: TableProps) => {
   const { t } = useProductTranslation();
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 640 : false);
@@ -311,22 +313,44 @@ const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
                       </h3>
                     </div>
                     <div className="flex items-center gap-2 ml-2">
-                      <button
-                        onClick={() => onNavigate('form', { ...item, mode: 'edit' })}
-                        className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
-                        title="Edit"
-                        aria-label="Edit"
-                      >
-                        <EditOutlined className="w-4 h-4 text-[var(--text-secondary)]" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item)}
-                        className="p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                        title="Delete"
-                        aria-label="Delete"
-                      >
-                        <DeleteOutlined className="w-4 h-4 text-red-500 dark:text-red-400" />
-                      </button>
+                      {canEdit ? (
+                        <button
+                          onClick={() => onNavigate('form', { ...item, mode: 'edit' })}
+                          className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
+                          title="Edit"
+                          aria-label="Edit"
+                        >
+                          <EditOutlined className="w-4 h-4 text-[var(--text-secondary)]" />
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          className="p-2 rounded opacity-50 cursor-not-allowed"
+                          title="You do not have permission to edit"
+                          aria-label="Edit (disabled)"
+                        >
+                          <EditOutlined className="w-4 h-4 text-[var(--text-secondary)]" />
+                        </button>
+                      )}
+                      {canDelete ? (
+                        <button
+                          onClick={() => handleDelete(item)}
+                          className="p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                          title="Delete"
+                          aria-label="Delete"
+                        >
+                          <DeleteOutlined className="w-4 h-4 text-red-500 dark:text-red-400" />
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          className="p-2 rounded opacity-50 cursor-not-allowed"
+                          title="You do not have permission to delete"
+                          aria-label="Delete (disabled)"
+                        >
+                          <DeleteOutlined className="w-4 h-4 text-red-300 dark:text-red-600" />
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="ml-7 space-y-2 text-xs text-[var(--text-secondary)]">
@@ -453,22 +477,44 @@ const Table = ({ onNavigate, products, onDelete, pagination }: TableProps) => {
                         >
                           <EyeOutlined className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
                         </button>
-                        <button
-                          onClick={() => onNavigate('form', { ...item, mode: 'edit' })}
-                          className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
-                          title="Edit"
-                          aria-label="Edit"
-                        >
-                          <EditOutlined className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item)}
-                          className="p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
-                          title="Delete"
-                          aria-label="Delete"
-                        >
-                          <DeleteOutlined className="w-4 h-4 text-red-500 dark:text-red-400" />
-                        </button>
+                        {canEdit ? (
+                          <button
+                            onClick={() => onNavigate('form', { ...item, mode: 'edit' })}
+                            className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
+                            title="Edit"
+                            aria-label="Edit"
+                          >
+                            <EditOutlined className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="p-2 rounded opacity-50 cursor-not-allowed"
+                            title="You do not have permission to edit"
+                            aria-label="Edit (disabled)"
+                          >
+                            <EditOutlined className="w-4 h-4 text-[var(--text-secondary)]" />
+                          </button>
+                        )}
+                        {canDelete ? (
+                          <button
+                            onClick={() => handleDelete(item)}
+                            className="p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                            title="Delete"
+                            aria-label="Delete"
+                          >
+                            <DeleteOutlined className="w-4 h-4 text-red-500 dark:text-red-400" />
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="p-2 rounded opacity-50 cursor-not-allowed"
+                            title="You do not have permission to delete"
+                            aria-label="Delete (disabled)"
+                          >
+                            <DeleteOutlined className="w-4 h-4 text-red-300 dark:text-red-600" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

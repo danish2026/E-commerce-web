@@ -11,6 +11,7 @@ import { FormModal, FormField } from '../../../components/common/FormModal';
 import { ViewModal, ViewField, createDateField, createTextField } from '../../../components/common/ViewModal';
 import LanguageSelector from '../../../components/purchase/LanguageSelector';
 import { useCategoryTranslation } from '../../../hooks/useCategoryTranslation';
+import { usePermissions } from '../../../hooks/usePermissions';
 import {
   fetchCategories,
   createCategory,
@@ -35,6 +36,7 @@ const Categories = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, translate } = useCategoryTranslation();
+  const { canCreate, canView, canEdit, canDelete } = usePermissions();
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
   const [categories, setCategories] = useState<CategoryDisplay[]>([]);
@@ -42,6 +44,13 @@ const Categories = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+
+  // Permission checks for categories module
+  const moduleName = 'categories';
+  const canCreateCategory = canCreate(moduleName);
+  const canViewCategory = canView(moduleName);
+  const canEditCategory = canEdit(moduleName);
+  const canDeleteCategory = canDelete(moduleName);
 
   // Modal states
   const [formModalOpen, setFormModalOpen] = useState(false);
@@ -278,6 +287,8 @@ const Categories = () => {
               <Button
                 icon={<PlusOutlined />}
                 onClick={() => handleOpenFormModal()}
+                disabled={!canCreateCategory}
+                title={!canCreateCategory ? 'You do not have permission to create categories' : ''}
                 style={{
                   height: '40px',
                   width: '200px',
@@ -291,7 +302,13 @@ const Categories = () => {
           </Space>
         </div>
 
-        {loading ? (
+        {!canViewCategory ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-center text-[var(--text-secondary)]">
+              You do not have permission to view categories.
+            </div>
+          </div>
+        ) : loading ? (
           <div className="flex justify-center items-center py-12">
             <Spin size="large" />
           </div>
@@ -303,6 +320,8 @@ const Categories = () => {
             onEdit={handleOpenFormModal}
             onDelete={handleDelete}
             onDeleteSuccess={handleDeleteSuccess}
+            canEdit={canEditCategory}
+            canDelete={canDeleteCategory}
             pagination={{
               current: currentPage,
               pageSize: pageSize,
