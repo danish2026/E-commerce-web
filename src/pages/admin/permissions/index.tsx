@@ -44,6 +44,16 @@ const Permissions = () => {
   const [deleteRoleModalVisible, setDeleteRoleModalVisible] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
   
+  // Pagination state for Role table
+  const [roleCurrentPage, setRoleCurrentPage] = useState(1);
+  const [rolePageSize, setRolePageSize] = useState(10);
+  const [roleTotal, setRoleTotal] = useState(0);
+  
+  // Pagination state for Role Permission table
+  const [rolePermissionCurrentPage, setRolePermissionCurrentPage] = useState(1);
+  const [rolePermissionPageSize, setRolePermissionPageSize] = useState(10);
+  const [rolePermissionTotal, setRolePermissionTotal] = useState(0);
+  
   // Form instances
   const [addRoleForm] = Form.useForm();
   const [addRolePermissionForm] = Form.useForm();
@@ -128,16 +138,34 @@ const Permissions = () => {
     }
   };
 
-  // Function to reload roles
+  // Function to reload roles with pagination
   const reloadRoles = async () => {
     try {
       setLoadingRoles(true);
-      const fetchedRoles = await fetchRoles();
-      setRoles(fetchedRoles);
-      console.log('Roles reloaded:', fetchedRoles.length);
+      const response = await fetchRoles(roleCurrentPage, rolePageSize);
+      setRoles(response.data);
+      setRoleTotal(response.meta.total);
+      console.log('Roles reloaded:', response.data.length);
     } catch (error: any) {   
       console.error('Error reloading roles:', error);
       setRoles([]);
+      setRoleTotal(0);
+    } finally {
+      setLoadingRoles(false);
+    }
+  };
+  
+  // Function to load roles with pagination
+  const loadRoles = async () => {
+    try {
+      setLoadingRoles(true);
+      const response = await fetchRoles(roleCurrentPage, rolePageSize);
+      setRoles(response.data);
+      setRoleTotal(response.meta.total);
+    } catch (error: any) {
+      console.error('Error loading roles:', error);
+      setRoles([]);
+      setRoleTotal(0);
     } finally {
       setLoadingRoles(false);
     }
@@ -178,11 +206,6 @@ const Permissions = () => {
     const loadRolesAndPermissions = async () => {
       try {
         setLoadingPermissions(true);
-        setLoadingRoles(true);
-        const fetchedRoles = await fetchRoles();
-        setRoles(fetchedRoles);
-        console.log('Roles loaded:', fetchedRoles.length);
-        
         // Load all permissions for role permission assignment using pagination
         const allPerms = await fetchAllPermissions();
         console.log('All permissions fetched:', allPerms.length);
@@ -195,16 +218,14 @@ const Permissions = () => {
         setAllPermissions(allPerms);
         console.log('All permissions state updated:', allPerms.length, 'permissions');
       } catch (error: any) {
-        console.error('Error loading roles/permissions:', error);
+        console.error('Error loading permissions:', error);
         console.error('Error response:', error.response);
         console.error('Error details:', error.response?.data || error.message);
         console.error('Error stack:', error.stack);
         message.error('Failed to load permissions. Please refresh the page.');
         setAllPermissions([]);
-        setRoles([]);
       } finally {
         setLoadingPermissions(false);
-        setLoadingRoles(false);
       }
     };
     loadRolesAndPermissions();
@@ -221,6 +242,20 @@ const Permissions = () => {
       loadRolePermissionsForRole(firstRole.id);
     }
   }, [roles]);
+  
+  // Load roles when pagination changes
+  useEffect(() => {
+    loadRoles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roleCurrentPage, rolePageSize]);
+  
+  // Load role permissions when pagination changes
+  useEffect(() => {
+    if (rolePermissionRoleId) {
+      loadRolePermissionsForRole(rolePermissionRoleId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rolePermissionCurrentPage, rolePermissionPageSize, rolePermissionRoleId]);
 
   const handleNavigate = (path: string, data?: any) => {
     if (path === 'form') {
@@ -240,6 +275,32 @@ const Permissions = () => {
   const handlePageSizeChange = (current: number, size: number) => {
     setPageSize(size);
     setCurrentPage(1);
+  };
+  
+  // Role table pagination handlers
+  const handleRolePageChange = (page: number, size?: number) => {
+    setRoleCurrentPage(page);
+    if (size && size !== rolePageSize) {
+      setRolePageSize(size);
+    }
+  };
+  
+  const handleRolePageSizeChange = (current: number, size: number) => {
+    setRolePageSize(size);
+    setRoleCurrentPage(1);
+  };
+  
+  // Role Permission table pagination handlers
+  const handleRolePermissionPageChange = (page: number, size?: number) => {
+    setRolePermissionCurrentPage(page);
+    if (size && size !== rolePermissionPageSize) {
+      setRolePermissionPageSize(size);
+    }
+  };
+  
+  const handleRolePermissionPageSizeChange = (current: number, size: number) => {
+    setRolePermissionPageSize(size);
+    setRolePermissionCurrentPage(1);
   };
 
   // Handle Add Role
@@ -261,12 +322,14 @@ const Permissions = () => {
     if (!roleId) return;
     try {
       setLoadingRolePermissionList(true);
-      const data = await fetchRolePermissionsByRole(roleId);
-      setRolePermissionsList(data);
+      const response = await fetchRolePermissionsByRole(roleId, rolePermissionCurrentPage, rolePermissionPageSize);
+      setRolePermissionsList(response.data);
+      setRolePermissionTotal(response.meta.total);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || 'Failed to load role permissions';
       message.error(errorMessage);
       setRolePermissionsList([]);
+      setRolePermissionTotal(0);
     } finally {
       setLoadingRolePermissionList(false);
     }
@@ -274,6 +337,7 @@ const Permissions = () => {
 
   const handleRolePermissionRoleChange = (value: string) => {
     setRolePermissionRoleId(value);
+    setRolePermissionCurrentPage(1); // Reset to first page when role changes
     loadRolePermissionsForRole(value);
   };
 
@@ -364,8 +428,9 @@ const Permissions = () => {
 
     try {
       setLoadingRolePermissions(true);
-      const rolePermissions = await fetchRolePermissionsByRole(roleId);
-      const permissionIds = rolePermissions.map((rp) => rp.permissionId);
+      // Fetch all role permissions for this role (use high limit to get all)
+      const response = await fetchRolePermissionsByRole(roleId, 1, 1000);
+      const permissionIds = response.data.map((rp: RolePermission) => rp.permissionId);
       setSelectedRolePermissions(permissionIds);
       // Initialize form with existing permissions, but allow user to select more
       addRolePermissionForm.setFieldsValue({ permissionIds });
@@ -670,7 +735,15 @@ const Permissions = () => {
                     dataSource={rolePermissionsList}
                     columns={rolePermissionColumns}
                     loading={loadingRolePermissionList}
-                    pagination={false}
+                    pagination={{
+                      current: rolePermissionCurrentPage,
+                      pageSize: rolePermissionPageSize,
+                      total: rolePermissionTotal,
+                      onChange: handleRolePermissionPageChange,
+                      onShowSizeChange: handleRolePermissionPageSizeChange,
+                      showSizeChanger: true,
+                      showTotal: (total: number) => `Total ${total} role permissions`,
+                    }}
                     size="middle"
                   />
                 </Space>
@@ -701,7 +774,15 @@ const Permissions = () => {
                     dataSource={roles}
                     columns={roleColumns}
                     loading={loadingRoles}
-                    pagination={false}
+                    pagination={{
+                      current: roleCurrentPage,
+                      pageSize: rolePageSize,
+                      total: roleTotal,
+                      onChange: handleRolePageChange,
+                      onShowSizeChange: handleRolePageSizeChange,
+                      showSizeChanger: true,
+                      showTotal: (total: number) => `Total ${total} roles`,
+                    }}
                     size="middle"
                   />
                 </Space>

@@ -109,10 +109,59 @@ export const deletePermission = async (id: string): Promise<void> => {
   await apiClient.delete(`permissions/${id}`);
 };
 
-// Get all roles
-export const fetchRoles = async (): Promise<Role[]> => {
-  const response = await apiClient.get('permissions/roles');
-  return response.data;
+// Get all roles with optional pagination
+export const fetchRoles = async (
+  page: number = 1,
+  limit: number = 10,
+  search?: string
+): Promise<{ data: Role[]; meta: { page: number; limit: number; total: number; totalPages: number; hasNext: boolean; hasPrev: boolean } }> => {
+  const params: Record<string, string | number> = {
+    page,
+    limit,
+  };
+  
+  if (search) {
+    params.search = search;
+  }
+  
+  try {
+    const response = await apiClient.get('permissions/roles', { params });
+    
+    // Handle both array and paginated response (for backward compatibility)
+    if (Array.isArray(response.data)) {
+      return {
+        data: response.data,
+        meta: {
+          total: response.data.length,
+          page: 1,
+          limit: response.data.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
+    }
+    
+    // Transform to match expected format
+    if (response.data.meta) {
+      return {
+        data: response.data.data || [],
+        meta: {
+          page: response.data.meta.page || page,
+          limit: response.data.meta.limit || limit,
+          total: response.data.meta.total || 0,
+          totalPages: response.data.meta.totalPages || Math.ceil((response.data.meta.total || 0) / (response.data.meta.limit || limit)),
+          hasNext: response.data.meta.hasNext !== undefined ? response.data.meta.hasNext : (response.data.meta.page || page) < Math.ceil((response.data.meta.total || 0) / (response.data.meta.limit || limit)),
+          hasPrev: response.data.meta.hasPrev !== undefined ? response.data.meta.hasPrev : (response.data.meta.page || page) > 1,
+        },
+      };
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching roles:', error);
+    throw error;
+  }
 };
 
 // Get all modules
@@ -173,10 +222,60 @@ export const createRolePermission = async (data: {
   return response.data;
 };
 
-// Get role permissions by role ID
-export const fetchRolePermissionsByRole = async (roleId: string): Promise<RolePermission[]> => {
-  const response = await apiClient.get(`permissions/role-permissions/role/${roleId}`);
-  return response.data;
+// Get role permissions by role ID with optional pagination
+export const fetchRolePermissionsByRole = async (
+  roleId: string,
+  page: number = 1,
+  limit: number = 10,
+  search?: string
+): Promise<{ data: RolePermission[]; meta: { page: number; limit: number; total: number; totalPages: number; hasNext: boolean; hasPrev: boolean } }> => {
+  const params: Record<string, string | number> = {
+    page,
+    limit,
+  };
+  
+  if (search) {
+    params.search = search;
+  }
+  
+  try {
+    const response = await apiClient.get(`permissions/role-permissions/role/${roleId}`, { params });
+    
+    // Handle both array and paginated response (for backward compatibility)
+    if (Array.isArray(response.data)) {
+      return {
+        data: response.data,
+        meta: {
+          total: response.data.length,
+          page: 1,
+          limit: response.data.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
+    }
+    
+    // Transform to match expected format
+    if (response.data.meta) {
+      return {
+        data: response.data.data || [],
+        meta: {
+          page: response.data.meta.page || page,
+          limit: response.data.meta.limit || limit,
+          total: response.data.meta.total || 0,
+          totalPages: response.data.meta.totalPages || Math.ceil((response.data.meta.total || 0) / (response.data.meta.limit || limit)),
+          hasNext: response.data.meta.hasNext !== undefined ? response.data.meta.hasNext : (response.data.meta.page || page) < Math.ceil((response.data.meta.total || 0) / (response.data.meta.limit || limit)),
+          hasPrev: response.data.meta.hasPrev !== undefined ? response.data.meta.hasPrev : (response.data.meta.page || page) > 1,
+        },
+      };
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching role permissions:', error);
+    throw error;
+  }
 };
 
 // Delete role permission
