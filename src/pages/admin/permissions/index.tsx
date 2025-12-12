@@ -133,7 +133,7 @@ const Permissions = () => {
       const fetchedRoles = await fetchRoles();
       setRoles(fetchedRoles);
       console.log('Roles reloaded:', fetchedRoles.length);
-    } catch (error: any) {
+    } catch (error: any) {   
       console.error('Error reloading roles:', error);
       setRoles([]);
     } finally {
@@ -141,7 +141,7 @@ const Permissions = () => {
     }
   };
 
-  // Load permissions with server-side pagination and filtering
+ 
   const loadPermissions = async () => {
     try {
       setLoading(true);
@@ -458,18 +458,57 @@ const Permissions = () => {
   // Handle Create Permission (with role and module selection)
   const handleCreatePermission = async (values: { roleId: string; module: string; actions: string[] }) => {
     try {
-      // First, create the permissions for the module
-      const createdPermissions = await bulkCreatePermissions({
-        module: values.module,
-        actions: values.actions,
-      });
+      let permissionsToAssign: Permission[] = [];
       
-      // Then, assign them to the role
-      if (createdPermissions.length > 0) {
-        await createRolePermission({
-          roleId: values.roleId,
-          permissionIds: createdPermissions.map(p => p.id),
+      try {
+        // First, try to create the permissions for the module
+        const createdPermissions = await bulkCreatePermissions({
+          module: values.module,
+          actions: values.actions,
         });
+        permissionsToAssign = createdPermissions;
+      } catch (error: any) {
+        // If we get a 409 error saying all permissions already exist, fetch the existing ones
+        if (error.response?.status === 409 && 
+            error.response?.data?.message?.includes('All permissions for module') &&
+            error.response?.data?.message?.includes('already exist')) {
+          // Fetch existing permissions for this module
+          const allPerms = await fetchAllPermissions();
+          // Filter to get permissions matching the module and requested actions
+          const existingPermissions = allPerms.filter(
+            (p) => p.module === values.module && values.actions.includes(p.action)
+          );
+          
+          if (existingPermissions.length > 0) {
+            permissionsToAssign = existingPermissions;
+          } else {
+            // If we still can't find them, throw the original error
+            throw error;
+          }
+        } else {
+          // For any other error, throw it
+          throw error;
+        }
+      }
+      
+      // Assign permissions to the role (only if we have permissions to assign)
+      if (permissionsToAssign.length > 0) {
+        try {
+          await createRolePermission({
+            roleId: values.roleId,
+            permissionIds: permissionsToAssign.map(p => p.id),
+          });
+        } catch (rolePermissionError: any) {
+          // If role permissions already exist (409), that's okay - they're already assigned
+          // Only show error if it's not a conflict error
+          if (rolePermissionError.response?.status === 409) {
+            // Permissions already assigned - this is fine, show success
+            console.log('Permissions already assigned to role');
+          } else {
+            // For other errors, throw them
+            throw rolePermissionError;
+          }
+        }
       }
       
       message.success(t.permissionsCreatedAndAssigned);
