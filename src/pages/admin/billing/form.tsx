@@ -96,22 +96,61 @@ const BillingForm = () => {
   const initializeOrderData = useCallback((order: Order) => {
     setCustomerName(order.customerName || '');
     setCustomerPhone(order.customerPhone || '');
-    const existingDiscount = Number(order.discount) || 0;
-    setDiscounts(existingDiscount > 0 ? [existingDiscount] : [0]);
+    
+    // Initialize order-level discount (this is the total order discount that was distributed)
+    const existingOrderDiscount = Number(order.discount) || 0;
+    // Always initialize with at least one discount entry (even if 0)
+    setDiscounts(existingOrderDiscount > 0 ? [existingOrderDiscount] : [0]);
+    
     if (order.paymentType) {
       setPaymentType(order.paymentType);
     }
 
     const orderItems = (order.orderItems || (order as any).items || []) as Order['orderItems'];
     if (orderItems && orderItems.length > 0) {
-      setItems(orderItems.map(item => ({
-        productId: item.productId,
-        product: item.product as ProductDto,
-        quantity: Number(item.quantity) || 1,
-        discount: (item as any).discount ? Number((item as any).discount) : 0,
-        productError: '',
-        quantityError: '',
-      })));
+      // Calculate base subtotals to extract item-level discounts
+      const baseSubtotals: number[] = [];
+      const totalItemDiscounts: number[] = [];
+      
+      orderItems.forEach(item => {
+        if (item.product) {
+          const unitPrice = Number((item.product as any).sellingPrice || item.unitPrice || 0);
+          const quantity = Number(item.quantity) || 1;
+          const baseSubtotal = unitPrice * quantity;
+          baseSubtotals.push(baseSubtotal);
+          // Store the total discount on this item (includes both item discount + proportional order discount)
+          totalItemDiscounts.push(Number((item as any).discount) || 0);
+        } else {
+          baseSubtotals.push(0);
+          totalItemDiscounts.push(0);
+        }
+      });
+      
+      const totalBaseSubtotal = baseSubtotals.reduce((sum, amount) => sum + amount, 0);
+      
+      // Extract item-level discounts by subtracting proportional order discount
+      setItems(orderItems.map((item, index) => {
+        const totalDiscountOnItem = totalItemDiscounts[index];
+        let itemLevelDiscount = 0;
+        
+        // If there's an order discount and base subtotal > 0, extract item-level discount
+        if (existingOrderDiscount > 0 && totalBaseSubtotal > 0 && baseSubtotals[index] > 0) {
+          const proportionalOrderDiscount = (baseSubtotals[index] / totalBaseSubtotal) * existingOrderDiscount;
+          itemLevelDiscount = Math.max(0, totalDiscountOnItem - proportionalOrderDiscount);
+        } else {
+          // If no order discount, the item discount is just the total discount on the item
+          itemLevelDiscount = totalDiscountOnItem;
+        }
+        
+        return {
+          productId: item.productId,
+          product: item.product as ProductDto,
+          quantity: Number(item.quantity) || 1,
+          discount: itemLevelDiscount,
+          productError: '',
+          quantityError: '',
+        };
+      }));
     }
   }, []);
 
@@ -315,58 +354,53 @@ const BillingForm = () => {
     // Calculate total order discount
     const orderDiscountAmount = discounts.reduce((sum, disc) => sum + (Number(disc) || 0), 0);
 
-    // First pass: calculate base subtotals for proportional discount distribution
-    const baseSubtotals: number[] = [];
+    // Calculate subtotal and GST (applying only item-level discounts, NOT order-level discount)
     items.forEach(item => {
       if (item.product && item.quantity) {
         const unitPrice = Number(item.product.sellingPrice) || 0;
         const quantity = Number(item.quantity) || 0;
         const baseSubtotal = unitPrice * quantity;
-        baseSubtotals.push(baseSubtotal);
-      } else {
-        baseSubtotals.push(0);
-      }
-    });
-
-    // Calculate total base subtotal for proportional discount distribution
-    const totalBaseSubtotal = baseSubtotals.reduce((sum, amount) => sum + amount, 0);
-
-    // Second pass: calculate with proportional order discount (matching server logic)
-    items.forEach((item, index) => {
-      if (item.product && item.quantity) {
-        const unitPrice = Number(item.product.sellingPrice) || 0;
-        const quantity = Number(item.quantity) || 0;
-        const baseSubtotal = baseSubtotals[index];
         const itemDiscount = Number(item.discount) || 0;
         
-        // Calculate proportional order-level discount for this item
-        const itemProportionalDiscount = totalBaseSubtotal > 0 
-          ? (baseSubtotal / totalBaseSubtotal) * orderDiscountAmount 
-          : 0;
-        
-        // Apply both item discount and proportional order discount
-        const totalDiscountForItem = itemDiscount + itemProportionalDiscount;
-        const discountedSubtotal = Math.max(0, baseSubtotal - totalDiscountForItem);
+        // Apply only item-level discount (order discount will be subtracted from grand total)
+        const discountedSubtotal = Math.max(0, baseSubtotal - itemDiscount);
         const gstAmount = (discountedSubtotal * (Number(item.product.gstPercentage) || 0)) / 100;
-        const itemTotal = discountedSubtotal + gstAmount;
         
         subtotal += discountedSubtotal;
         itemDiscountsTotal += itemDiscount;
         gstTotal += gstAmount;
-        grandTotal += itemTotal;
       }
     });
 
+    // Calculate grand total: Subtotal + GST Total - Order Discount
+    const subtotalWithGst = subtotal + gstTotal;
+    grandTotal = Math.max(0, subtotalWithGst - orderDiscountAmount);
+
+    // Calculate base subtotals (without any discounts) for validation
+    let totalBaseSubtotal = 0;
+    let totalBaseGst = 0;
+    items.forEach(item => {
+      if (item.product && item.quantity) {
+        const unitPrice = Number(item.product.sellingPrice) || 0;
+        const quantity = Number(item.quantity) || 0;
+        const baseSubtotal = unitPrice * quantity;
+        const baseGst = (baseSubtotal * (Number(item.product.gstPercentage) || 0)) / 100;
+        totalBaseSubtotal += baseSubtotal;
+        totalBaseGst += baseGst;
+      }
+    });
+
+    const totalBeforeDiscount = totalBaseSubtotal + totalBaseGst;
+
     // Validate discount doesn't exceed total
-    const totalBeforeOrderDiscount = totalBaseSubtotal + gstTotal;
-    const discountError = orderDiscountAmount > totalBeforeOrderDiscount 
-      ? `Discount (₹${orderDiscountAmount.toFixed(2)}) exceeds order total (₹${totalBeforeOrderDiscount.toFixed(2)})`
+    const discountError = orderDiscountAmount > totalBeforeDiscount 
+      ? `Discount (₹${orderDiscountAmount.toFixed(2)}) exceeds order total (₹${totalBeforeDiscount.toFixed(2)})`
       : '';
 
-    return { subtotal, gstTotal, itemDiscountsTotal, grandTotal, orderDiscountAmount, totalBaseSubtotal, discountError };
+    return { subtotal, gstTotal, itemDiscountsTotal, grandTotal, orderDiscountAmount, totalBaseSubtotal, totalBeforeDiscount, discountError };
   };
 
-  const { subtotal, gstTotal, itemDiscountsTotal, grandTotal, orderDiscountAmount, totalBaseSubtotal, discountError } = calculateTotals();
+  const { subtotal, gstTotal, itemDiscountsTotal, grandTotal, orderDiscountAmount, totalBaseSubtotal, totalBeforeDiscount, discountError } = calculateTotals();
 
   const onFinish = async ()   => {
     try {
@@ -451,13 +485,13 @@ const BillingForm = () => {
       };
 
       // Add discounts - for create use array, for update convert to single discount value
-      if (discountEntries.length > 0) {
-        if (isEditMode) {
-          // For updates, convert discounts array to single discount value (sum)
-          const totalDiscount = discountEntries.reduce((sum, disc) => sum + (Number(disc.amount) || 0), 0);
-          apiData.discount = totalDiscount;
-        } else {
-          // For creates, use discounts array
+      if (isEditMode) {
+        // For updates, always set discount explicitly (even if 0) to ensure it's updated correctly
+        const totalDiscount = discountEntries.reduce((sum, disc) => sum + (Number(disc.amount) || 0), 0);
+        apiData.discount = totalDiscount;
+      } else {
+        // For creates, use discounts array (only include if there are discounts > 0)
+        if (discountEntries.length > 0) {
           apiData.discounts = discountEntries;
         }
       }
@@ -827,7 +861,7 @@ const BillingForm = () => {
                     ))}
                     {discountError && (
                       <div className="text-xs mt-1" style={{ color: '#ff4d4f' }}>
-                        Maximum discount: ₹{(totalBaseSubtotal + gstTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        Maximum discount: ₹{totalBeforeDiscount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
                     )}
                   </div>

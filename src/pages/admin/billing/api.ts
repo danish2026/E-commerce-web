@@ -45,7 +45,7 @@ export interface OrderItem {
   gstPercentage?: number | string;
   gstAmount?: number | string;
   totalPrice?: number | string;
-  totalAmount?: number | string; // Added to match backend entity
+  totalAmount?: number | string; 
   createdAt?: string;
   updatedAt?: string;
 }
@@ -279,16 +279,18 @@ export const updateOrder = async (id: string, order: UpdateOrderDto): Promise<Or
       updateDto.customerPhone = (order as any).customerPhone;
     }
     // Convert discounts array to single discount value for UpdateOrderItemDto
+    // Always set discount explicitly (even if 0) to ensure it's updated correctly
     if (typeof (order as any).discounts !== 'undefined' && Array.isArray((order as any).discounts)) {
       // Sum up all discount amounts
       const totalDiscount = (order as any).discounts.reduce((sum: number, disc: any) => {
         return sum + (Number(disc.amount) || 0);
       }, 0);
-      if (totalDiscount > 0) {
-        updateDto.discount = totalDiscount;
-      }
+      updateDto.discount = totalDiscount; // Always set, even if 0
     } else if (typeof (order as any).discount !== 'undefined') {
-      updateDto.discount = (order as any).discount;
+      updateDto.discount = Number((order as any).discount) || 0; // Always set, even if 0
+    } else {
+      // If no discount provided, set to 0 to clear any existing discount
+      updateDto.discount = 0;
     }
     if (typeof (order as any).paymentType !== 'undefined') {
       updateDto.paymentType = (order as any).paymentType;

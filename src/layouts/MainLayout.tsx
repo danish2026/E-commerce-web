@@ -9,23 +9,19 @@ const MainLayout = () => {
   const location = useLocation();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Check for success message from navigation state
   useEffect(() => {
     if (location.state?.successMessage) {
       setSuccessMessage(location.state.successMessage);
-      // Clear the state to prevent showing message on refresh
       window.history.replaceState({}, document.title);
-      // Auto-hide message after 3 seconds
       const timer = setTimeout(() => {
         setSuccessMessage(null);
-      }, 3000);
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [location.state]);
 
   return (
     <>
-      {/* Success Modal Notification at Top Center */}
       {successMessage && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] success-notification">
           <div className="bg-surface-1 rounded-2xl shadow-card border border-[var(--glass-border)] p-4 min-w-[300px] max-w-[600px] flex items-center gap-3 backdrop-blur-sm">

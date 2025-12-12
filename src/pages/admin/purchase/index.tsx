@@ -195,7 +195,7 @@ const Purchase = () => {
                     { label: t.paid, value: PaymentStatus.PAID },
                     { label: t.pending, value: PaymentStatus.PENDING },
                     { label: t.partial, value: PaymentStatus.PARTIAL },
-                    { label: t.overdue, value: PaymentStatus.OVERDUE },
+                    // { label: t.overdue, value: PaymentStatus.OVERDUE },
                   ]}
                 />
               </div>

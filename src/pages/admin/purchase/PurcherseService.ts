@@ -76,7 +76,7 @@ export const fetchPurchases = async (
     { params }
   );
   
-  // Handle both paginated and non-paginated responses
+  // Normalize paginated response shapes (handles total/totalCount/meta)
   if (Array.isArray(data)) {
     return {
       data,
@@ -85,8 +85,38 @@ export const fetchPurchases = async (
       limit: data.length,
     };
   }
-  
-  return data as PaginatedPurchaseResponse;
+
+  const anyData: any = data;
+  const items: PurchaseDto[] = anyData.data || [];
+  const normalizedTotal =
+    typeof anyData.total === 'number'
+      ? anyData.total
+      : typeof anyData.totalCount === 'number'
+        ? anyData.totalCount
+        : typeof anyData.count === 'number'
+          ? anyData.count
+          : typeof anyData.meta?.total === 'number'
+            ? anyData.meta.total
+            : items.length;
+  const normalizedPage =
+    typeof anyData.page === 'number'
+      ? anyData.page
+      : typeof anyData.meta?.page === 'number'
+        ? anyData.meta.page
+        : 1;
+  const normalizedLimit =
+    typeof anyData.limit === 'number'
+      ? anyData.limit
+      : typeof anyData.meta?.limit === 'number'
+        ? anyData.meta.limit
+        : items.length;
+
+  return {
+    data: items,
+    total: normalizedTotal,
+    page: normalizedPage,
+    limit: normalizedLimit,
+  };
 };
 
 export const createPurchase = async (
