@@ -41,6 +41,8 @@ const Permissions = () => {
   const [selectedRolePermissions, setSelectedRolePermissions] = useState<string[]>([]);
   const [syncingPermissions, setSyncingPermissions] = useState(false);
   const [activeTab, setActiveTab] = useState('rolePermission');
+  const [deleteRoleModalVisible, setDeleteRoleModalVisible] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
   
   // Form instances
   const [addRoleForm] = Form.useForm();
@@ -298,36 +300,58 @@ const Permissions = () => {
   };
 
   const handleDeleteRole = (role: Role) => {
-    Modal.confirm({
-      title: 'Delete role?',
-      icon: <ExclamationCircleOutlined />,
-      content: 'This will remove the role and its permission associations.',
-      okText: 'Delete',
-      cancelText: 'Cancel',
-      okButtonProps: { danger: true },
-      onOk: async () => {
-        try {
-          setDeletingRoleId(role.id);
-          await deleteRole(role.id);
-          message.success('Role deleted');
-          await reloadRoles();
-          if (rolePermissionRoleId === role.id) {
-            const nextRole = roles.find((r) => r.id !== role.id);
-            setRolePermissionRoleId(nextRole?.id);
-            if (nextRole?.id) {
-              await loadRolePermissionsForRole(nextRole.id);
-            } else {
-              setRolePermissionsList([]);
-            }
-          }
-        } catch (error: any) {
-          const errorMessage = error.response?.data?.message || error.message || 'Failed to delete role';
-          message.error(errorMessage);
-        } finally {
-          setDeletingRoleId(null);
+    console.log('handleDeleteRole called for role:', role.id, role.name);
+    setRoleToDelete(role);
+    setDeleteRoleModalVisible(true);
+  };
+
+  const handleConfirmDeleteRole = async () => {
+    if (!roleToDelete) return;
+
+    try {
+      console.log('Starting delete process for role:', roleToDelete.id, roleToDelete.name);
+      setDeletingRoleId(roleToDelete.id);
+      
+      console.log('Calling deleteRole API with ID:', roleToDelete.id);
+      await deleteRole(roleToDelete.id);
+      console.log('Role deleted successfully from API');
+      
+      message.success(`Role "${roleToDelete.name}" deleted successfully`);
+      
+      console.log('Reloading roles list...');
+      await reloadRoles();
+      
+      // If the deleted role was selected in the role permission tab, switch to another role
+      if (rolePermissionRoleId === roleToDelete.id) {
+        const remainingRoles = roles.filter((r) => r.id !== roleToDelete.id);
+        if (remainingRoles.length > 0) {
+          setRolePermissionRoleId(remainingRoles[0].id);
+          await loadRolePermissionsForRole(remainingRoles[0].id);
+        } else {
+          setRolePermissionRoleId(undefined);
+          setRolePermissionsList([]);
         }
-      },
-    });
+      }
+      
+      console.log('Delete process completed successfully');
+      setDeleteRoleModalVisible(false);
+      setRoleToDelete(null);
+    } catch (error: any) {
+      console.error('Error deleting role - Full error:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to delete role';
+      message.error(errorMessage);
+    } finally {
+      setDeletingRoleId(null);
+    }
+  };
+
+  const handleCancelDeleteRole = () => {
+    console.log('Delete cancelled by user');
+    setDeleteRoleModalVisible(false);
+    setRoleToDelete(null);
   };
 
   // Handle role selection - fetch existing permissions
@@ -608,7 +632,13 @@ const Permissions = () => {
             icon={<DeleteOutlined />}
             aria-label="Delete Role"
             loading={deletingRoleId === record.id}
-            onClick={() => handleDeleteRole(record)}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              console.log('Delete button clicked for role:', record.id, record.name);
+              handleDeleteRole(record);
+            }}
+            disabled={deletingRoleId === record.id}
           >
           </AntButton>
         </Space>
@@ -1047,6 +1077,62 @@ const Permissions = () => {
           </Form.Item>
         </Form>
       </Modal>
+
+      {/* Delete Role Confirmation Modal */}
+      {deleteRoleModalVisible && roleToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70"
+          onClick={handleCancelDeleteRole}
+        >
+          <div
+            className="bg-[var(--surface-1)] rounded-lg shadow-xl max-w-md w-full mx-4 border border-[var(--glass-border)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                  <ExclamationCircleOutlined className="text-red-600 dark:text-red-400 text-xl" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+                    Delete Role?
+                  </h3>
+                  <p className="text-sm text-[var(--text-secondary)] mt-1">
+                    Are you sure you want to delete this role? This will remove the role and all its permission associations. This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+              <div className="mb-6 p-4 bg-[var(--surface-2)] rounded-lg">
+                <p className="text-sm text-[var(--text-primary)] font-medium">
+                  {roleToDelete.name}
+                </p>
+                {roleToDelete.description && (
+                  <p className="text-xs text-[var(--text-secondary)] mt-1">
+                    {roleToDelete.description}
+                  </p>
+                )}
+              </div>
+              <div className="flex justify-end gap-3">
+                <AntButton onClick={handleCancelDeleteRole}>
+                  Cancel
+                </AntButton>
+                <AntButton
+                  type="primary"
+                  danger
+                  loading={deletingRoleId === roleToDelete.id}
+                  onClick={handleConfirmDeleteRole}
+                  style={{
+                    backgroundColor: '#ff4d4f',
+                    borderColor: '#ff4d4f',
+                  }}
+                >
+                  Delete
+                </AntButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

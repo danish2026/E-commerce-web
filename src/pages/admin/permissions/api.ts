@@ -132,7 +132,36 @@ export const createRole = async (data: {
 
 // Delete a role
 export const deleteRole = async (id: string): Promise<void> => {
-  await apiClient.delete(`permissions/roles/${id}`);
+  if (!id) {
+    throw new Error('Role ID is required');
+  }
+  
+  const url = `permissions/roles/${id}`;
+  console.log('========== DELETE ROLE API CALL ==========');
+  console.log('Delete role request URL:', url);
+  console.log('Role ID:', id);
+  
+  try {
+    const response = await apiClient.delete(url);
+    console.log('Delete role request successful');
+    console.log('Response status:', response?.status);
+    console.log('Response data:', response?.data);
+    console.log('==========================================');
+    return;
+  } catch (error: any) {
+    console.error('========== DELETE ROLE ERROR ==========');
+    console.error('Delete role request failed');
+    console.error('Error object:', error);
+    console.error('Error message:', error?.message);
+    console.error('Error response:', error?.response);
+    console.error('Error response status:', error?.response?.status);
+    console.error('Error response data:', error?.response?.data);
+    console.error('Error response headers:', error?.response?.headers);
+    console.error('Request URL:', error?.config?.url);
+    console.error('Request method:', error?.config?.method);
+    console.error('==========================================');
+    throw error;
+  }
 };
 
 // Create role permission
