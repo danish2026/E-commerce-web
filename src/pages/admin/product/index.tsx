@@ -112,11 +112,12 @@ const Product = () => {
     loadProducts();
   }, [loadProducts]);
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when filters change (safety net)
   useEffect(() => {
     if (currentPage !== 1) {
       setCurrentPage(1);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchText, dateRange]);
 
   const handlePageChange = (page: number, pageSize?: number) => {
@@ -162,13 +163,23 @@ const Product = () => {
                 icon={<SearchOutlined />}
                 value={searchText}
                 allowClear
-                onChange={(e) => setSearchText(e.target.value)}
+                onChange={(e) => {
+                  setSearchText(e.target.value);
+                  setCurrentPage(1);
+                }}
+                onPressEnter={() => {
+                  setCurrentPage(1);
+                  loadProducts();
+                }}
                 style={{ width: 500, height: '40px' }}
                 className="product-search-input"
               />
               <RangePicker
                 value={dateRange}
-                onChange={(dates) => setDateRange(dates as [Dayjs | null, Dayjs | null] | null)}
+                onChange={(dates) => {
+                  setDateRange(dates as [Dayjs | null, Dayjs | null] | null);
+                  setCurrentPage(1);
+                }}
                 format="YYYY-MM-DD"
                 placeholder={[t.startDate, t.endDate]}
                 style={{ width: 300, height: '40px' }}
