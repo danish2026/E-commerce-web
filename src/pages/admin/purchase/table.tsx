@@ -512,7 +512,7 @@ const Table = ({ onNavigate, purchases, onDelete, pagination, canEdit = true, ca
                       >
                         <EyeOutlined className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
                       </button>
-                      {canEdit ? (
+                      {canEdit ? (  
                         <button
                           onClick={() => onNavigate('form', { ...purchase, mode: 'edit' })}
                           className="p-2 rounded hover:bg-[var(--glass-bg)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1"
@@ -523,6 +523,7 @@ const Table = ({ onNavigate, purchases, onDelete, pagination, canEdit = true, ca
                         </button>
                       ) : (
                         <button
+
                           disabled
                           className="p-2 rounded opacity-50 cursor-not-allowed"
                           title="You do not have permission to edit"
