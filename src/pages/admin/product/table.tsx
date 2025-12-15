@@ -63,6 +63,7 @@ const Table = ({ onNavigate, products, onDelete, pagination, canEdit = true, can
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<Product | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -79,6 +80,7 @@ const Table = ({ onNavigate, products, onDelete, pagination, canEdit = true, can
       return;
     }
     setItemToDelete(record);
+    setDeleteError(null); // Clear any previous errors
     setDeleteModalVisible(true);
   };
 
@@ -89,19 +91,30 @@ const Table = ({ onNavigate, products, onDelete, pagination, canEdit = true, can
     }
 
     setIsDeleting(true);
+    setDeleteError(null); // Clear any previous errors
     try {
       console.log('Deleting product with ID:', itemToDelete.id);
       await deleteProduct(itemToDelete.id);
       setDeleteModalVisible(false);
       setItemToDelete(null);
+      setDeleteError(null);
       // Trigger success callback (will show message at top center on main page)
       if (onDelete) {
         onDelete();
       }
     } catch (error) {
       console.error('Error deleting product:', error);
+      console.error('Error response:', (error as any)?.response?.data);
       const errorMessage = getApiErrorMessage(error, t.failedToDelete);
-      message.error(errorMessage);
+      console.log('Extracted error message:', errorMessage);
+      
+      // Set error state to display in modal
+      setDeleteError(errorMessage);
+      
+      // Also show toast notification for better visibility
+      message.error(errorMessage, 6); // Show for 6 seconds
+      
+      // Keep modal open so user can see the error
     } finally {
       setIsDeleting(false);
     }
@@ -110,6 +123,7 @@ const Table = ({ onNavigate, products, onDelete, pagination, canEdit = true, can
   const handleCancelDelete = () => {
     setDeleteModalVisible(false);
     setItemToDelete(null);
+    setDeleteError(null); // Clear error when closing modal
   };
 
   const handleSelectRow = (id: string, checked: boolean) => {
@@ -261,6 +275,21 @@ const Table = ({ onNavigate, products, onDelete, pagination, canEdit = true, can
             <p className="text-sm text-[var(--text-secondary)] mb-6">
               {t.deleteProductWarning}
             </p>
+            {deleteError && (
+              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <ExclamationCircleOutlined className="text-red-600 dark:text-red-400 text-lg flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-red-800 dark:text-red-300 mb-1">
+                      Cannot Delete Product
+                    </p>
+                    <p className="text-sm text-red-700 dark:text-red-400">
+                      {deleteError}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="flex gap-3 justify-end">
               <button
                 onClick={handleCancelDelete}

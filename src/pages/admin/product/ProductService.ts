@@ -165,11 +165,35 @@ export const getApiErrorMessage = (
   fallbackMessage: string
 ): string => {
   if (axios.isAxiosError(error)) {
-    const responseMessage =
-      (typeof error.response?.data === 'string' && error.response.data) ||
-      (error.response?.data?.message as string) ||
-      (error.response?.data?.error as string);
-    return responseMessage || fallbackMessage;
+    const responseData = error.response?.data;
+    
+    // Handle string response
+    if (typeof responseData === 'string') {
+      return responseData;
+    }
+    
+    // Handle object response
+    if (responseData && typeof responseData === 'object') {
+      // NestJS typically returns { statusCode, message, error }
+      // message can be a string or array of strings
+      if (responseData.message) {
+        if (Array.isArray(responseData.message)) {
+          return responseData.message.join(', ');
+        }
+        if (typeof responseData.message === 'string') {
+          return responseData.message;
+        }
+      }
+      
+      // Fallback to error field
+      if (responseData.error) {
+        return typeof responseData.error === 'string' 
+          ? responseData.error 
+          : fallbackMessage;
+      }
+    }
+    
+    return fallbackMessage;
   }
 
   if (error instanceof Error) {
